@@ -1,0 +1,28 @@
+{
+  "name": "admin-front",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev --host 0.0.0.0",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "lint": "eslint .",
+    "typecheck": "nuxt typecheck"
+  },
+  "dependencies": {
+    "@nuxt/ui": "^2.18.0",
+    "@pinia/nuxt": "^0.5.5",
+    "@vueuse/nuxt": "^11.1.0",
+    "nuxt": "^3.13.2",
+    "vue": "^3.5.11",
+    "pinia": "^2.2.4",
+    "dayjs": "^1.11.13"
+  },
+  "devDependencies": {
+    "@nuxt/eslint": "^0.5.7",
+    "@nuxt/typescript-build": "^3.0.2",
+    "typescript": "^5.6.3"
+  }
+}
