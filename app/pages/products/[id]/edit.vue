@@ -120,13 +120,14 @@ async function save() {
 
 onMounted(async () => {
   try {
-    const [p, cats, brands, suppliers] = await Promise.all([
+    const [rawProduct, cats, brands, suppliers] = await Promise.all([
       getProduct(id),
       listCategories(),
       listBrands(),
       listSuppliers(),
     ])
-    product.value = p as Product
+    const p = rawProduct as Product
+    product.value = p
     Object.assign(form, {
       name: p.name,
       description: p.description ?? '',

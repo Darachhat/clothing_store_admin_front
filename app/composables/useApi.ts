@@ -42,7 +42,7 @@ export function useApi() {
       if (typeof window !== 'undefined') {
         const hasRefresh = !!(authStore.$state.refreshToken || localStorage.getItem('refresh_token'))
         if (hasRefresh && (!token || isJwtExpired(token, 30))) {
-          const ok = await authStore.refreshToken()
+          const ok = await authStore.refreshSession()
           if (ok && authStore.accessToken) {
             token = authStore.accessToken
           }
@@ -57,7 +57,7 @@ export function useApi() {
     },
     async onResponseError({ response }) {
       if (response.status === 401) {
-        const refreshed = await authStore.refreshToken()
+        const refreshed = await authStore.refreshSession()
         if (!refreshed) {
           authStore.logout()
           await navigateTo('/login')

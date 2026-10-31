@@ -197,8 +197,8 @@ const createForm = ref({
   value: 10,
   code: '',
   min_purchase_amount: 0,
-  start_datetime: new Date().toISOString().split('T')[0],
-  end_datetime: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
+  start_datetime: new Date().toISOString().split('T')[0] ?? '',
+  end_datetime: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0] ?? '',
 })
 
 function openCreateModal() {
@@ -208,8 +208,8 @@ function openCreateModal() {
     value: 10,
     code: '',
     min_purchase_amount: 0,
-    start_datetime: new Date().toISOString().split('T')[0],
-    end_datetime: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0],
+    start_datetime: new Date().toISOString().split('T')[0] ?? '',
+    end_datetime: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0] ?? '',
   }
   showCreateModal.value = true
 }

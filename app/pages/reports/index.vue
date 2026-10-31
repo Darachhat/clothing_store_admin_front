@@ -119,7 +119,7 @@
             class="py-2.5 flex items-center justify-between text-sm"
           >
             <div class="flex items-center gap-3">
-              <span class="w-5 text-xs font-bold text-gray-400">#{{ idx + 1 }}</span>
+              <span class="w-5 text-xs font-bold text-gray-400">#{{ Number(idx) + 1 }}</span>
               <div>
                 <p class="font-medium text-gray-900 dark:text-white">{{ prod.name }}</p>
                 <p class="text-xs text-gray-400">{{ prod.sku }} • {{ prod.color }} / {{ prod.size }}</p>

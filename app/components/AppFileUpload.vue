@@ -160,7 +160,7 @@ function isImage(url: string) {
 function getDisplayFilename(url: string) {
   try {
     const parts = url.split('/')
-    return decodeURIComponent(parts[parts.length - 1])
+    return decodeURIComponent(parts[parts.length - 1] ?? url)
   } catch {
     return url
   }
