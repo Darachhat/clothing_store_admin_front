@@ -77,6 +77,7 @@ export const APP_NAV_SECTIONS: NavSection[] = [
     items: [
       { label: 'Users', to: '/users', icon: 'i-heroicons-user-group' },
       { label: 'Roles', to: '/roles', icon: 'i-heroicons-shield-check' },
+      { label: 'Audit Logs', to: '/audit-logs', icon: 'i-heroicons-clipboard-document-check' },
       { label: 'Settings', to: '/settings', icon: 'i-heroicons-cog-6-tooth' },
     ],
   },

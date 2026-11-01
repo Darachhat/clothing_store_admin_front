@@ -173,6 +173,8 @@
 </template>
 
 <script setup lang="ts">
+definePageMeta({ middleware: ['auth'] })
+
 const promotionApi = usePromotionApi()
 const toast = useAppToast()
 

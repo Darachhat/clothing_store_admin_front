@@ -232,6 +232,8 @@
 </template>
 
 <script setup lang="ts">
+definePageMeta({ middleware: ['auth'] })
+
 const expenseApi = useExpenseApi()
 const invApi = useInventoryApi()
 const toast = useAppToast()

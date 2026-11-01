@@ -55,6 +55,99 @@
       </form>
     </AppCard>
 
+    <!-- Branches & Warehouses Management -->
+    <AppCard>
+      <template #header>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <UIcon name="i-heroicons-building-storefront" class="w-4 h-4 text-gray-500" />
+            <h3 class="font-semibold text-gray-900 dark:text-white text-sm">Branches &amp; Warehouses</h3>
+          </div>
+          <AppButton size="sm" variant="ghost" label="Refresh" icon="i-heroicons-arrow-path" @click="loadBranches" />
+        </div>
+      </template>
+
+      <div class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div
+            v-for="b in branchesList"
+            :key="b.id"
+            class="p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 space-y-2"
+          >
+            <div class="flex items-center justify-between">
+              <div>
+                <span class="text-sm font-semibold text-gray-900 dark:text-white">{{ b.name }}</span>
+                <span class="ml-2 text-xs font-mono text-gray-500">({{ b.code }})</span>
+              </div>
+              <span class="text-xs px-2 py-0.5 rounded border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300">
+                {{ b.status }}
+              </span>
+            </div>
+            <p v-if="b.address" class="text-xs text-gray-500">{{ b.address }}</p>
+            <div class="pt-1 border-t border-gray-200 dark:border-gray-700">
+              <p class="text-[11px] font-medium text-gray-500 uppercase tracking-wider mb-1">Warehouses</p>
+              <div class="flex flex-wrap gap-1.5">
+                <span
+                  v-for="w in (b.warehouses || [])"
+                  :key="w.id"
+                  class="px-2 py-0.5 rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs text-gray-700 dark:text-gray-200"
+                >
+                  {{ w.name }} <template v-if="w.is_default">(Default)</template>
+                </span>
+                <span v-if="!b.warehouses || b.warehouses.length === 0" class="text-xs text-gray-400">No warehouses</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Create Branch / Warehouse Forms -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+          <form class="space-y-2" @submit.prevent="handleCreateBranch">
+            <p class="text-xs font-semibold text-gray-700 dark:text-gray-300">Add New Branch</p>
+            <div class="grid grid-cols-3 gap-2">
+              <input
+                v-model="newBranchForm.code"
+                type="text"
+                placeholder="Code (BR-02)"
+                required
+                class="rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-2.5 py-1.5 text-xs font-mono"
+              >
+              <input
+                v-model="newBranchForm.name"
+                type="text"
+                placeholder="Branch Name"
+                required
+                class="col-span-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-2.5 py-1.5 text-xs"
+              >
+            </div>
+            <AppButton type="submit" size="sm" variant="secondary" label="Create Branch" :loading="creatingBranch" />
+          </form>
+
+          <form class="space-y-2" @submit.prevent="handleCreateWarehouse">
+            <p class="text-xs font-semibold text-gray-700 dark:text-gray-300">Add New Warehouse</p>
+            <div class="grid grid-cols-3 gap-2">
+              <select
+                v-model="newWarehouseForm.branch_id"
+                required
+                class="rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 py-1.5 text-xs"
+              >
+                <option value="" disabled>Branch...</option>
+                <option v-for="b in branchesList" :key="b.id" :value="b.id">{{ b.name }}</option>
+              </select>
+              <input
+                v-model="newWarehouseForm.name"
+                type="text"
+                placeholder="Warehouse Name"
+                required
+                class="col-span-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-2.5 py-1.5 text-xs"
+              >
+            </div>
+            <AppButton type="submit" size="sm" variant="secondary" label="Create Warehouse" :loading="creatingWarehouse" />
+          </form>
+        </div>
+      </div>
+    </AppCard>
+
     <!-- Tax & Pricing -->
     <AppCard>
       <template #header>
@@ -138,6 +231,99 @@
       </form>
     </AppCard>
 
+    <!-- Telegram Notification Integration -->
+    <AppCard>
+      <template #header>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <UIcon name="i-heroicons-paper-airplane" class="w-4 h-4 text-gray-500" />
+            <h3 class="font-semibold text-gray-900 dark:text-white text-sm">Telegram Bot Notifications</h3>
+          </div>
+          <AppButton size="sm" variant="ghost" label="Refresh Bots" icon="i-heroicons-arrow-path" @click="loadTelegramAndLogs" />
+        </div>
+      </template>
+
+      <div class="space-y-4">
+        <div v-if="telegramBots.length > 0" class="space-y-2">
+          <p class="text-xs font-medium text-gray-600 dark:text-gray-400">Configured Bots (Masked Tokens)</p>
+          <div
+            v-for="bot in telegramBots"
+            :key="bot.id"
+            class="flex items-center justify-between p-2.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/60 text-xs"
+          >
+            <div>
+              <span class="font-semibold text-gray-900 dark:text-white">{{ bot.name }}</span>
+              <span class="ml-2 font-mono text-gray-500">({{ bot.code }})</span>
+            </div>
+            <span class="font-mono text-gray-500">{{ bot.token || '***' }}</span>
+          </div>
+        </div>
+
+        <form class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2" @submit.prevent="handleSendTestTelegram">
+          <div class="md:col-span-2">
+            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Test Alert Message</label>
+            <input
+              v-model="testTelegramMessage"
+              type="text"
+              placeholder="Store alert test message..."
+              class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
+            >
+          </div>
+          <div class="flex items-end">
+            <AppButton
+              type="submit"
+              variant="secondary"
+              label="Send Test Alert"
+              icon="i-heroicons-paper-airplane"
+              :loading="sendingTelegram"
+            />
+          </div>
+        </form>
+      </div>
+    </AppCard>
+
+    <!-- System & API Traffic Logs -->
+    <AppCard>
+      <template #header>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <UIcon name="i-heroicons-command-line" class="w-4 h-4 text-gray-500" />
+            <h3 class="font-semibold text-gray-900 dark:text-white text-sm">Recent API &amp; System Traffic Logs</h3>
+          </div>
+          <div class="flex items-center gap-2">
+            <AppButton size="sm" variant="ghost" label="Domain Audit Trail" to="/audit-logs" />
+            <AppButton size="sm" variant="secondary" label="Refresh" icon="i-heroicons-arrow-path" @click="loadTelegramAndLogs" />
+          </div>
+        </div>
+      </template>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead>
+            <tr class="border-b border-gray-200 dark:border-gray-700 text-gray-500">
+              <th class="py-2 px-2">Method</th>
+              <th class="py-2 px-2">Path</th>
+              <th class="py-2 px-2">Status</th>
+              <th class="py-2 px-2">Latency</th>
+              <th class="py-2 px-2">Client IP</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+            <tr v-for="log in systemLogs" :key="log.id" class="text-gray-700 dark:text-gray-300">
+              <td class="py-2 px-2 font-mono font-semibold">{{ log.method }}</td>
+              <td class="py-2 px-2 font-mono">{{ log.path }}</td>
+              <td class="py-2 px-2 font-mono">{{ log.response_code }}</td>
+              <td class="py-2 px-2 font-mono">{{ log.process_time_ms != null ? `${Number(log.process_time_ms).toFixed(1)} ms` : '-' }}</td>
+              <td class="py-2 px-2 font-mono text-gray-500">{{ log.client_ip || '-' }}</td>
+            </tr>
+            <tr v-if="systemLogs.length === 0">
+              <td colspan="5" class="py-4 text-center text-gray-400">No system traffic logs recorded yet</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </AppCard>
+
     <!-- Danger Zone -->
     <AppCard>
       <template #header>
@@ -170,8 +356,20 @@
 definePageMeta({ middleware: ['auth'] })
 
 const toast = useAppToast()
+const branchApi = useBranchApi()
+const tgSystemApi = useTelegramSystemApi()
+const primaryBranchId = ref<string | null>(null)
+const branchesList = ref<any[]>([])
+const creatingBranch = ref(false)
+const creatingWarehouse = ref(false)
+const newBranchForm = ref({ code: '', name: '' })
+const newWarehouseForm = ref({ branch_id: '', name: '' })
+const telegramBots = ref<any[]>([])
+const systemLogs = ref<any[]>([])
+const testTelegramMessage = ref('Test alert from Clothing Store Admin Portal')
+const sendingTelegram = ref(false)
 
-// Store settings stored locally (would normally come from API)
+// Store settings synced with primary branch + localStorage
 const storeInfo = ref({
   name: 'My Clothing Store',
   currency: 'USD',
@@ -198,8 +396,7 @@ const savingStore = ref(false)
 const savingTax = ref(false)
 const savingPos = ref(false)
 
-// Load from localStorage for persistence without a settings API
-onMounted(() => {
+onMounted(async () => {
   const saved = localStorage.getItem('store_settings')
   if (saved) {
     try {
@@ -209,7 +406,93 @@ onMounted(() => {
       if (parsed.posSettings) posSettings.value = { ...posSettings.value, ...parsed.posSettings }
     } catch (e) { /* ignore */ }
   }
+  await loadBranches()
+  await loadTelegramAndLogs()
 })
+
+async function loadBranches() {
+  try {
+    const branches = await branchApi.listBranches() as any[]
+    branchesList.value = branches || []
+    if (branches && branches.length > 0) {
+      const main = branches[0]
+      primaryBranchId.value = main.id
+      if (!newWarehouseForm.value.branch_id) {
+        newWarehouseForm.value.branch_id = main.id
+      }
+      storeInfo.value.name = main.name || storeInfo.value.name
+      storeInfo.value.phone = main.phone || storeInfo.value.phone
+      storeInfo.value.email = main.email || storeInfo.value.email
+      storeInfo.value.address = main.address || storeInfo.value.address
+    }
+  } catch {
+    // Fallback to localStorage values
+  }
+}
+
+async function handleCreateBranch() {
+  if (!newBranchForm.value.code.trim() || !newBranchForm.value.name.trim()) return
+  creatingBranch.value = true
+  try {
+    await branchApi.createBranch({
+      code: newBranchForm.value.code.trim(),
+      name: newBranchForm.value.name.trim(),
+    })
+    newBranchForm.value = { code: '', name: '' }
+    await loadBranches()
+    toast.add({ title: 'Branch Created', description: 'New branch added', color: 'green' })
+  } catch (err: any) {
+    toast.add({ title: 'Error', description: err?.data?.detail || 'Failed to create branch', color: 'red' })
+  } finally {
+    creatingBranch.value = false
+  }
+}
+
+async function handleCreateWarehouse() {
+  if (!newWarehouseForm.value.branch_id || !newWarehouseForm.value.name.trim()) return
+  creatingWarehouse.value = true
+  try {
+    await branchApi.createWarehouse({
+      branch_id: newWarehouseForm.value.branch_id,
+      name: newWarehouseForm.value.name.trim(),
+    })
+    newWarehouseForm.value.name = ''
+    await loadBranches()
+    toast.add({ title: 'Warehouse Created', description: 'New warehouse added', color: 'green' })
+  } catch (err: any) {
+    toast.add({ title: 'Error', description: err?.data?.detail || 'Failed to create warehouse', color: 'red' })
+  } finally {
+    creatingWarehouse.value = false
+  }
+}
+
+async function loadTelegramAndLogs() {
+  try {
+    const botsRes = await tgSystemApi.listBots()
+    telegramBots.value = botsRes?.data?.items || botsRes?.items || []
+  } catch {
+    telegramBots.value = []
+  }
+  try {
+    const logsRes = await tgSystemApi.listSystemLogs({ limit: 10 })
+    systemLogs.value = logsRes?.data?.items || logsRes?.items || []
+  } catch {
+    systemLogs.value = []
+  }
+}
+
+async function handleSendTestTelegram() {
+  if (!testTelegramMessage.value.trim()) return
+  sendingTelegram.value = true
+  try {
+    await tgSystemApi.sendTestMessage({ message: testTelegramMessage.value.trim() })
+    toast.add({ title: 'Telegram Dispatched', description: 'Test alert sent to Telegram service', color: 'green' })
+  } catch (err: any) {
+    toast.add({ title: 'Telegram Alert', description: err?.data?.detail || 'Unable to send Telegram alert', color: 'amber' })
+  } finally {
+    sendingTelegram.value = false
+  }
+}
 
 function persistSettings() {
   localStorage.setItem('store_settings', JSON.stringify({
@@ -221,10 +504,22 @@ function persistSettings() {
 
 async function saveStoreInfo() {
   savingStore.value = true
-  await new Promise(r => setTimeout(r, 400))
-  persistSettings()
-  toast.add({ title: 'Saved', description: 'Store information updated', color: 'green' })
-  savingStore.value = false
+  try {
+    if (primaryBranchId.value) {
+      await branchApi.updateBranch(primaryBranchId.value, {
+        name: storeInfo.value.name,
+        phone: storeInfo.value.phone || undefined,
+        email: storeInfo.value.email || undefined,
+        address: storeInfo.value.address || undefined,
+      })
+    }
+    persistSettings()
+    toast.add({ title: 'Saved', description: 'Store information updated', color: 'green' })
+  } catch (err: any) {
+    toast.add({ title: 'Error', description: err?.data?.detail || 'Failed to update store info', color: 'red' })
+  } finally {
+    savingStore.value = false
+  }
 }
 
 async function saveTaxSettings() {

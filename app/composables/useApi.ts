@@ -37,10 +37,18 @@ export function useApi() {
       if (!authStore.accessToken && typeof window !== 'undefined') {
         authStore.restoreSession()
       }
-      let token = authStore.accessToken || (typeof window !== 'undefined' ? localStorage.getItem('access_token') : null)
+      let token =
+        authStore.accessToken ||
+        (typeof window !== 'undefined'
+          ? localStorage.getItem('admin_access_token') || localStorage.getItem('access_token')
+          : null)
 
       if (typeof window !== 'undefined') {
-        const hasRefresh = !!(authStore.$state.refreshToken || localStorage.getItem('refresh_token'))
+        const hasRefresh = !!(
+          authStore.$state.refreshToken ||
+          localStorage.getItem('admin_refresh_token') ||
+          localStorage.getItem('refresh_token')
+        )
         if (hasRefresh && (!token || isJwtExpired(token, 30))) {
           const ok = await authStore.refreshSession()
           if (ok && authStore.accessToken) {
@@ -52,6 +60,11 @@ export function useApi() {
       const headers = new Headers(options.headers || {})
       if (token) {
         headers.set('Authorization', `Bearer ${token}`)
+      }
+      // Attach system credential server-side only (credential stays private)
+      if (import.meta.server) {
+        const sysAuth = config.apiBaseAuth as string
+        if (sysAuth) headers.set('X-System-Authorization', sysAuth)
       }
       options.headers = headers
     },
@@ -389,6 +402,7 @@ export function useBranchApi() {
         name: string
         address?: string
         phone?: string
+        email?: string
         status: string
         warehouses: Array<{
           id: string
@@ -398,5 +412,43 @@ export function useBranchApi() {
           status: string
         }>
       }>>('/api/admin/v1/branches/'),
+    updateBranch: (id: string, body: Record<string, unknown>) =>
+      apiFetch(`/api/admin/v1/branches/${id}`, { method: 'PATCH', body }),
+    createBranch: (body: { code: string; name: string; address?: string; phone?: string; email?: string }) =>
+      apiFetch('/api/admin/v1/branches/', { method: 'POST', body }),
+    listWarehouses: (branchId?: string) =>
+      apiFetch<any[]>('/api/admin/v1/warehouses', branchId ? { params: { branch_id: branchId }, query: { branch_id: branchId } } : undefined),
+    createWarehouse: (body: { branch_id: string; name: string; location?: string; is_default?: boolean }) =>
+      apiFetch('/api/admin/v1/warehouses', { method: 'POST', body }),
+  }
+}
+
+export function useAuditApi() {
+  const { apiFetch } = useApi()
+
+  return {
+    listAuditLogs: (params?: {
+      action?: string
+      entity_type?: string
+      user_id?: string
+      skip?: number
+      limit?: number
+    }) => apiFetch<any[]>('/api/admin/v1/audit-logs', { params, query: params }),
+  }
+}
+
+export function useTelegramSystemApi() {
+  const { apiFetch } = useApi()
+
+  return {
+    listBots: () => apiFetch<any>('/api/v1/telegram/bots'),
+    createBot: (body: { code: string; name: string; token: string; status_code?: string }) =>
+      apiFetch<any>('/api/v1/telegram/bots', { method: 'POST', body }),
+    sendTestMessage: (body: { chat_id?: string; message: string }) =>
+      apiFetch<any>('/api/v1/telegram/send', { method: 'POST', body }),
+    listSystemLogs: (params?: { limit?: number; offset?: number }) =>
+      apiFetch<any>('/api/v1/logs/system', { params, query: params }),
+    listTelegramOutboundLogs: (params?: { limit?: number }) =>
+      apiFetch<any>('/api/v1/logs/telegram-outbound', { params, query: params }),
   }
 }

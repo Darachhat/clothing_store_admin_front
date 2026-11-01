@@ -156,7 +156,7 @@ const kpiCards = computed(() => [
 ])
 
 const quickActions = [
-  { label: 'Open POS', to: '/pos', icon: 'i-heroicons-computer-desktop', newTab: true },
+  { label: 'Sales & Invoices', to: '/sales', icon: 'i-heroicons-receipt-percent', newTab: false },
   { label: 'Add Product', to: '/products/new', icon: 'i-heroicons-plus', newTab: false },
   { label: 'New Purchase Order', to: '/purchases', icon: 'i-heroicons-document-text', newTab: false },
   { label: 'Generate Labels', to: '/labels/generate', icon: 'i-heroicons-qr-code', newTab: false },

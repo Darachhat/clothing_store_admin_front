@@ -1,30 +1,49 @@
 <template>
   <div class="space-y-4">
     <!-- Header -->
-    <div class="flex items-center justify-between">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
       <div>
         <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Sales History</h2>
-        <p class="text-sm text-gray-500 dark:text-gray-400">View transactions and receipt records</p>
+        <p class="text-sm text-gray-500 dark:text-gray-400">View POS transactions, online storefront orders, and receipt records</p>
       </div>
-      <AppButton
-        to="/pos"
-        label="Open POS"
-        variant="primary"
-        target="_blank"
-      />
+      <div class="flex items-center gap-2">
+        <select
+          v-model="channelFilter"
+          class="h-9 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 text-xs text-gray-700 dark:text-gray-200"
+        >
+          <option value="ALL">All Channels</option>
+          <option value="POS">POS In-Store</option>
+          <option value="ONLINE">Online Store</option>
+        </select>
+        <AppButton
+          to="/sales/returns"
+          label="Returns"
+          variant="secondary"
+        />
+      </div>
     </div>
 
     <!-- Sales Table -->
     <AppCard>
       <AppTable
         :columns="columns"
-        :rows="sales"
+        :rows="filteredSales"
         :loading="loading"
         :empty-state="{ icon: 'i-heroicons-receipt-percent', label: 'No sales found' }"
       >
         <template #cell-invoice_number="{ row }">
           <span class="font-mono font-medium text-primary-600 dark:text-primary-400">
             {{ row.invoice_number }}
+          </span>
+        </template>
+
+        <template #cell-channel="{ row }">
+          <span
+            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-gray-200 dark:border-gray-700 text-xs font-medium"
+            :class="isOnlineOrder(row) ? 'bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900' : 'bg-gray-50 text-gray-700 dark:bg-gray-800 dark:text-gray-300'"
+          >
+            <UIcon :name="isOnlineOrder(row) ? 'i-heroicons-globe-alt' : 'i-heroicons-building-storefront'" class="w-3.5 h-3.5" />
+            <span>{{ isOnlineOrder(row) ? 'Online Store' : 'POS' }}</span>
           </span>
         </template>
 
@@ -147,17 +166,33 @@ const toast = useAppToast()
 
 const loading = ref(false)
 const sales = ref<any[]>([])
+const channelFilter = ref<'ALL' | 'POS' | 'ONLINE'>('ALL')
 const isDetailOpen = ref(false)
 const selectedSale = ref<any>(null)
 
 const columns = [
   { key: 'invoice_number', label: 'Invoice #', sortable: true },
+  { key: 'channel', label: 'Channel' },
   { key: 'total', label: 'Total', sortable: true },
   { key: 'sale_status', label: 'Status' },
   { key: 'payments', label: 'Payment' },
   { key: 'created_at', label: 'Date/Time', sortable: true },
   { key: 'actions', label: 'Actions' },
 ]
+
+function isOnlineOrder(sale: any): boolean {
+  return String(sale?.notes || '').includes('[ONLINE STORE]')
+}
+
+const filteredSales = computed(() => {
+  if (channelFilter.value === 'ONLINE') {
+    return sales.value.filter(s => isOnlineOrder(s))
+  }
+  if (channelFilter.value === 'POS') {
+    return sales.value.filter(s => !isOnlineOrder(s))
+  }
+  return sales.value
+})
 
 function getStatusColor(status?: string) {
   switch (status) {

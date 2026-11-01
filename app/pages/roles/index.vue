@@ -110,6 +110,8 @@
 </template>
 
 <script setup lang="ts">
+definePageMeta({ middleware: ['auth'] })
+
 const userApi = useUserApi()
 const toast = useAppToast()
 

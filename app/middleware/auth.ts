@@ -16,6 +16,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   // Enforce ADMIN or MANAGER role
   const roles = authStore.user?.roles?.map((r: any) => r.name) ?? []
   if (!roles.some((r: string) => ['ADMIN', 'MANAGER'].includes(r))) {
+    await authStore.logout()
     return navigateTo('/login')
   }
 })
