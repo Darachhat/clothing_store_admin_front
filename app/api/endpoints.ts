@@ -85,6 +85,11 @@ export const API_ENDPOINTS = {
     detail: (id: string) => `/api/admin/v1/branches/${id}`,
     warehouses: '/api/admin/v1/warehouses',
   },
+  terminals: {
+    base: '/api/admin/v1/terminals',
+    detail: (id: string) => `/api/admin/v1/terminals/${id}`,
+    heartbeat: (id: string) => `/api/admin/v1/terminals/${id}/heartbeat`,
+  },
   labels: {
     generate: '/api/admin/v1/labels/generate',
   },

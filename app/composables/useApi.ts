@@ -24,6 +24,9 @@ import type {
   Promotion,
   AUDIT_LOG_RESPONSE_SCHEMA,
   DashboardData,
+  PosTerminal,
+  PosTerminalCreate,
+  PosTerminalUpdate,
 } from '~/types'
 
 export function useApi() {
@@ -376,5 +379,24 @@ export function useTelegramSystemApi() {
       apiFetch<any>(API_ENDPOINTS.system.systemLogs, { params, query: params }),
     listTelegramOutboundLogs: (params?: { limit?: number }) =>
       apiFetch<any>(API_ENDPOINTS.system.telegramLogs, { params, query: params }),
+  }
+}
+
+export function useTerminalApi() {
+  const { apiFetch } = useApi()
+
+  return {
+    listTerminals: (params?: { branch_id?: string; status_code?: string }) =>
+      apiFetch<PosTerminal[]>(API_ENDPOINTS.terminals.base, { params, query: params }),
+    getTerminal: (id: string) =>
+      apiFetch<PosTerminal>(API_ENDPOINTS.terminals.detail(id)),
+    createTerminal: (body: PosTerminalCreate) =>
+      apiFetch<PosTerminal>(API_ENDPOINTS.terminals.base, { method: 'POST', body }),
+    updateTerminal: (id: string, body: PosTerminalUpdate) =>
+      apiFetch<PosTerminal>(API_ENDPOINTS.terminals.detail(id), { method: 'PUT', body }),
+    deleteTerminal: (id: string) =>
+      apiFetch<{ message: string }>(API_ENDPOINTS.terminals.detail(id), { method: 'DELETE' }),
+    heartbeat: (id: string) =>
+      apiFetch<PosTerminal>(API_ENDPOINTS.terminals.heartbeat(id), { method: 'POST' }),
   }
 }

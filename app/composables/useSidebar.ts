@@ -22,7 +22,7 @@ export const APP_NAV_SECTIONS: NavSection[] = [
   {
     title: 'Store',
     items: [
-      { label: 'Point of Sale', to: '/pos', icon: 'i-heroicons-computer-desktop', railPrimary: true, shortcut: 'F1' },
+      { label: 'POS Registers', to: '/settings/terminals', icon: 'i-heroicons-computer-desktop', railPrimary: true },
       { label: 'Sales Orders', to: '/sales', icon: 'i-heroicons-receipt-percent' },
       { label: 'Returns', to: '/sales/returns', icon: 'i-heroicons-arrow-uturn-left' },
     ],
