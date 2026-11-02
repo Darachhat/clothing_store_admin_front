@@ -182,7 +182,7 @@
             <!-- Template B Preview: 80mm Receipt -->
             <div v-if="printMode === 'THERMAL'" class="kh-receipt-80mm">
               <div class="kh-receipt-80mm__header">
-                <div class="kh-receipt-80mm__title-kh">ហាងលក់សម្លៀកបំពាក់ ភ្នំពេញ</div>
+                <div class="kh-receipt-80mm__title-kh">គឹម វណ្ណាក់ ហាងលក់សម្លៀកបំពាក់ </div>
                 <div class="kh-receipt-80mm__title-en">CLOTHING STORE PHNOM PENH</div>
                 <div class="kh-receipt-80mm__meta-center">
                   សាខា: {{ formatKhmerBranchName((sale as any).branch_name) }}
@@ -290,7 +290,7 @@
                 <div class="kh-invoice-a4__brand-group">
                   <div class="kh-invoice-a4__logo">CS</div>
                   <div>
-                    <h1 class="kh-invoice-a4__store-kh">ហាងលក់សម្លៀកបំពាក់ ភ្នំពេញ</h1>
+                    <h1 class="kh-invoice-a4__store-kh">គឹម វណ្ណាក់ ហាងលក់សម្លៀកបំពាក់ </h1>
                     <div class="kh-invoice-a4__store-en">CLOTHING STORE PHNOM PENH</div>
                     <div class="kh-invoice-a4__branch">
                       សាខា: {{ formatKhmerBranchName((sale as any).branch_name) }} &bull; ភ្នំពេញ, កម្ពុជា &bull; ទូរស័ព្ទ: 012 345 678
@@ -420,7 +420,7 @@
         <!-- Template B: 80mm Thermal Receipt -->
         <div v-if="printMode === 'THERMAL'" class="kh-receipt-80mm">
           <div class="kh-receipt-80mm__header">
-            <div class="kh-receipt-80mm__title-kh">ហាងលក់សម្លៀកបំពាក់ ភ្នំពេញ</div>
+            <div class="kh-receipt-80mm__title-kh">គឹម វណ្ណាក់ ហាងលក់សម្លៀកបំពាក់ </div>
             <div class="kh-receipt-80mm__title-en">CLOTHING STORE PHNOM PENH</div>
             <div class="kh-receipt-80mm__meta-center">
               សាខា: {{ formatKhmerBranchName((sale as any).branch_name) }}
@@ -528,7 +528,7 @@
             <div class="kh-invoice-a4__brand-group">
               <div class="kh-invoice-a4__logo">CS</div>
               <div>
-                <h1 class="kh-invoice-a4__store-kh">ហាងលក់សម្លៀកបំពាក់ ភ្នំពេញ</h1>
+                <h1 class="kh-invoice-a4__store-kh">គឹម វណ្ណាក់ ហាងលក់សម្លៀកបំពាក់ </h1>
                 <div class="kh-invoice-a4__store-en">CLOTHING STORE PHNOM PENH</div>
                 <div class="kh-invoice-a4__branch">
                   សាខា: {{ formatKhmerBranchName((sale as any).branch_name) }} &bull; ភ្នំពេញ, កម្ពុជា &bull; ទូរស័ព្ទ: 012 345 678
