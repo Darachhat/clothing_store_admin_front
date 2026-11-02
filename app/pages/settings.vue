@@ -469,13 +469,13 @@ async function handleCreateWarehouse() {
 async function loadTelegramAndLogs() {
   try {
     const botsRes = await tgSystemApi.listBots()
-    telegramBots.value = botsRes?.data?.items || botsRes?.items || []
+    telegramBots.value = (botsRes as any)?.data?.items || (botsRes as any)?.items || []
   } catch {
     telegramBots.value = []
   }
   try {
     const logsRes = await tgSystemApi.listSystemLogs({ limit: 10 })
-    systemLogs.value = logsRes?.data?.items || logsRes?.items || []
+    systemLogs.value = (logsRes as any)?.data?.items || (logsRes as any)?.items || []
   } catch {
     systemLogs.value = []
   }

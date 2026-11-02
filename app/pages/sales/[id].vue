@@ -53,7 +53,7 @@
         <div class="detail-col">
           <!-- Line Items -->
           <AppCard title="Items (បរិយាយទំនិញ)">
-            <AppTable :columns="itemCols" :rows="sale.items" :loading="false" empty-text="No items.">
+            <AppTable :columns="itemCols" :rows="sale.items || []" :loading="false" empty-text="No items.">
               <template #cell-product="{ row }">
                 <div class="item-cell">
                   <span class="item-name kh-text">{{ row.product_name || 'ទំនិញ' }}</span>
@@ -71,7 +71,7 @@
 
           <!-- Payments -->
           <AppCard title="Payments (ការទូទាត់)">
-            <AppTable :columns="paymentCols" :rows="sale.payments" :loading="false" empty-text="No payments recorded.">
+            <AppTable :columns="paymentCols" :rows="sale.payments || []" :loading="false" empty-text="No payments recorded.">
               <template #cell-amount="{ value }"><strong>${{ Number(value).toFixed(2) }}</strong></template>
               <template #cell-payment_method="{ value }">
                 <AppBadge color="default">{{ formatKhmerPaymentMethod(value) }}</AppBadge>

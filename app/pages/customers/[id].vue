@@ -27,7 +27,7 @@
               <dt>Status</dt>
               <dd><AppBadge :color="customer.status === 'ACTIVE' ? 'green' : 'default'">{{ customer.status }}</AppBadge></dd>
             </div>
-            <div class="detail-row"><dt>Joined</dt><dd>{{ fmtDate(customer.created_at) }}</dd></div>
+            <div class="detail-row"><dt>Joined</dt><dd>{{ fmtDate(customer.created_at || '') }}</dd></div>
           </dl>
         </AppCard>
 
