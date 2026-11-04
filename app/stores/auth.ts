@@ -18,16 +18,9 @@ let cachedApiBase: string | null = null
 function getApiBase(): string {
   if (cachedApiBase) return cachedApiBase
   const config = useRuntimeConfig()
-  const base = String(import.meta.server ? config.apiBase : config.public?.apiBase || '').trim()
-  if (!base) {
-    throw new Error(
-      import.meta.server
-        ? 'Missing NUXT_API_BASE in runtimeConfig'
-        : 'Missing NUXT_PUBLIC_API_BASE in runtimeConfig.public'
-    )
-  }
-  cachedApiBase = base
-  return base
+  const base = String(import.meta.server ? config.apiBase : (config.public?.apiBase || '/api/proxy')).trim()
+  cachedApiBase = base || '/api/proxy'
+  return cachedApiBase
 }
 
 export const useAuthStore = defineStore('auth', {
@@ -149,7 +142,6 @@ export const useAuthStore = defineStore('auth', {
     },
 
     restoreSession() {
-      getApiBase()
       if (typeof window !== 'undefined') {
         const token = localStorage.getItem('admin_access_token') || localStorage.getItem('access_token')
         const refresh = localStorage.getItem('admin_refresh_token') || localStorage.getItem('refresh_token')

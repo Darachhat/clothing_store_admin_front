@@ -27,14 +27,7 @@ export function createAdminApiClient() {
   let sysAuth = ''
   if (!baseURL || import.meta.server) {
     const config = useRuntimeConfig()
-    baseURL = String(import.meta.server ? config.apiBase : config.public?.apiBase || '').trim()
-    if (!baseURL) {
-      throw new Error(
-        import.meta.server
-          ? 'Missing NUXT_API_BASE in runtimeConfig'
-          : 'Missing NUXT_PUBLIC_API_BASE in runtimeConfig.public'
-      )
-    }
+    baseURL = String(import.meta.server ? config.apiBase : (config.public?.apiBase || '/api/proxy')).trim() || '/api/proxy'
     if (!import.meta.server) {
       cachedClientBaseURL = baseURL
     } else {
