@@ -1,6 +1,4 @@
 // Centralized HTTP Client for Admin Frontend
-import type { FetchOptions } from 'ofetch'
-
 function isJwtExpired(token: string, bufferSeconds = 30): boolean {
   try {
     const parts = token.split('.')
@@ -22,13 +20,29 @@ function isJwtExpired(token: string, bufferSeconds = 30): boolean {
   return false
 }
 
-export function createAdminApiClient() {
-  const config = useRuntimeConfig()
-  const authStore = useAuthStore()
+let cachedClientBaseURL: string | null = null
 
-  const baseURL = (import.meta.server
-    ? (config.apiBase || 'http://backend:8000')
-    : config.public.apiBase) as string
+export function createAdminApiClient() {
+  let baseURL = cachedClientBaseURL || ''
+  let sysAuth = ''
+  if (!baseURL || import.meta.server) {
+    const config = useRuntimeConfig()
+    baseURL = String(import.meta.server ? config.apiBase : config.public?.apiBase || '').trim()
+    if (!baseURL) {
+      throw new Error(
+        import.meta.server
+          ? 'Missing NUXT_API_BASE in runtimeConfig'
+          : 'Missing NUXT_PUBLIC_API_BASE in runtimeConfig.public'
+      )
+    }
+    if (!import.meta.server) {
+      cachedClientBaseURL = baseURL
+    } else {
+      sysAuth = String(config.apiBaseAuth || '').trim()
+    }
+  }
+
+  const authStore = useAuthStore()
 
   const apiFetch = $fetch.create({
     baseURL,
@@ -62,10 +76,8 @@ export function createAdminApiClient() {
       if (token) {
         headers.set('Authorization', `Bearer ${token}`)
       }
-      // Attach system credential server-side only (credential stays private)
-      if (import.meta.server) {
-        const sysAuth = config.apiBaseAuth as string
-        if (sysAuth) headers.set('X-System-Authorization', sysAuth)
+      if (import.meta.server && sysAuth) {
+        headers.set('X-System-Authorization', sysAuth)
       }
       options.headers = headers
     },
@@ -73,8 +85,10 @@ export function createAdminApiClient() {
       if (response.status === 401) {
         const refreshed = await authStore.refreshSession()
         if (!refreshed) {
-          authStore.logout()
-          await navigateTo('/login')
+          await authStore.logout()
+          if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
+            window.location.replace('/login')
+          }
         }
       }
     },
