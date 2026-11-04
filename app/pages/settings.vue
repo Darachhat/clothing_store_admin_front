@@ -356,6 +356,7 @@
 definePageMeta({ middleware: ['auth'] })
 
 const toast = useAppToast()
+const { apiFetch } = useApi()
 const branchApi = useBranchApi()
 const tgSystemApi = useTelegramSystemApi()
 const primaryBranchId = ref<string | null>(null)
@@ -397,14 +398,35 @@ const savingTax = ref(false)
 const savingPos = ref(false)
 
 onMounted(async () => {
-  const saved = localStorage.getItem('store_settings')
-  if (saved) {
-    try {
-      const parsed = JSON.parse(saved)
-      if (parsed.storeInfo) storeInfo.value = { ...storeInfo.value, ...parsed.storeInfo }
-      if (parsed.taxSettings) taxSettings.value = { ...taxSettings.value, ...parsed.taxSettings }
-      if (parsed.posSettings) posSettings.value = { ...posSettings.value, ...parsed.posSettings }
-    } catch (e) { /* ignore */ }
+  // 1. Fetch server-side store & tax settings
+  try {
+    const s = await apiFetch<any>('/api/admin/v1/settings/store')
+    if (s) {
+      storeInfo.value = {
+        name: s.name || storeInfo.value.name,
+        currency: s.currency || storeInfo.value.currency,
+        phone: s.phone || '',
+        email: s.email || '',
+        address: s.address || '',
+        receipt_footer: s.receipt_footer || 'Thank you for your purchase!',
+      }
+      taxSettings.value = {
+        default_tax_rate: s.default_tax_rate ?? 5,
+        tax_inclusive: s.tax_inclusive ?? false,
+        rounding: s.rounding ?? 'round',
+      }
+    }
+  } catch {
+    // Fallback to localStorage cache
+    const saved = localStorage.getItem('store_settings')
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved)
+        if (parsed.storeInfo) storeInfo.value = { ...storeInfo.value, ...parsed.storeInfo }
+        if (parsed.taxSettings) taxSettings.value = { ...taxSettings.value, ...parsed.taxSettings }
+        if (parsed.posSettings) posSettings.value = { ...posSettings.value, ...parsed.posSettings }
+      } catch (e) { /* ignore */ }
+    }
   }
   await loadBranches()
   await loadTelegramAndLogs()
@@ -513,10 +535,26 @@ async function saveStoreInfo() {
         address: storeInfo.value.address || undefined,
       })
     }
+    // Persist server-side
+    await apiFetch('/api/admin/v1/settings/store', {
+      method: 'PUT',
+      body: {
+        name: storeInfo.value.name,
+        currency: storeInfo.value.currency,
+        phone: storeInfo.value.phone,
+        email: storeInfo.value.email,
+        address: storeInfo.value.address,
+        receipt_footer: storeInfo.value.receipt_footer,
+        default_tax_rate: taxSettings.value.default_tax_rate,
+        tax_inclusive: taxSettings.value.tax_inclusive,
+        rounding: taxSettings.value.rounding,
+      },
+    })
     persistSettings()
-    toast.add({ title: 'Saved', description: 'Store information updated', color: 'green' })
+    toast.add({ title: 'Saved', description: 'Store information persisted to database', color: 'green' })
   } catch (err: any) {
-    toast.add({ title: 'Error', description: err?.data?.detail || 'Failed to update store info', color: 'red' })
+    persistSettings()
+    toast.add({ title: 'Saved Locally', description: err?.data?.detail || 'Updated in local store', color: 'amber' })
   } finally {
     savingStore.value = false
   }
@@ -524,10 +562,29 @@ async function saveStoreInfo() {
 
 async function saveTaxSettings() {
   savingTax.value = true
-  await new Promise(r => setTimeout(r, 400))
-  persistSettings()
-  toast.add({ title: 'Saved', description: 'Tax settings updated', color: 'green' })
-  savingTax.value = false
+  try {
+    await apiFetch('/api/admin/v1/settings/store', {
+      method: 'PUT',
+      body: {
+        name: storeInfo.value.name,
+        currency: storeInfo.value.currency,
+        phone: storeInfo.value.phone,
+        email: storeInfo.value.email,
+        address: storeInfo.value.address,
+        receipt_footer: storeInfo.value.receipt_footer,
+        default_tax_rate: taxSettings.value.default_tax_rate,
+        tax_inclusive: taxSettings.value.tax_inclusive,
+        rounding: taxSettings.value.rounding,
+      },
+    })
+    persistSettings()
+    toast.add({ title: 'Saved', description: 'Tax settings persisted to database', color: 'green' })
+  } catch (err: any) {
+    persistSettings()
+    toast.add({ title: 'Saved Locally', description: err?.data?.detail || 'Updated in local store', color: 'amber' })
+  } finally {
+    savingTax.value = false
+  }
 }
 
 async function savePosSettings() {

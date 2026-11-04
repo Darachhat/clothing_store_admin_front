@@ -90,6 +90,17 @@ export const API_ENDPOINTS = {
     detail: (id: string) => `/api/admin/v1/terminals/${id}`,
     heartbeat: (id: string) => `/api/admin/v1/terminals/${id}/heartbeat`,
   },
+  shifts: {
+    base: '/api/admin/v1/shifts',
+    detail: (id: string) => `/api/admin/v1/shifts/${id}`,
+    summary: (id: string) => `/api/admin/v1/shifts/${id}/summary`,
+    close: (id: string) => `/api/admin/v1/shifts/${id}/close`,
+  },
+  settings: {
+    base: '/api/admin/v1/settings',
+    category: (cat: string) => `/api/admin/v1/settings/${cat}`,
+    store: '/api/admin/v1/settings/store',
+  },
   labels: {
     generate: '/api/admin/v1/labels/generate',
   },

@@ -400,3 +400,46 @@ export function useTerminalApi() {
       apiFetch<PosTerminal>(API_ENDPOINTS.terminals.heartbeat(id), { method: 'POST' }),
   }
 }
+
+export function useShiftApi() {
+  const { apiFetch } = useApi()
+
+  return {
+    listShifts: (params?: {
+      terminal_id?: string
+      cashier_id?: string
+      status_code?: string
+      skip?: number
+      limit?: number
+    }) => apiFetch<any[]>(API_ENDPOINTS.shifts.base, { params, query: params }),
+    getShift: (id: string) =>
+      apiFetch<any>(API_ENDPOINTS.shifts.detail(id)),
+    getShiftSummary: (id: string) =>
+      apiFetch<any>(API_ENDPOINTS.shifts.summary(id)),
+    closeShift: (
+      id: string,
+      body: { closing_cash_usd: number; closing_cash_khr?: number; notes?: string },
+    ) => apiFetch<any>(API_ENDPOINTS.shifts.close(id), { method: 'POST', body }),
+  }
+}
+
+export function useSystemSettingsApi() {
+  const { apiFetch } = useApi()
+
+  return {
+    getCategorySettings: (category: string) =>
+      apiFetch<Record<string, any>>(API_ENDPOINTS.settings.category(category)),
+    updateCategorySettings: (category: string, settings: Record<string, any>) =>
+      apiFetch<Record<string, any>>(API_ENDPOINTS.settings.category(category), {
+        method: 'PUT',
+        body: settings,
+      }),
+    getStoreSettings: () =>
+      apiFetch<Record<string, any>>(API_ENDPOINTS.settings.store),
+    updateStoreSettings: (settings: Record<string, any>) =>
+      apiFetch<Record<string, any>>(API_ENDPOINTS.settings.store, {
+        method: 'PUT',
+        body: settings,
+      }),
+  }
+}

@@ -23,6 +23,7 @@ export const APP_NAV_SECTIONS: NavSection[] = [
     title: 'Store',
     items: [
       { label: 'POS Registers', to: '/settings/terminals', icon: 'i-heroicons-computer-desktop', railPrimary: true },
+      { label: 'Receipt Templates', to: '/settings/receipts', icon: 'i-heroicons-printer' },
       { label: 'Sales Orders', to: '/sales', icon: 'i-heroicons-receipt-percent' },
       { label: 'Returns', to: '/sales/returns', icon: 'i-heroicons-arrow-uturn-left' },
     ],
@@ -31,6 +32,8 @@ export const APP_NAV_SECTIONS: NavSection[] = [
     title: 'Catalog',
     items: [
       { label: 'Products', to: '/products', icon: 'i-heroicons-tag', railPrimary: true },
+      { label: 'Categories', to: '/categories', icon: 'i-heroicons-rectangle-stack' },
+      { label: 'Brands', to: '/brands', icon: 'i-heroicons-sparkles' },
       { label: 'Print Labels', to: '/labels', icon: 'i-heroicons-qr-code' },
     ],
   },
