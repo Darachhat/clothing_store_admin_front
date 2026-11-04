@@ -93,8 +93,27 @@ export default defineNuxtConfig({
   } as any,
 
   routeRules: {
-    '/': { headers: { 'cache-control': 'public, max-age=0, must-revalidate' } },
-    '/admin/**': { headers: { 'cache-control': 'no-cache, no-store, must-revalidate' } },
+    '/': {
+      headers: {
+        'cache-control': 'no-cache, no-store, must-revalidate',
+        'cdn-cache-control': 'no-store',
+        'cloudflare-cdn-cache-control': 'no-store',
+      },
+    },
+    '/login': {
+      headers: {
+        'cache-control': 'no-cache, no-store, must-revalidate',
+        'cdn-cache-control': 'no-store',
+        'cloudflare-cdn-cache-control': 'no-store',
+      },
+    },
+    '/admin/**': {
+      headers: {
+        'cache-control': 'no-cache, no-store, must-revalidate',
+        'cdn-cache-control': 'no-store',
+        'cloudflare-cdn-cache-control': 'no-store',
+      },
+    },
     '/_nuxt/**': { headers: { 'cache-control': 'public, max-age=31536000, immutable' } },
     '/uploads/**': { proxy: `${process.env.NUXT_API_BASE || 'https://api.kimvannak.store'}/uploads/**` },
   } as any,
