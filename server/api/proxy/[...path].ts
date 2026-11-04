@@ -17,6 +17,7 @@ export default defineEventHandler(async (event) => {
       statusCode: 500,
       statusMessage: 'Server Configuration Error',
       message: 'NUXT_API_BASE is not configured in environment variables.',
+      data: { detail: 'NUXT_API_BASE is not configured in environment variables.' },
     })
   }
 
@@ -26,6 +27,7 @@ export default defineEventHandler(async (event) => {
       statusCode: 500,
       statusMessage: 'Server Configuration Error',
       message: 'NUXT_API_BASE_AUTH is not configured in environment variables.',
+      data: { detail: 'NUXT_API_BASE_AUTH is not configured in environment variables.' },
     })
   }
 
@@ -49,7 +51,7 @@ export default defineEventHandler(async (event) => {
   if (method !== 'GET' && method !== 'HEAD') {
     const rawBody = await readRawBody(event, false)
     if (rawBody !== undefined && rawBody !== null) {
-      body = rawBody as unknown as BodyInit
+      body = (typeof rawBody === 'string' ? rawBody : new Uint8Array(rawBody)) as BodyInit
     }
   }
 
@@ -82,10 +84,12 @@ export default defineEventHandler(async (event) => {
       headers: resHeaders,
     })
   } catch (err: any) {
+    const detail = `Backend proxy request failed: ${err?.message || 'Unknown error'}`
     throw createError({
       statusCode: 502,
       statusMessage: 'Bad Gateway',
-      message: `Backend proxy request failed: ${err?.message || 'Unknown error'}`,
+      message: detail,
+      data: { detail },
     })
   }
 })
