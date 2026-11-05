@@ -142,5 +142,12 @@ export const API_ENDPOINTS = {
     paymentGatewayTest: '/api/admin/v1/settings/payment-gateway/test',
     translations: '/api/admin/v1/translations',
   },
+  translations: {
+    base: '/api/admin/v1/translations',
+    items: '/api/admin/v1/translations/items',
+    itemDetail: (id: string) => `/api/admin/v1/translations/items/${id}`,
+    purgeCache: '/api/admin/v1/translations/cache/purge',
+    seed: '/api/admin/v1/translations/seed',
+  },
 } as const
 

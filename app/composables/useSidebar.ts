@@ -86,6 +86,7 @@ export const APP_NAV_SECTIONS: NavSection[] = [
       { label: 'Roles', to: '/roles', icon: 'i-heroicons-shield-check', permission: 'user.manage' },
       { label: 'Audit Logs', to: '/audit-logs', icon: 'i-heroicons-clipboard-document-check', permission: 'settings.manage' },
       { label: 'Integrations', to: '/settings/integrations', icon: 'i-heroicons-cpu-chip', permission: 'settings.manage' },
+      { label: 'Translations CMS', to: '/settings/translations', icon: 'i-heroicons-language', permission: 'settings.manage' },
       { label: 'Settings', to: '/settings', icon: 'i-heroicons-cog-6-tooth', permission: 'settings.manage' },
     ],
   },
@@ -118,6 +119,7 @@ const ROUTE_TRANSLATION_MAP: Record<string, string> = {
   '/roles': 'nav.roles',
   '/audit-logs': 'nav.audit_logs',
   '/settings/integrations': 'nav.integrations',
+  '/settings/translations': 'nav.translations',
   '/settings': 'nav.settings',
 }
 

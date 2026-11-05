@@ -49,3 +49,61 @@ export interface DashboardData {
   net_profit: number
   low_stock_count: number
 }
+
+// Translations CMS Types
+export interface TranslationItem {
+  id: string
+  ref_id?: string
+  schema_name: string
+  table_name: string
+  column_name: string
+  en?: string | null
+  km?: string | null
+  cn?: string | null
+  jp?: string | null
+  kr?: string | null
+  note?: string | null
+  status_code: 'ACTIVE' | 'INACTIVE' | string
+  created_datetime?: string
+  updated_datetime?: string
+}
+
+export interface TranslationItemCreate {
+  schema_name: string
+  table_name: string
+  column_name: string
+  en?: string
+  km?: string
+  cn?: string
+  jp?: string
+  kr?: string
+  note?: string
+  status_code?: string
+}
+
+export interface TranslationItemUpdate {
+  schema_name?: string
+  table_name?: string
+  column_name?: string
+  en?: string
+  km?: string
+  cn?: string
+  jp?: string
+  kr?: string
+  note?: string
+  status_code?: string
+}
+
+export interface TranslationPagination {
+  items: TranslationItem[]
+  total: number
+  page: number
+  page_size: number
+  total_pages: number
+}
+
+export interface TranslationPurgeResult {
+  status: string
+  message: string
+}
+

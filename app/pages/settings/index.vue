@@ -5,6 +5,50 @@
       <p class="text-sm text-gray-500 dark:text-gray-400">Manage store configuration, tax rates, and general preferences</p>
     </div>
 
+    <!-- Language & Regional Preferences -->
+    <AppCard>
+      <template #header>
+        <div class="flex items-center justify-between w-full">
+          <div class="flex items-center gap-2">
+            <UIcon name="i-heroicons-globe-alt" class="w-4 h-4 text-gray-500" />
+            <h3 class="font-semibold text-gray-900 dark:text-white text-sm">Language &amp; Regional Preferences</h3>
+          </div>
+          <NuxtLink
+            to="/settings/translations"
+            class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+          >
+            <UIcon name="i-heroicons-language" class="w-3.5 h-3.5" />
+            <span>Translations CMS</span>
+          </NuxtLink>
+        </div>
+      </template>
+      <div class="space-y-3">
+        <p class="text-xs text-gray-500 dark:text-gray-400">
+          Select the active display language for the administrative console. Content is synchronized with the database translation dictionary.
+        </p>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+          <button
+            v-for="loc in supportedLocales"
+            :key="loc.code"
+            type="button"
+            class="flex flex-col items-center justify-center p-3 rounded-lg border text-xs font-medium transition-all"
+            :class="currentLocale === loc.code
+              ? 'border-gray-900 dark:border-white bg-gray-900 text-white dark:bg-white dark:text-gray-900 shadow-xs'
+              : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'"
+            @click="setLocale(loc.code)"
+          >
+            <span class="text-xl mb-1">{{ loc.flag }}</span>
+            <span class="font-semibold">{{ loc.native }}</span>
+            <span class="text-[10px] opacity-75">({{ loc.name }})</span>
+            <span v-if="currentLocale === loc.code" class="mt-1.5 inline-flex items-center gap-1 text-[10px] font-medium">
+              <UIcon name="i-heroicons-check-circle" class="w-3.5 h-3.5" />
+              Active
+            </span>
+          </button>
+        </div>
+      </div>
+    </AppCard>
+
     <!-- Store Information -->
     <AppCard>
       <template #header>
@@ -487,6 +531,8 @@ const posSettings = ref({
   require_customer: false,
   print_receipt_on_complete: false,
 })
+
+const { currentLocale, supportedLocales, setLocale, t } = useAppTranslation()
 
 const savingStore = ref(false)
 const savingTax = ref(false)

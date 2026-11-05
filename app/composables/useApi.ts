@@ -27,6 +27,11 @@ import type {
   PosTerminal,
   PosTerminalCreate,
   PosTerminalUpdate,
+  TranslationItem,
+  TranslationItemCreate,
+  TranslationItemUpdate,
+  TranslationPagination,
+  TranslationPurgeResult,
 } from '~/types'
 
 export function useApi() {
@@ -483,3 +488,45 @@ export function useSystemSettingsApi() {
       }),
   }
 }
+
+export function useTranslationsApi() {
+  const { apiFetch } = useApi()
+
+  return {
+    getPublicTranslations: (params?: { lang?: string; schema_name?: string }) =>
+      apiFetch<Record<string, any>>(API_ENDPOINTS.translations.base, { params, query: params }),
+    listItems: (params?: {
+      q?: string
+      schema_name?: string
+      table_name?: string
+      status_code?: string
+      page?: number
+      page_size?: number
+    }) => apiFetch<TranslationPagination>(API_ENDPOINTS.translations.items, { params, query: params }),
+    getItem: (id: string) =>
+      apiFetch<TranslationItem>(API_ENDPOINTS.translations.itemDetail(id)),
+    createItem: (body: TranslationItemCreate) =>
+      apiFetch<TranslationItem>(API_ENDPOINTS.translations.items, {
+        method: 'POST',
+        body,
+      }),
+    updateItem: (id: string, body: TranslationItemUpdate) =>
+      apiFetch<TranslationItem>(API_ENDPOINTS.translations.itemDetail(id), {
+        method: 'PUT',
+        body,
+      }),
+    deleteItem: (id: string) =>
+      apiFetch(API_ENDPOINTS.translations.itemDetail(id), {
+        method: 'DELETE',
+      }),
+    purgeCache: () =>
+      apiFetch<TranslationPurgeResult>(API_ENDPOINTS.translations.purgeCache, {
+        method: 'POST',
+      }),
+    seedTranslations: () =>
+      apiFetch<{ status: string; seeded_count: number }>(API_ENDPOINTS.translations.seed, {
+        method: 'POST',
+      }),
+  }
+}
+
