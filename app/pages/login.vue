@@ -81,13 +81,14 @@
         <div class="telegram-login-section">
           <div ref="telegramWidgetContainer" class="telegram-widget-box" />
           <button
+            v-if="!widgetLoaded"
             type="button"
             class="login-tg-btn"
             :disabled="loading"
             @click="startTelegramRedirectLogin"
           >
             <UIcon name="i-heroicons-paper-airplane" class="w-4 h-4" />
-            <span>{{ loading ? 'Verifying Telegram...' : 'Continue with Telegram' }}</span>
+            <span>{{ loading ? 'Verifying Telegram...' : 'Log in with Telegram' }}</span>
           </button>
         </div>
 
@@ -115,6 +116,7 @@ const errorMsg = ref('')
 const telegramBotUsername = ref<string | null>('clothing_store_kvm_bot')
 const telegramBotId = ref<string>('8453886789')
 const telegramWidgetContainer = ref<HTMLElement | null>(null)
+const widgetLoaded = ref(false)
 
 const features = [
   'Full dashboard & analytics',
@@ -254,8 +256,14 @@ onMounted(async () => {
     script.setAttribute('data-telegram-login', cleanBotUsername)
     script.setAttribute('data-size', 'large')
     script.setAttribute('data-onauth', 'onTelegramAuthAdmin(user)')
-    script.setAttribute('data-auth-url', `${window.location.origin}${window.location.pathname}`)
     script.setAttribute('data-request-access', 'write')
+    script.onload = () => {
+      setTimeout(() => {
+        if (telegramWidgetContainer.value?.querySelector('iframe')) {
+          widgetLoaded.value = true
+        }
+      }, 300)
+    }
     telegramWidgetContainer.value.appendChild(script)
   }
 })
