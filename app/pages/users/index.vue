@@ -968,26 +968,42 @@ async function linkTelegramFromPayload(payload: Record<string, unknown>) {
 
 async function handleSelfLinkTelegram() {
   if (typeof window === 'undefined') return
-  const tgConfig = await authStore.getTelegramConfig()
-  const botId = tgConfig.bot_id || '8453886789'
-
-  const tgWindow = window as any
-  if (tgWindow.Telegram?.Login?.auth) {
-    tgWindow.Telegram.Login.auth(
-      { bot_id: botId, request_access: 'write' },
-      (data: Record<string, unknown> | false) => {
-        if (data) {
-          linkTelegramFromPayload(data)
-        }
+  selfSecurityLoading.value = true
+  try {
+    const ch = await authStore.createTelegramAppLinkChallenge()
+    window.location.href = ch.tg_app_url
+    toast.add({
+      title: 'Confirm in Telegram App',
+      description: "Tap 'Start' in @clothing_store_kvm_bot in your Telegram App to finish linking.",
+      color: 'green',
+    })
+    let attempts = 0
+    const timer = setInterval(async () => {
+      attempts++
+      if (attempts > 60) {
+        clearInterval(timer)
+        selfSecurityLoading.value = false
+        return
       }
-    )
-    return
+      try {
+        const res = await authStore.pollTelegramAppStatus(ch.challenge_token)
+        if (res.status === 'APPROVED') {
+          clearInterval(timer)
+          selfSecurityLoading.value = false
+          await authStore.fetchCurrentUser()
+          await fetchUsers()
+          toast.add({ title: 'Telegram Linked', description: 'Your Telegram account is now linked!', color: 'green' })
+        } else if (res.status === 'REJECTED' || res.status === 'EXPIRED') {
+          clearInterval(timer)
+          selfSecurityLoading.value = false
+          toast.add({ title: 'Error', description: res.message || 'Telegram link failed', color: 'red' })
+        }
+      } catch {}
+    }, 2000)
+  } catch (err: any) {
+    selfSecurityLoading.value = false
+    toast.add({ title: 'Error', description: err?.data?.detail || err.message || 'Could not start Telegram link', color: 'red' })
   }
-
-  const origin = window.location.origin
-  const returnTo = `${origin}${window.location.pathname}`
-  const oauthUrl = `https://oauth.telegram.org/auth?bot_id=${encodeURIComponent(botId)}&origin=${encodeURIComponent(origin)}&embed=0&request_access=write&return_to=${encodeURIComponent(returnTo)}`
-  window.location.href = oauthUrl
 }
 
 function extractTelegramRedirectOnUsersPage(): Record<string, unknown> | null {
