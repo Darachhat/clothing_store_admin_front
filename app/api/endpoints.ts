@@ -140,6 +140,7 @@ export const API_ENDPOINTS = {
     endpoints: '/api/admin/v1/systems/endpoints',
     paymentGateway: '/api/admin/v1/settings/payment-gateway',
     paymentGatewayTest: '/api/admin/v1/settings/payment-gateway/test',
+    translations: '/api/admin/v1/translations',
   },
 } as const
 

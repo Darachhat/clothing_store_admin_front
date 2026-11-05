@@ -1,3 +1,6 @@
+import { computed } from 'vue'
+import { useAppTranslation } from './useAppTranslation'
+
 export interface NavItem {
   label: string
   to: string
@@ -88,8 +91,62 @@ export const APP_NAV_SECTIONS: NavSection[] = [
   },
 ]
 
+const ROUTE_TRANSLATION_MAP: Record<string, string> = {
+  '/dashboard': 'nav.dashboard',
+  '/settings/terminals': 'nav.pos_registers',
+  '/settings/receipts': 'nav.receipt_templates',
+  '/sales': 'nav.sales_orders',
+  '/sales/returns': 'nav.returns',
+  '/products': 'nav.products',
+  '/categories': 'nav.categories',
+  '/brands': 'nav.brands',
+  '/labels': 'nav.print_labels',
+  '/inventory': 'nav.stock_levels',
+  '/inventory/movements': 'nav.movements',
+  '/inventory/transfers': 'nav.transfers',
+  '/inventory/adjustments': 'nav.adjustments',
+  '/purchases': 'nav.purchase_orders',
+  '/suppliers': 'nav.suppliers',
+  '/customers': 'nav.customers',
+  '/promotions': 'nav.promotions',
+  '/expenses': 'nav.expenses',
+  '/reports/sales': 'nav.sales_report',
+  '/reports/inventory': 'nav.inventory_report',
+  '/reports/purchases': 'nav.purchases_report',
+  '/reports/profit': 'nav.profit_loss',
+  '/users': 'nav.users',
+  '/roles': 'nav.roles',
+  '/audit-logs': 'nav.audit_logs',
+  '/settings/integrations': 'nav.integrations',
+  '/settings': 'nav.settings',
+}
+
+const SECTION_TRANSLATION_MAP: Record<string, string> = {
+  'Overview': 'nav_section.overview',
+  'Store': 'nav_section.store',
+  'Catalog': 'nav_section.catalog',
+  'Inventory': 'nav_section.inventory',
+  'Purchasing': 'nav_section.purchasing',
+  'Customers': 'nav_section.customers',
+  'Finance': 'nav_section.finance',
+  'Reports': 'nav_section.reports',
+  'Administration': 'nav_section.administration',
+}
+
 export function useSidebar() {
   const isCollapsed = useState<boolean>('app_sidebar_collapsed', () => false)
+  const { t } = useAppTranslation()
+
+  const localizedNavSections = computed(() => {
+    return APP_NAV_SECTIONS.map(section => ({
+      ...section,
+      title: t(SECTION_TRANSLATION_MAP[section.title] || section.title, section.title),
+      items: section.items.map(item => ({
+        ...item,
+        label: t(ROUTE_TRANSLATION_MAP[item.to] || item.label, item.label),
+      })),
+    }))
+  })
 
   function toggle() {
     isCollapsed.value = !isCollapsed.value
@@ -105,7 +162,8 @@ export function useSidebar() {
 
   return {
     isCollapsed,
-    navSections: APP_NAV_SECTIONS,
+    navSections: localizedNavSections,
+    rawNavSections: APP_NAV_SECTIONS,
     toggle,
     collapse,
     expand,

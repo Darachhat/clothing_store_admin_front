@@ -136,7 +136,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref, unref, watch } from 'vue'
 import { useRoute, useRouter, useRuntimeConfig } from '#app'
 import { useAuthStore } from '~/stores/auth'
 import { useSidebar, type NavItem } from '~/composables/useSidebar'
@@ -205,7 +205,8 @@ function toggleCollapse() {
 
 // Filter sections and items by current user's permissions
 const filteredNavSections = computed(() => {
-  return navSections
+  const sections = unref(navSections) || []
+  return sections
     .map((sec) => ({
       ...sec,
       items: sec.items.filter((item) => !item.permission || authStore.hasPermission(item.permission)),
@@ -250,7 +251,10 @@ const userInitials = computed(() => {
     .toUpperCase() || 'U'
 })
 
-const allNavPaths = computed(() => navSections.flatMap(s => s.items.map(i => i.to)))
+const allNavPaths = computed(() => {
+  const sections = unref(navSections) || []
+  return sections.flatMap((s: any) => s.items.map((i: any) => i.to))
+})
 
 function isActive(to: string): boolean {
   const path = route.path
@@ -258,7 +262,7 @@ function isActive(to: string): boolean {
   if (path === to) return true
   if (path.startsWith(to + '/')) {
     const hasMoreSpecificMatch = allNavPaths.value.some(
-      other => other !== to && other.length > to.length && (path === other || path.startsWith(other + '/'))
+      (other: string) => other !== to && other.length > to.length && (path === other || path.startsWith(other + '/'))
     )
     return !hasMoreSpecificMatch
   }
