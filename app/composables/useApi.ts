@@ -377,14 +377,48 @@ export function useTelegramSystemApi() {
 
   return {
     listBots: () => apiFetch<any>(API_ENDPOINTS.system.bots),
-    createBot: (body: { code: string; name: string; token: string; status_code?: string }) =>
+    getBot: (id: string) => apiFetch<any>(API_ENDPOINTS.system.botDetail(id)),
+    createBot: (body: { code: string; name: string; username?: string; token?: string; status_code?: string; description?: string }) =>
       apiFetch<any>(API_ENDPOINTS.system.bots, { method: 'POST', body }),
-    sendTestMessage: (body: { chat_id?: string; message: string }) =>
-      apiFetch<any>(API_ENDPOINTS.system.sendTelegram, { method: 'POST', body }),
+    updateBot: (id: string, body: { name?: string; username?: string; token?: string; status_code?: string; description?: string }) =>
+      apiFetch<any>(API_ENDPOINTS.system.botDetail(id), { method: 'PUT', body }),
+    deleteBot: (id: string) =>
+      apiFetch<any>(API_ENDPOINTS.system.botDetail(id), { method: 'DELETE' }),
+
+    listChats: (params?: { search?: string; telegram_bot_code?: string; status_code?: string; page?: number; size?: number }) =>
+      apiFetch<any>(API_ENDPOINTS.system.chats, { params, query: params }),
+    getChat: (id: string) => apiFetch<any>(API_ENDPOINTS.system.chatDetail(id)),
+    createChat: (body: { code: string; telegram_bot_code: string; name: string; chat_type?: string; chat_id: string; thread_id?: string; description?: string; status_code?: string }) =>
+      apiFetch<any>(API_ENDPOINTS.system.chats, { method: 'POST', body }),
+    updateChat: (id: string, body: { telegram_bot_code?: string; name?: string; chat_type?: string; chat_id?: string; thread_id?: string; description?: string; status_code?: string }) =>
+      apiFetch<any>(API_ENDPOINTS.system.chatDetail(id), { method: 'PUT', body }),
+    deleteChat: (id: string) =>
+      apiFetch<any>(API_ENDPOINTS.system.chatDetail(id), { method: 'DELETE' }),
+
+    sendTestMessage: (body: { chat_code?: string; text?: string; chat_id?: string; message?: string; parse_mode?: string }) => {
+      const payload = {
+        chat_code: body.chat_code || 'clothing_store_alerts',
+        text: body.text || body.message || '',
+        parse_mode: body.parse_mode || 'HTML',
+      }
+      return apiFetch<any>(API_ENDPOINTS.system.sendTelegram, { method: 'POST', body: payload })
+    },
     listSystemLogs: (params?: { limit?: number; offset?: number }) =>
       apiFetch<any>(API_ENDPOINTS.system.systemLogs, { params, query: params }),
     listTelegramOutboundLogs: (params?: { limit?: number }) =>
       apiFetch<any>(API_ENDPOINTS.system.telegramLogs, { params, query: params }),
+  }
+}
+
+export function usePaymentGatewayApi() {
+  const { apiFetch } = useApi()
+
+  return {
+    getConfig: () => apiFetch<any>(API_ENDPOINTS.system.paymentGateway),
+    updateConfig: (body: Record<string, any>) =>
+      apiFetch<any>(API_ENDPOINTS.system.paymentGateway, { method: 'PUT', body }),
+    testConnection: () =>
+      apiFetch<any>(API_ENDPOINTS.system.paymentGatewayTest, { method: 'POST' }),
   }
 }
 

@@ -239,6 +239,44 @@
       </form>
     </AppCard>
 
+    <!-- External Integrations & Payment Gateways Hub -->
+    <AppCard>
+      <template #header>
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <UIcon name="i-heroicons-cpu-chip" class="w-5 h-5 text-gray-500" />
+            <div>
+              <h3 class="font-semibold text-gray-900 dark:text-white text-sm">Payment Gateways &amp; Integrations Hub</h3>
+              <p class="text-xs text-gray-500">Database-backed credentials for ABA PayWay, Telegram notification bots, and outbound alert channels</p>
+            </div>
+          </div>
+          <AppButton size="sm" variant="primary" label="Open Integrations Hub" icon="i-heroicons-arrow-top-right-on-square" to="/settings/integrations" />
+        </div>
+      </template>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+        <div class="p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <UIcon name="i-heroicons-credit-card" class="w-5 h-5 text-gray-500" />
+            <div>
+              <p class="font-medium text-gray-900 dark:text-white">ABA PayWay Gateway</p>
+              <p class="text-[11px] text-gray-500">KHQR, merchant credentials, sandbox/live endpoints</p>
+            </div>
+          </div>
+          <AppButton size="sm" variant="ghost" label="Configure" to="/settings/integrations" />
+        </div>
+        <div class="p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <UIcon name="i-heroicons-paper-airplane" class="w-5 h-5 text-gray-500" />
+            <div>
+              <p class="font-medium text-gray-900 dark:text-white">Telegram Notifications</p>
+              <p class="text-[11px] text-gray-500">Bots, alert channels, topic threads, and test pings</p>
+            </div>
+          </div>
+          <AppButton size="sm" variant="ghost" label="Manage" to="/settings/integrations" />
+        </div>
+      </div>
+    </AppCard>
+
     <!-- Telegram Notification Integration -->
     <AppCard>
       <template #header>

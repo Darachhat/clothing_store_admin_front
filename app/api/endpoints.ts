@@ -129,12 +129,17 @@ export const API_ENDPOINTS = {
   },
   system: {
     bots: '/api/admin/v1/telegram/bots',
+    botDetail: (id: string) => `/api/admin/v1/telegram/bots/${id}`,
+    chats: '/api/admin/v1/telegram/chats',
+    chatDetail: (id: string) => `/api/admin/v1/telegram/chats/${id}`,
     sendTelegram: '/api/admin/v1/telegram/send',
     systemLogs: '/api/admin/v1/logs/system',
     telegramLogs: '/api/admin/v1/logs/telegram-outbound',
     clients: '/api/admin/v1/systems/clients',
     credentials: '/api/admin/v1/systems/credentials',
     endpoints: '/api/admin/v1/systems/endpoints',
+    paymentGateway: '/api/admin/v1/settings/payment-gateway',
+    paymentGatewayTest: '/api/admin/v1/settings/payment-gateway/test',
   },
 } as const
 

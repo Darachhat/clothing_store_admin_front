@@ -82,6 +82,7 @@ export const APP_NAV_SECTIONS: NavSection[] = [
       { label: 'Users', to: '/users', icon: 'i-heroicons-user-group', permission: 'user.manage' },
       { label: 'Roles', to: '/roles', icon: 'i-heroicons-shield-check', permission: 'user.manage' },
       { label: 'Audit Logs', to: '/audit-logs', icon: 'i-heroicons-clipboard-document-check', permission: 'settings.manage' },
+      { label: 'Integrations', to: '/settings/integrations', icon: 'i-heroicons-cpu-chip', permission: 'settings.manage' },
       { label: 'Settings', to: '/settings', icon: 'i-heroicons-cog-6-tooth', permission: 'settings.manage' },
     ],
   },
