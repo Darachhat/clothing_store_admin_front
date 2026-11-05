@@ -324,6 +324,10 @@ export function useUserApi() {
       apiFetch<User>(API_ENDPOINTS.users.detail(id), { method: 'PATCH', body: body as any }),
     deleteUser: (id: string) =>
       apiFetch(API_ENDPOINTS.users.detail(id), { method: 'DELETE' }),
+    activateUser: (id: string) =>
+      apiFetch<User>(API_ENDPOINTS.users.activate(id), { method: 'POST', body: {} as any }),
+    getUserRoleHistory: (id: string, limit = 50) =>
+      apiFetch<any[]>(API_ENDPOINTS.users.roleHistory(id), { params: { limit }, query: { limit } }),
     listRoles: () =>
       apiFetch<Role[]>(API_ENDPOINTS.users.roles),
     createRole: (body: unknown) =>
