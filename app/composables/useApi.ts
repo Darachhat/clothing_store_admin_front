@@ -349,6 +349,8 @@ export function useBranchApi() {
       apiFetch<Warehouse[]>(API_ENDPOINTS.branches.warehouses, branchId ? { params: { branch_id: branchId }, query: { branch_id: branchId } } : undefined),
     createWarehouse: (body: { branch_id: string; name: string; location?: string; is_default?: boolean }) =>
       apiFetch(API_ENDPOINTS.branches.warehouses, { method: 'POST', body }),
+    updateWarehouse: (id: string, body: Record<string, unknown>) =>
+      apiFetch(`/api/admin/v1/warehouses/${id}`, { method: 'PATCH', body }),
   }
 }
 

@@ -106,6 +106,56 @@
         </div>
       </div>
     </div>
+
+    <!-- Bottom row: Sales Trend Chart + Top Selling Products -->
+    <div style="display:grid; grid-template-columns:1.4fr 1fr; gap:16px;">
+      <!-- Sales Trend Chart -->
+      <div style="background:var(--surface-card); border:1px solid var(--border-subtle); border-radius:var(--radius-lg); padding:20px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+          <p style="font-size:12px; font-weight:700; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.06em;">Sales Revenue Trend</p>
+          <span style="font-size:11px; color:var(--text-tertiary); font-family:var(--font-mono);">{{ (dashboard as any)?.sales_chart?.length || 0 }} data points</span>
+        </div>
+        <div v-if="(dashboard as any)?.sales_chart?.length" style="display:flex; align-items:flex-end; gap:8px; height:140px; padding-top:12px;">
+          <div
+            v-for="pt in (dashboard as any).sales_chart"
+            :key="pt.label"
+            style="flex:1; min-width:24px; display:flex; flex-direction:column; align-items:center; gap:6px; height:100%; justify-content:flex-end;"
+          >
+            <span style="font-size:10px; font-family:var(--font-mono); color:var(--text-secondary);">${{ Number(pt.revenue).toFixed(0) }}</span>
+            <div
+              :style="`width:100%; max-width:36px; border-radius:4px 4px 0 0; background:var(--text-primary); height:${Math.max(8, Math.round((Number(pt.revenue) / maxChartRevenue) * 90))}px;`"
+            />
+            <span style="font-size:10px; font-family:var(--font-mono); color:var(--text-tertiary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:56px;">{{ pt.label.slice(-5) }}</span>
+          </div>
+        </div>
+        <div v-else style="height:140px; display:flex; align-items:center; justify-content:center; color:var(--text-tertiary); font-size:12px;">
+          No completed sales in selected period.
+        </div>
+      </div>
+
+      <!-- Top Selling Products -->
+      <div style="background:var(--surface-card); border:1px solid var(--border-subtle); border-radius:var(--radius-lg); padding:20px;">
+        <p style="font-size:12px; font-weight:700; color:var(--text-tertiary); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:16px;">Top-Selling Products</p>
+        <div v-if="(dashboard as any)?.top_products?.length" style="display:flex; flex-direction:column; gap:10px;">
+          <div
+            v-for="prod in (dashboard as any).top_products"
+            :key="prod.sku"
+            style="display:flex; align-items:center; justify-content:space-between; font-size:12px; padding-bottom:8px; border-bottom:1px solid var(--border-subtle);"
+          >
+            <div>
+              <div style="font-weight:600; color:var(--text-primary);">{{ prod.product_name }}</div>
+              <div style="font-size:11px; color:var(--text-tertiary); font-family:var(--font-mono);">{{ prod.sku }} · {{ prod.quantity_sold }} sold</div>
+            </div>
+            <div style="font-weight:600; font-family:var(--font-mono); color:var(--text-primary);">
+              ${{ fmt(prod.revenue) }}
+            </div>
+          </div>
+        </div>
+        <div v-else style="height:120px; display:flex; align-items:center; justify-content:center; color:var(--text-tertiary); font-size:12px;">
+          No product sales recorded in this period.
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -126,7 +176,14 @@ const periodOptions = [
   { label: 'Last 7 Days', value: '7days' },
   { label: 'Last 30 Days', value: '30days' },
   { label: 'This Month', value: 'this_month' },
+  { label: 'This Year', value: 'this_year' },
 ]
+
+const maxChartRevenue = computed(() => {
+  const pts = (dashboard.value as any)?.sales_chart || []
+  const m = Math.max(...pts.map((p: any) => Number(p.revenue) || 0), 1)
+  return m
+})
 
 const kpiCards = computed(() => [
   {

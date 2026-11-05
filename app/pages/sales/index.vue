@@ -23,6 +23,42 @@
       </div>
     </div>
 
+    <!-- Search & Date Filters -->
+    <AppCard>
+      <div class="flex flex-wrap items-end gap-3">
+        <div class="flex-1 min-w-48">
+          <label class="block text-xs font-medium text-gray-700 mb-1">Invoice #</label>
+          <input
+            v-model="searchQuery"
+            type="text"
+            placeholder="Search invoice number (e.g. INV-2026...)"
+            class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
+            @keyup.enter="fetchSales"
+          />
+        </div>
+        <div class="w-40">
+          <label class="block text-xs font-medium text-gray-700 mb-1">Status</label>
+          <select v-model="statusFilter" class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm" @change="fetchSales">
+            <option value="">All Statuses</option>
+            <option value="COMPLETED">Completed</option>
+            <option value="RETURNED">Returned</option>
+            <option value="CANCELLED">Cancelled</option>
+            <option value="DRAFT">Draft</option>
+          </select>
+        </div>
+        <div class="w-40">
+          <label class="block text-xs font-medium text-gray-700 mb-1">From Date</label>
+          <input v-model="fromDate" type="date" class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm" @change="fetchSales" />
+        </div>
+        <div class="w-40">
+          <label class="block text-xs font-medium text-gray-700 mb-1">To Date</label>
+          <input v-model="toDate" type="date" class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm" @change="fetchSales" />
+        </div>
+        <AppButton variant="secondary" label="Filter" icon="i-heroicons-magnifying-glass" @click="fetchSales" />
+        <AppButton variant="ghost" label="Reset" @click="resetFilters" />
+      </div>
+    </AppCard>
+
     <!-- Sales Table -->
     <AppCard>
       <AppTable
@@ -167,6 +203,10 @@ const toast = useAppToast()
 const loading = ref(false)
 const sales = ref<any[]>([])
 const channelFilter = ref<'ALL' | 'POS' | 'ONLINE'>('ALL')
+const searchQuery = ref('')
+const statusFilter = ref('')
+const fromDate = ref('')
+const toDate = ref('')
 const isDetailOpen = ref(false)
 const selectedSale = ref<any>(null)
 
@@ -211,7 +251,12 @@ function formatDate(dateStr: string) {
 async function fetchSales() {
   loading.value = true
   try {
-    const res: any = await saleApi.listSales({ limit: 50 })
+    const params: Record<string, any> = { limit: 100 }
+    if (searchQuery.value.trim()) params.q = searchQuery.value.trim()
+    if (statusFilter.value) params.status = statusFilter.value
+    if (fromDate.value) params.from_date = fromDate.value
+    if (toDate.value) params.to_date = toDate.value
+    const res: any = await saleApi.listSales(params)
     sales.value = res || []
   } catch (err: any) {
     toast.add({
@@ -222,6 +267,15 @@ async function fetchSales() {
   } finally {
     loading.value = false
   }
+}
+
+function resetFilters() {
+  searchQuery.value = ''
+  statusFilter.value = ''
+  fromDate.value = ''
+  toDate.value = ''
+  channelFilter.value = 'ALL'
+  fetchSales()
 }
 
 function openDetails(sale: any) {

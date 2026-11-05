@@ -90,9 +90,17 @@
                 <span
                   v-for="w in (b.warehouses || [])"
                   :key="w.id"
-                  class="px-2 py-0.5 rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs text-gray-700 dark:text-gray-200"
+                  class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs text-gray-700 dark:text-gray-200"
                 >
-                  {{ w.name }} <template v-if="w.is_default">(Default)</template>
+                  <span>{{ w.name }} <template v-if="w.is_default">(Default)</template></span>
+                  <button
+                    type="button"
+                    class="text-[10px] font-mono px-1 rounded border border-gray-200 hover:bg-gray-100"
+                    :title="w.status === 'INACTIVE' ? 'Activate warehouse' : 'Deactivate warehouse'"
+                    @click="toggleWarehouseStatus(w)"
+                  >
+                    {{ w.status || 'ACTIVE' }}
+                  </button>
                 </span>
                 <span v-if="!b.warehouses || b.warehouses.length === 0" class="text-xs text-gray-400">No warehouses</span>
               </div>
@@ -324,6 +332,55 @@
       </div>
     </AppCard>
 
+    <!-- Account Security / Change Password -->
+    <AppCard>
+      <template #header>
+        <div class="flex items-center gap-2">
+          <UIcon name="i-heroicons-lock-closed" class="w-4 h-4 text-gray-500" />
+          <h3 class="font-semibold text-gray-900 dark:text-white text-sm">Account Security — Change Password</h3>
+        </div>
+      </template>
+      <form class="space-y-4" @submit.prevent="handleChangePassword">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-xs font-medium text-gray-700 mb-1">Current Password *</label>
+            <input
+              v-model="passwordForm.current_password"
+              type="password"
+              required
+              placeholder="Current password"
+              class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-700 mb-1">New Password (min 8 chars) *</label>
+            <input
+              v-model="passwordForm.new_password"
+              type="password"
+              minlength="8"
+              required
+              placeholder="New password"
+              class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-700 mb-1">Confirm New Password *</label>
+            <input
+              v-model="passwordForm.confirm_password"
+              type="password"
+              minlength="8"
+              required
+              placeholder="Confirm new password"
+              class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
+            />
+          </div>
+        </div>
+        <div class="flex justify-end">
+          <AppButton type="submit" variant="primary" label="Update Password" :loading="changingPassword" />
+        </div>
+      </form>
+    </AppCard>
+
     <!-- Danger Zone -->
     <AppCard>
       <template #header>
@@ -396,6 +453,12 @@ const posSettings = ref({
 const savingStore = ref(false)
 const savingTax = ref(false)
 const savingPos = ref(false)
+const changingPassword = ref(false)
+const passwordForm = ref({
+  current_password: '',
+  new_password: '',
+  confirm_password: '',
+})
 
 onMounted(async () => {
   // 1. Fetch server-side store & tax settings
@@ -485,6 +548,44 @@ async function handleCreateWarehouse() {
     toast.add({ title: 'Error', description: err?.data?.detail || 'Failed to create warehouse', color: 'red' })
   } finally {
     creatingWarehouse.value = false
+  }
+}
+
+async function toggleWarehouseStatus(w: any) {
+  const nextStatus = w.status === 'INACTIVE' ? 'ACTIVE' : 'INACTIVE'
+  try {
+    await branchApi.updateWarehouse(w.id, { status: nextStatus })
+    await loadBranches()
+    toast.add({ title: 'Warehouse Updated', description: `${w.name} is now ${nextStatus}`, color: 'green' })
+  } catch (err: any) {
+    toast.add({ title: 'Error', description: err?.data?.detail || 'Failed to update warehouse', color: 'red' })
+  }
+}
+
+async function handleChangePassword() {
+  if (passwordForm.value.new_password.length < 8) {
+    toast.add({ title: 'Validation Error', description: 'New password must be at least 8 characters', color: 'amber' })
+    return
+  }
+  if (passwordForm.value.new_password !== passwordForm.value.confirm_password) {
+    toast.add({ title: 'Validation Error', description: 'New password and confirmation do not match', color: 'amber' })
+    return
+  }
+  changingPassword.value = true
+  try {
+    await apiFetch('/api/admin/v1/auth/change-password', {
+      method: 'POST',
+      body: {
+        current_password: passwordForm.value.current_password,
+        new_password: passwordForm.value.new_password,
+      },
+    })
+    passwordForm.value = { current_password: '', new_password: '', confirm_password: '' }
+    toast.add({ title: 'Password Updated', description: 'Your password has been changed successfully', color: 'green' })
+  } catch (err: any) {
+    toast.add({ title: 'Password Change Failed', description: err?.data?.detail || err.message, color: 'red' })
+  } finally {
+    changingPassword.value = false
   }
 }
 
