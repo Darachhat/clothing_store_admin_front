@@ -616,19 +616,13 @@
             </div>
             <div v-else class="space-y-2">
               <p class="text-xs text-gray-500">
-                Paste a signed Telegram Login verification payload to link your Telegram identity:
+                Connect your Telegram account to sign in with one click using Telegram Login:
               </p>
-              <textarea
-                v-model="selfTelegramJson"
-                rows="3"
-                placeholder='{"id": 123456789, "first_name": "Admin", "username": "admin_tg", "auth_date": 1730000000, "hash": "..."}'
-                class="w-full rounded-md border border-gray-200 bg-white dark:bg-gray-800 p-2 text-xs font-mono"
-              />
               <AppButton
                 size="sm"
                 variant="primary"
-                icon="i-heroicons-check-badge"
-                label="Verify & Link Telegram"
+                icon="i-heroicons-paper-airplane"
+                label="Connect with Telegram"
                 :loading="selfSecurityLoading"
                 @click="handleSelfLinkTelegram"
               />
@@ -959,20 +953,73 @@ async function handleConfirmPhoneOtp() {
   }
 }
 
-async function handleSelfLinkTelegram() {
-  if (!selfTelegramJson.value.trim()) return
+async function linkTelegramFromPayload(payload: Record<string, unknown>) {
   selfSecurityLoading.value = true
   try {
-    const payload = JSON.parse(selfTelegramJson.value)
     await authStore.linkTelegram(payload)
-    selfTelegramJson.value = ''
-    toast.add({ title: 'Telegram Linked', description: 'Telegram identity verified and linked', color: 'green' })
+    toast.add({ title: 'Telegram Linked', description: 'Telegram identity verified and linked to your account', color: 'green' })
     await fetchUsers()
   } catch (err: any) {
-    toast.add({ title: 'Error', description: err?.data?.detail || err.message || 'Invalid Telegram payload', color: 'red' })
+    toast.add({ title: 'Error', description: err?.data?.detail || err.message || 'Telegram linking failed', color: 'red' })
   } finally {
     selfSecurityLoading.value = false
   }
+}
+
+async function handleSelfLinkTelegram() {
+  if (typeof window === 'undefined') return
+  const tgConfig = await authStore.getTelegramConfig()
+  const botId = tgConfig.bot_id || '8453886789'
+
+  const tgWindow = window as any
+  if (tgWindow.Telegram?.Login?.auth) {
+    tgWindow.Telegram.Login.auth(
+      { bot_id: botId, request_access: 'write' },
+      (data: Record<string, unknown> | false) => {
+        if (data) {
+          linkTelegramFromPayload(data)
+        }
+      }
+    )
+    return
+  }
+
+  const origin = window.location.origin
+  const returnTo = `${origin}${window.location.pathname}`
+  const oauthUrl = `https://oauth.telegram.org/auth?bot_id=${encodeURIComponent(botId)}&origin=${encodeURIComponent(origin)}&embed=0&request_access=write&return_to=${encodeURIComponent(returnTo)}`
+  window.location.href = oauthUrl
+}
+
+function extractTelegramRedirectOnUsersPage(): Record<string, unknown> | null {
+  if (typeof window === 'undefined') return null
+  const hash = window.location.hash || ''
+  if (hash.includes('tgAuthResult=')) {
+    try {
+      const encoded = hash.split('tgAuthResult=')[1]?.split('&')[0] || ''
+      const normalizedBase64 = encoded.replace(/-/g, '+').replace(/_/g, '/')
+      const padded = normalizedBase64 + '='.repeat((4 - (normalizedBase64.length % 4)) % 4)
+      const parsed = JSON.parse(atob(padded))
+      if (parsed && parsed.id && parsed.hash) {
+        window.history.replaceState({}, document.title, window.location.pathname)
+        return parsed
+      }
+    } catch {}
+  }
+  const params = new URLSearchParams(window.location.search)
+  if (params.get('id') && params.get('hash') && params.get('auth_date')) {
+    const payload: Record<string, unknown> = {
+      id: Number(params.get('id')) || params.get('id'),
+      auth_date: Number(params.get('auth_date')),
+      hash: params.get('hash'),
+    }
+    if (params.get('first_name')) payload.first_name = params.get('first_name')
+    if (params.get('last_name')) payload.last_name = params.get('last_name')
+    if (params.get('username')) payload.username = params.get('username')
+    if (params.get('photo_url')) payload.photo_url = params.get('photo_url')
+    window.history.replaceState({}, document.title, window.location.pathname)
+    return payload
+  }
+  return null
 }
 
 async function handleSelfUnlinkTelegram() {
@@ -991,5 +1038,9 @@ async function handleSelfUnlinkTelegram() {
 onMounted(async () => {
   await fetchRoles()
   await fetchUsers()
+  const tgRedirectPayload = extractTelegramRedirectOnUsersPage()
+  if (tgRedirectPayload) {
+    await linkTelegramFromPayload(tgRedirectPayload)
+  }
 })
 </script>

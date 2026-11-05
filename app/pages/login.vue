@@ -84,37 +84,11 @@
             type="button"
             class="login-tg-btn"
             :disabled="loading"
-            @click="showTelegramModal = !showTelegramModal"
+            @click="startTelegramRedirectLogin"
           >
             <UIcon name="i-heroicons-paper-airplane" class="w-4 h-4" />
-            <span>Sign in with Telegram</span>
+            <span>{{ loading ? 'Verifying Telegram...' : 'Continue with Telegram' }}</span>
           </button>
-
-          <div v-if="showTelegramModal" class="telegram-payload-card">
-            <p class="telegram-payload-hint">
-              <span v-if="telegramBotUsername">
-                Authenticate via <strong>@{{ telegramBotUsername }}</strong> widget above, or paste a signed Telegram Login payload:
-              </span>
-              <span v-else>
-                Paste a signed Telegram Login verification payload (verified with HMAC-SHA256 on backend):
-              </span>
-            </p>
-            <textarea
-              v-model="telegramPayloadJson"
-              rows="3"
-              class="telegram-payload-textarea"
-              placeholder='{"id": 123456789, "first_name": "Admin", "username": "admin_tg", "auth_date": 1730000000, "hash": "..."}'
-            />
-            <button
-              type="button"
-              class="login-btn"
-              :disabled="loading || !telegramPayloadJson.trim()"
-              @click="handleTelegramJsonLogin"
-            >
-              <UIcon name="i-heroicons-check-badge" class="w-4 h-4" />
-              <span>Verify & Sign In</span>
-            </button>
-          </div>
         </div>
 
         <p class="login-footer-note">
@@ -138,10 +112,9 @@ const loading = ref(false)
 const showPassword = ref(false)
 const errorMsg = ref('')
 
-const telegramBotUsername = ref<string | null>(null)
+const telegramBotUsername = ref<string | null>('clothing_store_kvm_bot')
+const telegramBotId = ref<string>('8453886789')
 const telegramWidgetContainer = ref<HTMLElement | null>(null)
-const showTelegramModal = ref(false)
-const telegramPayloadJson = ref('')
 
 const features = [
   'Full dashboard & analytics',
@@ -192,14 +165,65 @@ async function handleTelegramAuthCallback(userPayload: Record<string, unknown>) 
   }
 }
 
-async function handleTelegramJsonLogin() {
-  errorMsg.value = ''
-  try {
-    const parsed = JSON.parse(telegramPayloadJson.value)
-    await handleTelegramAuthCallback(parsed)
-  } catch {
-    errorMsg.value = 'Invalid Telegram authentication JSON format.'
+function extractTelegramRedirectPayload(): Record<string, unknown> | null {
+  if (typeof window === 'undefined') return null
+
+  // 1. Check #tgAuthResult=<base64> returned by https://oauth.telegram.org/auth redirect
+  const hash = window.location.hash || ''
+  if (hash.includes('tgAuthResult=')) {
+    try {
+      const encoded = hash.split('tgAuthResult=')[1]?.split('&')[0] || ''
+      const normalizedBase64 = encoded.replace(/-/g, '+').replace(/_/g, '/')
+      const padded = normalizedBase64 + '='.repeat((4 - (normalizedBase64.length % 4)) % 4)
+      const parsed = JSON.parse(atob(padded))
+      if (parsed && parsed.id && parsed.hash) {
+        window.history.replaceState({}, document.title, window.location.pathname)
+        return parsed
+      }
+    } catch {}
   }
+
+  // 2. Check query string ?id=...&auth_date=...&hash=... returned by data-auth-url redirect
+  const params = new URLSearchParams(window.location.search)
+  if (params.get('id') && params.get('hash') && params.get('auth_date')) {
+    const payload: Record<string, unknown> = {
+      id: Number(params.get('id')) || params.get('id'),
+      auth_date: Number(params.get('auth_date')),
+      hash: params.get('hash'),
+    }
+    if (params.get('first_name')) payload.first_name = params.get('first_name')
+    if (params.get('last_name')) payload.last_name = params.get('last_name')
+    if (params.get('username')) payload.username = params.get('username')
+    if (params.get('photo_url')) payload.photo_url = params.get('photo_url')
+    window.history.replaceState({}, document.title, window.location.pathname)
+    return payload
+  }
+
+  return null
+}
+
+function startTelegramRedirectLogin() {
+  if (typeof window === 'undefined') return
+  errorMsg.value = ''
+
+  const tgWindow = window as any
+  if (tgWindow.Telegram?.Login?.auth && telegramBotId.value) {
+    tgWindow.Telegram.Login.auth(
+      { bot_id: telegramBotId.value, request_access: 'write' },
+      (data: Record<string, unknown> | false) => {
+        if (data) {
+          handleTelegramAuthCallback(data)
+        }
+      }
+    )
+    return
+  }
+
+  // Direct browser redirect to Telegram OAuth
+  const origin = window.location.origin
+  const returnTo = `${origin}${window.location.pathname}`
+  const oauthUrl = `https://oauth.telegram.org/auth?bot_id=${encodeURIComponent(telegramBotId.value)}&origin=${encodeURIComponent(origin)}&embed=0&request_access=write&return_to=${encodeURIComponent(returnTo)}`
+  window.location.href = oauthUrl
 }
 
 onMounted(async () => {
@@ -207,16 +231,30 @@ onMounted(async () => {
     ;(window as any).onTelegramAuthAdmin = (user: Record<string, unknown>) => {
       handleTelegramAuthCallback(user)
     }
+
+    // Automatically verify if returning from Telegram OAuth redirect
+    const redirectedPayload = extractTelegramRedirectPayload()
+    if (redirectedPayload) {
+      await handleTelegramAuthCallback(redirectedPayload)
+      return
+    }
   }
+
   const tgConfig = await authStore.getTelegramConfig()
-  telegramBotUsername.value = tgConfig.bot_username || null
-  if (tgConfig.enabled && tgConfig.bot_username && telegramWidgetContainer.value) {
+  const cleanBotUsername = (tgConfig.bot_username || 'clothing_store_kvm_bot').replace(/^@/, '')
+  telegramBotUsername.value = cleanBotUsername
+  if (tgConfig.bot_id) {
+    telegramBotId.value = tgConfig.bot_id
+  }
+
+  if (telegramWidgetContainer.value && cleanBotUsername) {
     const script = document.createElement('script')
     script.async = true
     script.src = 'https://telegram.org/js/telegram-widget.js?22'
-    script.setAttribute('data-telegram-login', tgConfig.bot_username)
+    script.setAttribute('data-telegram-login', cleanBotUsername)
     script.setAttribute('data-size', 'large')
     script.setAttribute('data-onauth', 'onTelegramAuthAdmin(user)')
+    script.setAttribute('data-auth-url', `${window.location.origin}${window.location.pathname}`)
     script.setAttribute('data-request-access', 'write')
     telegramWidgetContainer.value.appendChild(script)
   }
