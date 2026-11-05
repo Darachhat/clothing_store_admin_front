@@ -34,7 +34,7 @@ const { navSections } = useSidebar()
 
 const pageTitle = computed(() => {
   const path = route.path
-  const allItems = navSections.flatMap(s => s.items)
+  const allItems = [...navSections.flatMap(s => s.items)].sort((a, b) => b.to.length - a.to.length)
   const found = allItems.find(i => i.to === path || (path.startsWith(i.to + '/') && i.to !== '/'))
   return found?.label || 'Clothing Store'
 })

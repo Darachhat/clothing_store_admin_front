@@ -1,8 +1,10 @@
 <!-- AppCard — flat white surface, 8px grid, 1px border -->
 <template>
   <div class="a-card" :class="[noPad && 'a-card--no-pad', flush && 'a-card--flush']">
-    <div v-if="$slots.header" class="a-card__header">
-      <slot name="header" />
+    <div v-if="$slots.header || title" class="a-card__header">
+      <slot name="header">
+        <span>{{ title }}</span>
+      </slot>
     </div>
     <div class="a-card__body">
       <slot />
@@ -15,6 +17,7 @@
 
 <script setup lang="ts">
 defineProps<{
+  title?: string
   noPad?: boolean
   flush?: boolean  // no border-radius, edge-to-edge
 }>()

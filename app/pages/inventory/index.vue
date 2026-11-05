@@ -100,7 +100,7 @@
         <template #header>
           <div class="flex items-center justify-between">
             <h3 class="text-base font-semibold">Stock Adjustment</h3>
-            <AppButton variant="ghost" @click="isAdjustOpen = false" />
+            <AppButton variant="ghost" icon="i-heroicons-x-mark" @click="isAdjustOpen = false" />
           </div>
         </template>
 

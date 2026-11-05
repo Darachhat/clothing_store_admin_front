@@ -239,9 +239,19 @@ const userInitials = computed(() => {
     .toUpperCase() || 'U'
 })
 
+const allNavPaths = computed(() => navSections.flatMap(s => s.items.map(i => i.to)))
+
 function isActive(to: string): boolean {
-  if (to === '/dashboard') return route.path === '/dashboard' || route.path === '/'
-  return route.path === to || route.path.startsWith(to + '/')
+  const path = route.path
+  if (to === '/dashboard') return path === '/dashboard' || path === '/'
+  if (path === to) return true
+  if (path.startsWith(to + '/')) {
+    const hasMoreSpecificMatch = allNavPaths.value.some(
+      other => other !== to && other.length > to.length && (path === other || path.startsWith(other + '/'))
+    )
+    return !hasMoreSpecificMatch
+  }
+  return false
 }
 
 async function onLogout() {

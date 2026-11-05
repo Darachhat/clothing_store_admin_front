@@ -13,7 +13,7 @@
         <button
           type="button"
           class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-          :class="{ '!border-emerald-500 !text-emerald-700 dark:!text-emerald-400': autoRefreshEnabled }"
+          :class="{ '!text-emerald-700 dark:!text-emerald-400': autoRefreshEnabled }"
           @click="toggleAutoRefresh"
         >
           <span

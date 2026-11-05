@@ -209,12 +209,12 @@ function getDisplayFilename(url: string) {
 }
 
 .app-file-upload__dropzone.is-dragging {
-  border-color: #2563eb;
-  background: rgba(37, 99, 235, 0.04);
+  border-color: var(--border-strong);
+  background: var(--surface-hover);
 }
 
 .app-file-upload__dropzone.is-error {
-  border-color: #ef4444;
+  border-color: var(--border-strong);
 }
 
 .app-file-upload__input {
@@ -374,7 +374,7 @@ function getDisplayFilename(url: string) {
 
 .app-file-upload__remove-btn:hover {
   background: rgba(239, 68, 68, 0.08);
-  border-color: #ef4444;
+  border-color: var(--border-strong);
   color: #ef4444;
 }
 

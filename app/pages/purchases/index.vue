@@ -92,7 +92,7 @@
         <template #header>
           <div class="flex items-center justify-between">
             <h3 class="text-base font-semibold">Create Purchase Order</h3>
-            <AppButton variant="ghost" size="sm" @click="showCreateModal = false" />
+            <AppButton variant="ghost" size="sm" icon="i-heroicons-x-mark" @click="showCreateModal = false" />
           </div>
         </template>
 
@@ -161,6 +161,7 @@
                 <AppButton
                   variant="danger"
                   size="sm"
+                  icon="i-heroicons-trash"
                   @click="removeItemRow(idx)"
                 />
               </div>
@@ -191,7 +192,7 @@
         <template #header>
           <div class="flex items-center justify-between">
             <h3 class="text-base font-semibold">Receive Goods: {{ selectedOrder?.po_number }}</h3>
-            <AppButton variant="ghost" size="sm" @click="showReceiveModal = false" />
+            <AppButton variant="ghost" size="sm" icon="i-heroicons-x-mark" @click="showReceiveModal = false" />
           </div>
         </template>
 
@@ -251,7 +252,7 @@
         <template #header>
           <div class="flex items-center justify-between">
             <h3 class="text-base font-semibold">PO Details: {{ selectedOrder?.po_number }}</h3>
-            <AppButton variant="ghost" size="sm" @click="showDetailsModal = false" />
+            <AppButton variant="ghost" size="sm" icon="i-heroicons-x-mark" @click="showDetailsModal = false" />
           </div>
         </template>
 

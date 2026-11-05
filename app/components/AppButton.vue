@@ -21,8 +21,18 @@
       name="i-heroicons-arrow-path"
       class="a-btn__spinner w-3.5 h-3.5"
     />
+    <UIcon
+      v-else-if="icon"
+      :name="icon"
+      class="w-3.5 h-3.5 shrink-0"
+    />
     <slot v-if="!loading" name="icon-left" />
     <slot>{{ label }}</slot>
+    <UIcon
+      v-if="trailingIcon"
+      :name="trailingIcon"
+      class="w-3.5 h-3.5 shrink-0"
+    />
     <slot name="icon-right" />
   </component>
 </template>
@@ -31,15 +41,17 @@
 import { resolveComponent } from 'vue'
 
 withDefaults(defineProps<{
-  label?:    string
-  to?:       string
-  external?: boolean
-  variant?:  'default' | 'primary' | 'secondary' | 'danger' | 'ghost'
-  size?:     'sm' | 'md' | 'lg'
-  block?:    boolean
-  loading?:  boolean
-  disabled?: boolean
-  type?:     'button' | 'submit' | 'reset'
+  label?:        string
+  icon?:         string
+  trailingIcon?: string
+  to?:           string
+  external?:     boolean
+  variant?:      'default' | 'primary' | 'secondary' | 'danger' | 'ghost'
+  size?:         'sm' | 'md' | 'lg'
+  block?:        boolean
+  loading?:      boolean
+  disabled?:     boolean
+  type?:         'button' | 'submit' | 'reset'
 }>(), {
   variant: 'default',
   size:    'md',
@@ -69,12 +81,14 @@ withDefaults(defineProps<{
 .a-btn--lg  { height: 40px; padding: 0 18px; font-size: 14px; }
 
 /* Variants */
-.a-btn--default {
+.a-btn--default,
+.a-btn--secondary {
   background: var(--surface-card);
   color: var(--text-primary);
   border-color: var(--border-default);
 }
-.a-btn--default:hover:not(:disabled) {
+.a-btn--default:hover:not(:disabled),
+.a-btn--secondary:hover:not(:disabled) {
   background: var(--surface-hover);
   border-color: var(--border-strong);
 }
@@ -93,7 +107,7 @@ withDefaults(defineProps<{
 }
 .a-btn--danger:hover:not(:disabled) {
   background: var(--status-red-bg);
-  border-color: var(--status-red);
+  border-color: var(--border-strong);
 }
 
 .a-btn--ghost {

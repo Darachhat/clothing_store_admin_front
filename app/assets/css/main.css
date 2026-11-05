@@ -1507,15 +1507,18 @@ input[type="tel"],
 input[type="password"],
 input[type="url"],
 input[type="search"],
+input[type="date"],
+input[type="datetime-local"],
+select,
 textarea {
-  border: 1px solid var(--border-default);
+  border: 1px solid var(--border-default) !important;
   border-radius: var(--radius-md);
   padding: 0 10px;
   height: 36px;
   font-family: var(--font-body);
   font-size: 13px;
-  color: var(--text-primary);
-  background: var(--surface-card);
+  color: var(--text-primary) !important;
+  background-color: var(--surface-card) !important;
   outline: none;
   transition: border-color 0.1s;
   width: 100%;
@@ -1535,8 +1538,11 @@ input[type="tel"]:focus,
 input[type="password"]:focus,
 input[type="url"]:focus,
 input[type="search"]:focus,
+input[type="date"]:focus,
+input[type="datetime-local"]:focus,
+select:focus,
 textarea:focus {
-  border-color: var(--border-strong);
+  border-color: var(--border-strong) !important;
 }
 
 input::placeholder,

@@ -62,12 +62,16 @@
             <AppButton
               size="sm"
               variant="ghost"
+              icon="i-heroicons-pencil-square"
+              label="Edit"
               @click="openEditModal(row)"
             />
             <AppButton
               v-if="row.status === 'ACTIVE'"
               size="sm"
               variant="danger"
+              icon="i-heroicons-no-symbol"
+              label="Deactivate"
               @click="deactivateUser(row)"
             />
           </div>
@@ -81,7 +85,7 @@
         <template #header>
           <div class="flex items-center justify-between">
             <h3 class="text-base font-semibold">Create Staff Account</h3>
-            <AppButton variant="ghost" size="sm" @click="showCreateModal = false" />
+            <AppButton variant="ghost" size="sm" icon="i-heroicons-x-mark" @click="showCreateModal = false" />
           </div>
         </template>
 
@@ -159,7 +163,7 @@
         <template #header>
           <div class="flex items-center justify-between">
             <h3 class="text-base font-semibold">Edit User: {{ selectedUser?.username }}</h3>
-            <AppButton variant="ghost" size="sm" @click="showEditModal = false" />
+            <AppButton variant="ghost" size="sm" icon="i-heroicons-x-mark" @click="showEditModal = false" />
           </div>
         </template>
 
@@ -182,6 +186,24 @@
               required
               class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
             />
+          </div>
+
+          <div>
+            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Assigned Roles</label>
+            <div class="grid grid-cols-2 gap-2 p-2.5 border border-gray-200 rounded-md">
+              <label
+                v-for="r in roles"
+                :key="r.id"
+                class="flex items-center gap-2 text-xs text-gray-700 cursor-pointer"
+              >
+                <input
+                  v-model="editForm.role_ids"
+                  type="checkbox"
+                  :value="r.id"
+                />
+                <span>{{ r.name }}</span>
+              </label>
+            </div>
           </div>
 
           <div>
@@ -241,6 +263,7 @@ const editForm = ref({
   full_name: '',
   email: '',
   status: 'ACTIVE',
+  role_ids: [] as string[],
 })
 
 function getRoleColor(role: string) {
@@ -270,6 +293,7 @@ function openEditModal(user: any) {
     full_name: user.full_name,
     email: user.email,
     status: user.status,
+    role_ids: (user.roles || []).map((r: any) => r.id),
   }
   showEditModal.value = true
 }

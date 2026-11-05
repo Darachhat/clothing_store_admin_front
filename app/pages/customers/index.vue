@@ -100,7 +100,7 @@
         <template #header>
           <div class="flex items-center justify-between">
             <h3 class="text-base font-semibold">Add New Customer</h3>
-            <AppButton variant="ghost" @click="isCreateModalOpen = false" />
+            <AppButton variant="ghost" icon="i-heroicons-x-mark" @click="isCreateModalOpen = false" />
           </div>
         </template>
 
@@ -141,7 +141,7 @@
         <template #header>
           <div class="flex items-center justify-between">
             <h3 class="text-base font-semibold">Adjust Points: {{ selectedCustomer?.name }}</h3>
-            <AppButton variant="ghost" @click="isPointsModalOpen = false" />
+            <AppButton variant="ghost" icon="i-heroicons-x-mark" @click="isPointsModalOpen = false" />
           </div>
         </template>
 

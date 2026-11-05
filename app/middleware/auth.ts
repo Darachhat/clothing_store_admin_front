@@ -40,7 +40,7 @@ export default defineNuxtRouteMiddleware(async () => {
 
   if (authStore.user) {
     const cachedRoles = authStore.user?.roles?.map((r: any) => r.name) ?? []
-    if (cachedRoles.some((r: string) => ['ADMIN', 'MANAGER'].includes(r))) {
+    if (cachedRoles.some((r: string) => ['ADMIN', 'MANAGER', 'WAREHOUSE'].includes(r))) {
       authStore.fetchCurrentUser().catch(() => {})
       return
     }
@@ -54,7 +54,7 @@ export default defineNuxtRouteMiddleware(async () => {
   }
 
   const roles = authStore.user?.roles?.map((r: any) => r.name) ?? []
-  if (!roles.some((r: string) => ['ADMIN', 'MANAGER'].includes(r))) {
+  if (!roles.some((r: string) => ['ADMIN', 'MANAGER', 'WAREHOUSE'].includes(r))) {
     await authStore.logout()
     return navigateTo('/login', { replace: true })
   }

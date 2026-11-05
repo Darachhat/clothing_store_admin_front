@@ -8,8 +8,8 @@
 
     <!-- Empty state -->
     <div v-else-if="!rows || rows.length === 0" class="a-table-empty">
-      <UIcon name="i-heroicons-inbox" class="w-8 h-8" style="color:var(--border-strong);" />
-      <span class="a-table-empty__text">{{ emptyText || 'No records found.' }}</span>
+      <UIcon :name="emptyState?.icon || 'i-heroicons-inbox'" class="w-8 h-8" style="color:var(--border-strong);" />
+      <span class="a-table-empty__text">{{ emptyText || emptyState?.label || 'No records found.' }}</span>
     </div>
 
     <!-- Table -->
@@ -60,6 +60,7 @@ withDefaults(defineProps<{
   rows:    any[]
   loading?: boolean
   emptyText?: string
+  emptyState?: { icon?: string; label?: string }
   onRowClick?: (row: any) => void
 }>(), {
   loading: false,

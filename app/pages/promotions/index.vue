@@ -62,22 +62,33 @@
         </template>
 
         <template #cell-actions="{ row }">
-          <AppButton
-            variant="danger"
-            size="sm"
-            @click="deletePromotion(row)"
-          />
+          <div class="flex items-center gap-1">
+            <AppButton
+              variant="ghost"
+              size="sm"
+              icon="i-heroicons-pencil-square"
+              label="Edit"
+              @click="openEditModal(row)"
+            />
+            <AppButton
+              variant="danger"
+              size="sm"
+              icon="i-heroicons-trash"
+              label="Delete"
+              @click="deletePromotion(row)"
+            />
+          </div>
         </template>
       </AppTable>
     </AppCard>
 
-    <!-- Create Promotion Modal -->
+    <!-- Create / Edit Promotion Modal -->
     <AppModal v-model="showCreateModal">
       <AppCard>
         <template #header>
           <div class="flex items-center justify-between">
-            <h3 class="text-base font-semibold">Create Promotion</h3>
-            <AppButton variant="ghost" size="sm" @click="showCreateModal = false" />
+            <h3 class="text-base font-semibold">{{ editingPromotionId ? 'Edit Promotion' : 'Create Promotion' }}</h3>
+            <AppButton variant="ghost" size="sm" icon="i-heroicons-x-mark" @click="showCreateModal = false" />
           </div>
         </template>
 
@@ -193,6 +204,7 @@ const columns = [
 ]
 
 const showCreateModal = ref(false)
+const editingPromotionId = ref<string | null>(null)
 const createForm = ref({
   name: '',
   type: 'PERCENTAGE',
@@ -204,6 +216,7 @@ const createForm = ref({
 })
 
 function openCreateModal() {
+  editingPromotionId.value = null
   createForm.value = {
     name: '',
     type: 'PERCENTAGE',
@@ -212,6 +225,20 @@ function openCreateModal() {
     min_purchase_amount: 0,
     start_datetime: new Date().toISOString().split('T')[0] ?? '',
     end_datetime: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0] ?? '',
+  }
+  showCreateModal.value = true
+}
+
+function openEditModal(promo: any) {
+  editingPromotionId.value = promo.id
+  createForm.value = {
+    name: promo.name || '',
+    type: promo.type || 'PERCENTAGE',
+    value: Number(promo.value || 10),
+    code: promo.code || '',
+    min_purchase_amount: Number(promo.min_purchase_amount || 0),
+    start_datetime: promo.start_datetime ? new Date(promo.start_datetime).toISOString().split('T')[0] ?? '' : '',
+    end_datetime: promo.end_datetime ? new Date(promo.end_datetime).toISOString().split('T')[0] ?? '' : '',
   }
   showCreateModal.value = true
 }
@@ -231,7 +258,7 @@ async function fetchPromotions() {
 async function handleCreatePromotion() {
   saving.value = true
   try {
-    await promotionApi.createPromotion({
+    const payload = {
       name: createForm.value.name,
       type: createForm.value.type,
       value: createForm.value.value,
@@ -240,8 +267,14 @@ async function handleCreatePromotion() {
       start_datetime: new Date(createForm.value.start_datetime).toISOString(),
       end_datetime: new Date(createForm.value.end_datetime).toISOString(),
       status: 'ACTIVE',
-    })
-    toast.add({ title: 'Success', description: 'Promotion created successfully', color: 'green' })
+    }
+    if (editingPromotionId.value) {
+      await promotionApi.updatePromotion(editingPromotionId.value, payload)
+      toast.add({ title: 'Success', description: 'Promotion updated successfully', color: 'green' })
+    } else {
+      await promotionApi.createPromotion(payload)
+      toast.add({ title: 'Success', description: 'Promotion created successfully', color: 'green' })
+    }
     showCreateModal.value = false
     await fetchPromotions()
   } catch (err: any) {

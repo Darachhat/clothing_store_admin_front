@@ -41,7 +41,7 @@
         <template #header>
           <div class="flex items-center justify-between">
             <h3 class="text-base font-semibold">Record Stock Adjustment</h3>
-            <AppButton variant="ghost" size="sm" @click="showModal = false" />
+            <AppButton variant="ghost" size="sm" icon="i-heroicons-x-mark" @click="showModal = false" />
           </div>
         </template>
 

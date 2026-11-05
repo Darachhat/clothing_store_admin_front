@@ -149,7 +149,7 @@
         <template #header>
           <div class="flex items-center justify-between">
             <h3 class="text-base font-semibold">Record New Expense</h3>
-            <AppButton variant="ghost" size="sm" @click="showCreateModal = false" />
+            <AppButton variant="ghost" size="sm" icon="i-heroicons-x-mark" @click="showCreateModal = false" />
           </div>
         </template>
 

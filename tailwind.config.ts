@@ -19,8 +19,8 @@ import type { Config } from 'tailwindcss'
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default ({
-  // Dark mode: class-based (matches nuxt.config colorMode)
-  darkMode: 'class',
+  // Dark mode disabled in admin (light theme design system only)
+  darkMode: ['selector', '[data-theme="dark"]'],
 
   theme: {
     extend: {

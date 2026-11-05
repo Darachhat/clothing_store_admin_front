@@ -52,7 +52,7 @@
         <template #header>
           <div class="flex items-center justify-between">
             <h3 class="text-base font-semibold">Create Stock Transfer</h3>
-            <AppButton variant="ghost" size="sm" @click="showModal = false" />
+            <AppButton variant="ghost" size="sm" icon="i-heroicons-x-mark" @click="showModal = false" />
           </div>
         </template>
 
@@ -87,7 +87,7 @@
                 </select>
                 <input v-model.number="item.quantity" type="number" min="1" required placeholder="Qty"
                   class="w-20 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 py-1.5 text-xs" />
-                <AppButton variant="danger" size="sm" @click="form.items.splice(idx, 1)" />
+                <AppButton variant="danger" size="sm" icon="i-heroicons-trash" @click="form.items.splice(idx, 1)" />
               </div>
             </div>
           </div>

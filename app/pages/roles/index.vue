@@ -45,16 +45,26 @@
             </span>
           </div>
         </template>
+
+        <template #cell-actions="{ row }">
+          <AppButton
+            size="sm"
+            variant="ghost"
+            icon="i-heroicons-pencil-square"
+            label="Edit Permissions"
+            @click="openEditModal(row)"
+          />
+        </template>
       </AppTable>
     </AppCard>
 
-    <!-- Create Role Modal -->
+    <!-- Create / Edit Role Modal -->
     <AppModal v-model="showCreateModal" :ui="{ width: 'sm:max-w-xl' }">
       <AppCard>
         <template #header>
           <div class="flex items-center justify-between">
-            <h3 class="text-base font-semibold">Create Custom Role</h3>
-            <AppButton variant="ghost" size="sm" @click="showCreateModal = false" />
+            <h3 class="text-base font-semibold">{{ editingRoleId ? 'Edit Role & Permissions' : 'Create Custom Role' }}</h3>
+            <AppButton variant="ghost" size="sm" icon="i-heroicons-x-mark" @click="showCreateModal = false" />
           </div>
         </template>
 
@@ -124,9 +134,11 @@ const columns = [
   { key: 'name', label: 'Role' },
   { key: 'description', label: 'Description' },
   { key: 'permissions', label: 'Permissions' },
+  { key: 'actions', label: 'Actions' },
 ]
 
 const showCreateModal = ref(false)
+const editingRoleId = ref<string | null>(null)
 const createForm = ref({
   name: '',
   description: '',
@@ -134,10 +146,21 @@ const createForm = ref({
 })
 
 function openCreateModal() {
+  editingRoleId.value = null
   createForm.value = {
     name: '',
     description: '',
     permission_ids: [],
+  }
+  showCreateModal.value = true
+}
+
+function openEditModal(role: any) {
+  editingRoleId.value = role.id
+  createForm.value = {
+    name: role.name || '',
+    description: role.description || '',
+    permission_ids: (role.permissions || []).map((p: any) => p.id),
   }
   showCreateModal.value = true
 }
@@ -166,8 +189,16 @@ async function fetchPermissions() {
 async function handleCreateRole() {
   saving.value = true
   try {
-    await userApi.createRole(createForm.value)
-    toast.add({ title: 'Success', description: 'Role created successfully', color: 'green' })
+    if (editingRoleId.value) {
+      await userApi.updateRole(editingRoleId.value, {
+        description: createForm.value.description,
+        permission_ids: createForm.value.permission_ids,
+      })
+      toast.add({ title: 'Success', description: 'Role permissions updated successfully', color: 'green' })
+    } else {
+      await userApi.createRole(createForm.value)
+      toast.add({ title: 'Success', description: 'Role created successfully', color: 'green' })
+    }
     showCreateModal.value = false
     await fetchRoles()
   } catch (err: any) {

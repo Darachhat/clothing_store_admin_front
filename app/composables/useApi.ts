@@ -243,7 +243,7 @@ export function usePurchaseApi() {
     createOrder: (body: unknown) =>
       apiFetch<PurchaseOrder>(API_ENDPOINTS.purchases.base, { method: 'POST', body: body as any }),
     updateOrder: (id: string, body: unknown) =>
-      apiFetch<PurchaseOrder>(API_ENDPOINTS.purchases.detail(id), { method: 'PUT', body: body as any }),
+      apiFetch<PurchaseOrder>(API_ENDPOINTS.purchases.detail(id), { method: 'PATCH', body: body as any }),
     approveOrder: (id: string) =>
       apiFetch(API_ENDPOINTS.purchases.approve(id), { method: 'POST' }),
     cancelOrder: (id: string) =>
