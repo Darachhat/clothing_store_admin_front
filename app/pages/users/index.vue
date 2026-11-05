@@ -138,6 +138,9 @@
               <span>{{ row.telegram_username ? `@${row.telegram_username}` : 'Linked' }}</span>
             </div>
             <span class="text-[11px] font-mono text-gray-500">ID: {{ row.telegram_id }}</span>
+            <span v-if="row.telegram_linked_at" class="text-[10px] text-gray-400">
+              Linked {{ formatShortDate(row.telegram_linked_at) }}
+            </span>
           </div>
           <span v-else class="text-xs text-gray-400">Not linked</span>
         </template>
@@ -392,6 +395,9 @@
                 <div class="font-medium text-gray-900 dark:text-white">Telegram External Identity</div>
                 <div v-if="selectedUser?.telegram_id && !editForm.unlink_telegram" class="text-gray-500 font-mono">
                   Linked: {{ selectedUser.telegram_username ? `@${selectedUser.telegram_username}` : '' }} (ID: {{ selectedUser.telegram_id }})
+                  <span v-if="selectedUser.telegram_linked_at" class="block text-[11px] text-gray-400 font-sans">
+                    Linked at: {{ formatDateTime(selectedUser.telegram_linked_at) }}
+                  </span>
                 </div>
                 <div v-else class="text-gray-400">No Telegram account linked</div>
               </div>
