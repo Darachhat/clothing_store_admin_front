@@ -79,6 +79,7 @@
         </div>
 
         <div class="telegram-login-section">
+          <div ref="telegramWidgetContainer" class="telegram-widget-box" />
           <button
             type="button"
             class="login-tg-btn"
@@ -86,7 +87,7 @@
             @click="startTelegramAppLogin"
           >
             <UIcon name="i-heroicons-paper-airplane" class="w-4 h-4" />
-            <span>{{ appChallengeActive ? 'Waiting for Telegram App...' : 'Log in with Telegram App' }}</span>
+            <span>{{ appChallengeActive ? 'Waiting for Telegram App...' : 'Open in Telegram App' }}</span>
           </button>
 
           <div v-if="appChallengeActive" class="telegram-payload-card">
@@ -141,6 +142,7 @@ const errorMsg = ref('')
 
 const telegramBotUsername = ref<string | null>('clothing_store_kvm_bot')
 const telegramBotId = ref<string>('8453886789')
+const telegramWidgetContainer = ref<HTMLElement | null>(null)
 const appChallengeActive = ref(false)
 const appChallengeMessage = ref('')
 const appChallengeWebUrl = ref('')
@@ -288,6 +290,9 @@ onBeforeUnmount(() => {
 
 onMounted(async () => {
   if (typeof window !== 'undefined') {
+    ;(window as any).onTelegramAuthAdmin = (user: Record<string, unknown>) => {
+      handleTelegramAuthCallback(user)
+    }
     const redirectedPayload = extractTelegramRedirectPayload()
     if (redirectedPayload) {
       await handleTelegramAuthCallback(redirectedPayload)
@@ -295,9 +300,20 @@ onMounted(async () => {
     }
   }
   const tgConfig = await authStore.getTelegramConfig()
-  telegramBotUsername.value = (tgConfig.bot_username || 'clothing_store_kvm_bot').replace(/^@/, '')
+  const cleanBotUsername = (tgConfig.bot_username || 'clothing_store_kvm_bot').replace(/^@/, '')
+  telegramBotUsername.value = cleanBotUsername
   if (tgConfig.bot_id) {
     telegramBotId.value = tgConfig.bot_id
+  }
+  if (telegramWidgetContainer.value && cleanBotUsername) {
+    const script = document.createElement('script')
+    script.async = true
+    script.src = 'https://telegram.org/js/telegram-widget.js?22'
+    script.setAttribute('data-telegram-login', cleanBotUsername)
+    script.setAttribute('data-size', 'large')
+    script.setAttribute('data-auth-url', `${window.location.origin}${window.location.pathname}`)
+    script.setAttribute('data-request-access', 'write')
+    telegramWidgetContainer.value.appendChild(script)
   }
 })
 </script>
