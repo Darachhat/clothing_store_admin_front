@@ -1,4 +1,4 @@
-// Admin auth middleware — restores session and enforces ADMIN or MANAGER role
+// Admin auth middleware — restores session and enforces ADMIN or MANAGER role + route permissions
 function isJwtExpired(token: string, bufferSeconds = 30): boolean {
   try {
     const parts = token.split('.')
@@ -20,7 +20,13 @@ function isJwtExpired(token: string, bufferSeconds = 30): boolean {
   return false
 }
 
-export default defineNuxtRouteMiddleware(async () => {
+const ROUTE_PERMISSION_MAP: Array<{ prefix: string; permission: string }> = [
+  { prefix: '/users', permission: 'user.manage' },
+  { prefix: '/roles', permission: 'user.manage' },
+  { prefix: '/audit-logs', permission: 'settings.manage' },
+]
+
+export default defineNuxtRouteMiddleware(async (to) => {
   if (import.meta.server) return
 
   const authStore = useAuthStore()
@@ -38,15 +44,11 @@ export default defineNuxtRouteMiddleware(async () => {
     }
   }
 
-  if (authStore.user) {
-    const cachedRoles = authStore.user?.roles?.map((r: any) => r.name) ?? []
-    if (cachedRoles.some((r: string) => ['ADMIN', 'MANAGER', 'WAREHOUSE'].includes(r))) {
-      authStore.fetchCurrentUser().catch(() => {})
-      return
-    }
+  if (!authStore.user) {
+    await authStore.fetchCurrentUser()
+  } else {
+    authStore.fetchCurrentUser().catch(() => {})
   }
-
-  await authStore.fetchCurrentUser()
 
   if (!authStore.accessToken || !authStore.user) {
     authStore.clearLocalSession()
@@ -54,8 +56,17 @@ export default defineNuxtRouteMiddleware(async () => {
   }
 
   const roles = authStore.user?.roles?.map((r: any) => r.name) ?? []
-  if (!roles.some((r: string) => ['ADMIN', 'MANAGER', 'WAREHOUSE'].includes(r))) {
+  if (!roles.some((r: string) => ['ADMIN', 'MANAGER'].includes(r))) {
     await authStore.logout()
     return navigateTo('/login', { replace: true })
+  }
+
+  // Enforce permission-level route restrictions
+  for (const rule of ROUTE_PERMISSION_MAP) {
+    if (to.path === rule.prefix || to.path.startsWith(rule.prefix + '/')) {
+      if (!authStore.hasPermission(rule.permission)) {
+        return navigateTo('/dashboard', { replace: true })
+      }
+    }
   }
 })

@@ -20,6 +20,12 @@ export function createUserService(client: AdminApiClient) {
     deleteUser: (id: string) =>
       client.delete(API_ENDPOINTS.users.detail(id)),
 
+    activateUser: (id: string) =>
+      client.post<User>(API_ENDPOINTS.users.activate(id), {}),
+
+    getUserRoleHistory: (id: string, limit = 50) =>
+      client.get<any[]>(API_ENDPOINTS.users.roleHistory(id), { limit }),
+
     listRoles: () =>
       client.get<Role[]>(API_ENDPOINTS.users.roles),
 

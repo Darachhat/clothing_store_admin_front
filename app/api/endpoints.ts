@@ -5,6 +5,11 @@ export const API_ENDPOINTS = {
     logout: '/api/admin/v1/auth/logout',
     refresh: '/api/admin/v1/auth/refresh',
     me: '/api/admin/v1/auth/me',
+    telegramConfig: '/api/admin/v1/auth/telegram/config',
+    telegramLogin: '/api/admin/v1/auth/telegram/login',
+    telegramLink: '/api/admin/v1/auth/telegram/link',
+    phoneRequestVerification: '/api/admin/v1/auth/phone/request-verification',
+    phoneVerify: '/api/admin/v1/auth/phone/verify',
   },
   products: {
     base: '/api/admin/v1/products',
@@ -107,6 +112,8 @@ export const API_ENDPOINTS = {
   users: {
     base: '/api/admin/v1/users',
     detail: (id: string) => `/api/admin/v1/users/${id}`,
+    activate: (id: string) => `/api/admin/v1/users/${id}/activate`,
+    roleHistory: (id: string) => `/api/admin/v1/users/${id}/role-history`,
     roles: '/api/admin/v1/roles',
     roleDetail: (id: string) => `/api/admin/v1/roles/${id}`,
     permissions: '/api/admin/v1/roles/permissions',

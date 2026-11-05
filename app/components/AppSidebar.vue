@@ -48,7 +48,7 @@
 
     <!-- ─── Full Mode Navigation (Categorized Sections) ────────────── -->
     <nav v-else class="app-sidebar__full-nav" aria-label="Categorized navigation">
-      <div v-for="section in navSections" :key="section.title" class="app-sidebar__section">
+      <div v-for="section in filteredNavSections" :key="section.title" class="app-sidebar__section">
         <span class="app-sidebar__section-title">{{ section.title }}</span>
         <NuxtLink
           v-for="item in section.items"
@@ -203,10 +203,20 @@ function toggleCollapse() {
   }
 }
 
+// Filter sections and items by current user's permissions
+const filteredNavSections = computed(() => {
+  return navSections
+    .map((sec) => ({
+      ...sec,
+      items: sec.items.filter((item) => !item.permission || authStore.hasPermission(item.permission)),
+    }))
+    .filter((sec) => sec.items.length > 0)
+})
+
 // Flat list of primary items for rail mode
 const railItems = computed<NavItem[]>(() => {
   const primaries: NavItem[] = []
-  for (const sec of navSections) {
+  for (const sec of filteredNavSections.value) {
     for (const it of sec.items) {
       if (it.railPrimary) {
         primaries.push(it)
@@ -225,7 +235,8 @@ const userName = computed(() => {
 })
 
 const userRole = computed(() => {
-  return authStore.currentUser?.roles?.[0]?.name || 'Staff'
+  const roles = authStore.currentUser?.roles?.map((r: any) => r.name) ?? []
+  return roles.length > 0 ? roles.join(', ') : 'Staff'
 })
 
 const userInitials = computed(() => {
