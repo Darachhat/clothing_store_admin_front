@@ -50,7 +50,7 @@ const endItem = computed(() => Math.min(props.total, props.page * props.pageSize
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
   font-size: 12px;
   color: var(--text-tertiary, #64748b);
@@ -67,5 +67,21 @@ const endItem = computed(() => Math.min(props.total, props.page * props.pageSize
   align-items: center;
   gap: 8px;
 }
-</style>
 
+@media (max-width: 520px) {
+  .app-pagination {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .app-pagination__summary {
+    text-align: center;
+  }
+
+  .app-pagination__controls {
+    justify-content: space-between;
+    width: 100%;
+  }
+}
+</style>

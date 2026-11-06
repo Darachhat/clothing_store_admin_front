@@ -531,7 +531,7 @@ async function generateLabelsPdf() {
 .page-root { display: flex; flex-direction: column; gap: 16px; }
 .page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .page-header__left { display: flex; flex-direction: column; gap: 2px; }
-.page-header__actions { display: flex; gap: 8px; align-items: center; }
+.page-header__actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 
 .back-link {
   display: inline-flex; align-items: center; gap: 4px;
@@ -543,10 +543,14 @@ async function generateLabelsPdf() {
 
 .studio-grid { display: grid; grid-template-columns: 440px 1fr; gap: 16px; align-items: start; }
 @media (max-width: 1024px) { .studio-grid { grid-template-columns: 1fr; } }
-.studio-left, .studio-right { display: flex; flex-direction: column; gap: 16px; }
+.studio-left, .studio-right { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 
 .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .col-span-2 { grid-column: span 2; }
+@media (max-width: 540px) {
+  .settings-grid { grid-template-columns: 1fr; }
+  .col-span-2 { grid-column: span 1; }
+}
 .form-field { display: flex; flex-direction: column; gap: 5px; }
 .field-label { font-size: 12px; font-weight: 500; color: var(--text-secondary); }
 .field-input {

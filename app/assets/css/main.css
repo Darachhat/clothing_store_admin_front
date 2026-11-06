@@ -1892,30 +1892,43 @@ html, body {
 }
 
 .admin-content {
-  padding: 20px 24px 36px;
+  padding: 24px 28px 36px;
   flex: 1;
   max-width: var(--page-max-width);
   width: 100%;
   margin: 0 auto;
+  min-width: 0;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1023px) {
   .admin-topbar {
-    padding: 0 16px;
+    padding: 0 20px;
   }
   .admin-content {
-    padding: 16px 16px 28px;
+    padding: 20px 20px 32px;
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
+  .admin-topbar {
+    padding: 0 12px;
+  }
+  .admin-content {
+    padding: 14px 12px 28px;
+  }
   .admin-sidebar {
     transform: translateX(-100%);
-    width: var(--sidebar-width) !important;
+    width: min(272px, 86vw) !important;
     box-shadow: var(--shadow-lg);
+    z-index: 50;
   }
   .admin-sidebar.is-mobile-open {
     transform: translateX(0);
+  }
+  .admin-sidebar .nav-item {
+    min-height: 40px;
+    padding: 8px 12px;
+    font-size: 13.5px;
   }
   .admin-main,
   .admin-main.is-sidebar-collapsed {
@@ -2082,10 +2095,17 @@ textarea:focus {
   display: flex;
   justify-content: flex-end;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
   padding-top: 14px;
   border-top: 1px solid var(--border-subtle);
   margin-top: 6px;
+}
+
+@media (max-width: 420px) {
+  .modal-actions > * {
+    flex: 1 1 auto;
+  }
 }
 
 /* ─── Cards & Surfaces ──────────────────────────────────────────────────── */
@@ -2118,26 +2138,35 @@ textarea:focus {
 /* ─── KPI / Stat Grids ──────────────────────────────────────────────────── */
 .kpi-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
 }
 
 .kpi-grid-3 {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1023px) {
   .kpi-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 767px) {
   .kpi-grid,
   .kpi-grid-3 {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+}
+
+@media (max-width: 374px) {
+  .kpi-grid,
+  .kpi-grid-3 {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
   }
 }
 

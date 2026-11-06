@@ -266,7 +266,7 @@
 
         <!-- 8. Actions (Inspect, Edit, End Shift, Activate/Deactivate) -->
         <template #cell-actions="{ row }">
-          <div class="flex items-center justify-end gap-1">
+          <div class="register-actions">
             <AppButton
               size="xs"
               variant="ghost"
@@ -747,12 +747,12 @@ const form = reactive({
 
 const columns = [
   { key: 'code', label: 'Register', sortable: true },
-  { key: 'branch_display', label: 'Branch', sortable: true },
-  { key: 'warehouse_display', label: 'Warehouse', sortable: true },
+  { key: 'branch_display', label: 'Branch', sortable: true, mobilePriority: 4 },
+  { key: 'warehouse_display', label: 'Warehouse', sortable: true, mobilePriority: 5 },
   { key: 'connection', label: 'Connection', sortable: true },
-  { key: 'active_shift', label: 'Active Shift' },
-  { key: 'cashier_display', label: 'Cashier', sortable: true },
-  { key: 'status_code', label: 'Configuration Status', sortable: true },
+  { key: 'active_shift', label: 'Active Shift', mobilePriority: 2 },
+  { key: 'cashier_display', label: 'Cashier', sortable: true, mobilePriority: 1 },
+  { key: 'status_code', label: 'Configuration Status', sortable: true, mobilePriority: 3 },
   { key: 'actions', label: 'Actions', align: 'right' as const },
 ]
 
@@ -1470,5 +1470,25 @@ onBeforeUnmount(() => {
   border-radius: var(--radius-lg, 8px);
   background: var(--status-amber-bg, #fffbeb);
   border: 1px solid var(--border-subtle, #e5e7eb);
+}
+
+.register-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 639px) {
+  .refresh-toolbar {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .refresh-timestamp {
+    width: 100%;
+    padding: 0 0 2px;
+  }
 }
 </style>

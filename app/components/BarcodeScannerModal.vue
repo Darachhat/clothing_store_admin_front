@@ -508,21 +508,23 @@ onUnmounted(() => {
   display: flex;
   border-bottom: 1px solid var(--border-subtle, #e5e7eb);
   gap: 4px;
+  overflow-x: auto;
 }
 
 .scanner-tab {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 14px;
+  padding: 8px 12px;
   background: transparent;
   border: none;
   border-bottom: 2px solid transparent;
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 500;
   color: var(--text-secondary);
   cursor: pointer;
   margin-bottom: -1px;
+  white-space: nowrap;
 }
 
 .scanner-tab.is-active {
@@ -757,7 +759,7 @@ onUnmounted(() => {
 }
 
 .webcam-reticle {
-  width: 200px;
+  width: min(200px, 75%);
   height: 120px;
   border: 2px dashed rgba(255, 255, 255, 0.7);
   border-radius: 8px;

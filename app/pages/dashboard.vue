@@ -385,15 +385,18 @@ onMounted(loadDashboard)
   gap: 6px;
   height: 150px;
   padding-top: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
 }
 
 .bar-col {
-  flex: 1;
+  flex: 1 0 22px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 5px;
   height: 100%;
+  min-width: 22px;
 }
 
 .bar-fill-wrap {

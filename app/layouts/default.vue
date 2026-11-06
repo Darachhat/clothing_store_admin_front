@@ -19,10 +19,10 @@
 
           <nav class="topbar-context" aria-label="Current section">
             <span class="topbar-context__group">{{ currentRouteContext.groupLabel }}</span>
-            <UIcon name="i-heroicons-chevron-right" class="w-3.5 h-3.5 text-gray-400" />
+            <UIcon name="i-heroicons-chevron-right" class="topbar-context__sep w-3.5 h-3.5 text-gray-400" />
             <NuxtLink :to="currentRouteContext.itemTo" class="topbar-context__page">
-              <UIcon :name="currentRouteContext.icon" class="w-4 h-4 text-gray-500" />
-              <span>{{ currentRouteContext.itemLabel }}</span>
+              <UIcon :name="currentRouteContext.icon" class="w-4 h-4 text-gray-500 flex-shrink-0" />
+              <span class="truncate">{{ currentRouteContext.itemLabel }}</span>
             </NuxtLink>
           </nav>
         </div>
@@ -35,26 +35,29 @@
               to="/pos"
               class="topbar-pill"
               title="Open Point of Sale Terminal"
+              aria-label="Open Point of Sale Terminal"
             >
-              <UIcon name="i-heroicons-computer-desktop" class="w-3.5 h-3.5" />
-              <span>{{ t('common.open_pos', 'Open POS') }}</span>
+              <UIcon name="i-heroicons-computer-desktop" class="w-3.5 h-3.5 flex-shrink-0" />
+              <span class="topbar-pill__label">{{ t('common.open_pos', 'Open POS') }}</span>
             </NuxtLink>
             <NuxtLink
               to="/settings/terminals"
               class="topbar-pill"
               :class="{ 'is-active': route.path === '/settings/terminals' }"
               title="Monitor POS Registers & Shifts"
+              aria-label="Monitor POS Registers & Shifts"
             >
-              <UIcon name="i-heroicons-cpu-chip" class="w-3.5 h-3.5" />
-              <span>{{ t('nav.pos_registers', 'POS Registers') }}</span>
+              <UIcon name="i-heroicons-cpu-chip" class="w-3.5 h-3.5 flex-shrink-0" />
+              <span class="topbar-pill__label">{{ t('nav.pos_registers', 'POS Registers') }}</span>
             </NuxtLink>
             <NuxtLink
               to="/products/new"
               class="topbar-pill"
               title="Create a new product"
+              aria-label="Create a new product"
             >
-              <UIcon name="i-heroicons-plus" class="w-3.5 h-3.5" />
-              <span>New Product</span>
+              <UIcon name="i-heroicons-plus" class="w-3.5 h-3.5 flex-shrink-0" />
+              <span class="topbar-pill__label">New Product</span>
             </NuxtLink>
           </div>
 
@@ -64,12 +67,13 @@
               type="button"
               class="topbar-btn"
               title="Switch display language"
+              aria-label="Switch display language"
               @click="langMenuOpen = !langMenuOpen; userMenuOpen = false"
             >
-              <UIcon name="i-heroicons-language" class="w-4 h-4 text-gray-500" />
+              <UIcon name="i-heroicons-language" class="w-4 h-4 text-gray-500 flex-shrink-0" />
               <span class="font-mono font-bold text-[11px] uppercase">{{ activeLocaleOption?.code }}</span>
-              <span class="hidden sm:inline text-xs">{{ activeLocaleOption?.native }}</span>
-              <UIcon name="i-heroicons-chevron-down" class="w-3.5 h-3.5 text-gray-400" />
+              <span class="hidden md:inline text-xs">{{ activeLocaleOption?.native }}</span>
+              <UIcon name="i-heroicons-chevron-down" class="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
             </button>
 
             <div v-if="langMenuOpen" class="topbar-dropdown topbar-dropdown--lang">
@@ -120,7 +124,7 @@
             >
               <span class="topbar-user-avatar">{{ userInitial }}</span>
               <span class="hidden md:inline text-xs font-medium text-gray-700 max-w-[120px] truncate">{{ userName }}</span>
-              <UIcon name="i-heroicons-chevron-down" class="w-3.5 h-3.5 text-gray-400" />
+              <UIcon name="i-heroicons-chevron-down" class="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
             </button>
 
             <div v-if="userMenuOpen" class="topbar-dropdown topbar-dropdown--user">
@@ -128,6 +132,16 @@
                 <p class="text-xs font-semibold text-gray-900 truncate">{{ userName }}</p>
                 <p class="text-[11px] text-gray-500 truncate">{{ authStore.user?.email || userRole }}</p>
               </div>
+              <NuxtLink
+                to="/pos"
+                class="topbar-dropdown__item sm:hidden"
+                @click="userMenuOpen = false"
+              >
+                <span class="flex items-center gap-2">
+                  <UIcon name="i-heroicons-computer-desktop" class="w-4 h-4 text-gray-500" />
+                  <span>{{ t('common.open_pos', 'Open POS') }}</span>
+                </span>
+              </NuxtLink>
               <NuxtLink
                 to="/settings"
                 class="topbar-dropdown__item"
@@ -144,7 +158,7 @@
                 @click="userMenuOpen = false"
               >
                 <span class="flex items-center gap-2">
-                  <UIcon name="i-heroicons-computer-desktop" class="w-4 h-4 text-gray-500" />
+                  <UIcon name="i-heroicons-cpu-chip" class="w-4 h-4 text-gray-500" />
                   <span>POS Registers</span>
                 </span>
               </NuxtLink>
@@ -238,22 +252,24 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 10px;
   min-width: 0;
+  flex: 1;
 }
 
 .topbar-mobile-btn {
   display: none;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: var(--radius-md, 6px);
   border: 1px solid var(--border-subtle, #e5e7eb);
   background: var(--surface-card, #ffffff);
   color: var(--text-secondary, #475569);
   cursor: pointer;
+  flex-shrink: 0;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .topbar-mobile-btn {
     display: inline-flex;
   }
@@ -265,6 +281,7 @@ onBeforeUnmount(() => {
   gap: 6px;
   font-size: 12.5px;
   min-width: 0;
+  overflow: hidden;
 }
 
 .topbar-context__group {
@@ -273,8 +290,9 @@ onBeforeUnmount(() => {
   white-space: nowrap;
 }
 
-@media (max-width: 640px) {
-  .topbar-context__group {
+@media (max-width: 639px) {
+  .topbar-context__group,
+  .topbar-context__sep {
     display: none;
   }
 }
@@ -289,12 +307,13 @@ onBeforeUnmount(() => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .topbar-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   flex-shrink: 0;
 }
 
@@ -304,7 +323,13 @@ onBeforeUnmount(() => {
   gap: 6px;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1023px) {
+  .topbar-pill__label {
+    display: none;
+  }
+}
+
+@media (max-width: 639px) {
   .topbar-quick-links {
     display: none;
   }
@@ -313,8 +338,10 @@ onBeforeUnmount(() => {
 .topbar-pill {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
-  padding: 5px 10px;
+  height: 32px;
+  padding: 0 10px;
   border-radius: var(--radius-md, 6px);
   border: 1px solid var(--border-subtle, #e5e7eb);
   background: var(--surface-inset, #f8fafc);
@@ -323,6 +350,13 @@ onBeforeUnmount(() => {
   font-weight: 500;
   text-decoration: none;
   transition: background 0.12s, color 0.12s;
+}
+
+@media (max-width: 1023px) {
+  .topbar-pill {
+    width: 32px;
+    padding: 0;
+  }
 }
 
 .topbar-pill:hover,
@@ -334,9 +368,9 @@ onBeforeUnmount(() => {
 .topbar-btn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   height: 32px;
-  padding: 0 10px;
+  padding: 0 9px;
   border-radius: var(--radius-md, 6px);
   border: 1px solid var(--border-subtle, #e5e7eb);
   background: var(--surface-card, #ffffff);
@@ -354,9 +388,9 @@ onBeforeUnmount(() => {
 .topbar-user-trigger {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
   height: 32px;
-  padding: 0 8px 0 4px;
+  padding: 0 7px 0 4px;
   border-radius: var(--radius-full, 9999px);
   border: 1px solid var(--border-subtle, #e5e7eb);
   background: var(--surface-card, #ffffff);
@@ -366,6 +400,13 @@ onBeforeUnmount(() => {
 
 .topbar-user-trigger:hover {
   background: var(--surface-hover, #f1f5f9);
+}
+
+@media (max-width: 767px) {
+  .topbar-btn,
+  .topbar-user-trigger {
+    height: 36px;
+  }
 }
 
 .topbar-user-avatar {
@@ -379,6 +420,7 @@ onBeforeUnmount(() => {
   justify-content: center;
   font-size: 11px;
   font-weight: 700;
+  flex-shrink: 0;
 }
 
 .topbar-dropdown {
@@ -391,6 +433,7 @@ onBeforeUnmount(() => {
   box-shadow: var(--shadow-md, 0 4px 12px rgba(15, 23, 42, 0.08));
   padding: 4px 0;
   z-index: 50;
+  max-width: calc(100vw - 24px);
 }
 
 .topbar-dropdown--lang {
@@ -398,7 +441,7 @@ onBeforeUnmount(() => {
 }
 
 .topbar-dropdown--user {
-  width: 200px;
+  width: 205px;
 }
 
 .topbar-dropdown__header {
@@ -413,12 +456,12 @@ onBeforeUnmount(() => {
 
 .topbar-dropdown__item {
   width: 100%;
-  padding: 7px 12px;
+  padding: 8px 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  font-size: 12px;
+  font-size: 12.5px;
   color: var(--text-secondary, #475569);
   background: transparent;
   border: none;

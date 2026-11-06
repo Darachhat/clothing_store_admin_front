@@ -71,7 +71,7 @@ defineEmits(['primary-click'])
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
+  gap: 14px;
   flex-wrap: wrap;
 }
 
@@ -80,12 +80,13 @@ defineEmits(['primary-click'])
   flex-direction: column;
   gap: 2px;
   min-width: 0;
+  flex: 1 1 260px;
 }
 
 .app-page-header__title-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   flex-wrap: wrap;
 }
 
@@ -95,6 +96,23 @@ defineEmits(['primary-click'])
   gap: 8px;
   flex-wrap: wrap;
   flex-shrink: 0;
+}
+
+@media (max-width: 639px) {
+  .app-page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .app-page-header__left {
+    flex: 1 1 auto;
+  }
+
+  .app-page-header__actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
 }
 
 .app-breadcrumbs {
@@ -131,4 +149,3 @@ defineEmits(['primary-click'])
   color: var(--text-muted, #94a3b8);
 }
 </style>
-

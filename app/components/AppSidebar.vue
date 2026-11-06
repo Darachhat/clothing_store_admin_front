@@ -5,6 +5,7 @@
       <div
         v-if="isMobileOpen"
         class="sidebar-mobile-backdrop no-print"
+        aria-hidden="true"
         @click="closeMobileSidebar"
       />
     </Transition>
@@ -12,7 +13,7 @@
     <aside
       class="admin-sidebar app-sidebar no-print"
       :class="[
-        isRail ? 'is-collapsed app-sidebar--rail' : 'app-sidebar--full',
+        effectiveRail ? 'is-collapsed app-sidebar--rail' : 'app-sidebar--full',
         { 'is-mobile-open': isMobileOpen },
         customClass,
       ]"
@@ -29,7 +30,7 @@
           <div class="sidebar-brand-mark app-sidebar__logo-mark">
             <UIcon name="i-heroicons-building-storefront" class="w-4 h-4 text-white" />
           </div>
-          <div v-if="!isRail" class="app-sidebar__brand-meta min-w-0">
+          <div v-if="!effectiveRail" class="app-sidebar__brand-meta min-w-0">
             <span class="sidebar-brand-name app-sidebar__brand-name block truncate">
               {{ config.public.appName || 'Clothing Store' }}
             </span>
@@ -39,25 +40,36 @@
           </div>
         </NuxtLink>
 
-        <!-- Collapse / Expand Toggle Button -->
+        <!-- Desktop/Tablet Collapse / Expand Toggle Button -->
         <button
           v-if="collapsible"
           type="button"
           class="sidebar-collapse-btn app-sidebar__toggle-btn"
-          :title="isRail ? 'Expand sidebar' : 'Collapse sidebar'"
+          :aria-label="effectiveRail ? 'Expand sidebar' : 'Collapse sidebar'"
+          :title="effectiveRail ? 'Expand sidebar' : 'Collapse sidebar'"
           @click="toggleCollapse"
         >
           <UIcon
-            :name="isRail ? 'i-heroicons-chevron-double-right' : 'i-heroicons-chevron-double-left'"
+            :name="effectiveRail ? 'i-heroicons-chevron-double-right' : 'i-heroicons-chevron-double-left'"
             class="w-3.5 h-3.5"
           />
+        </button>
+
+        <!-- Mobile Close Drawer Button -->
+        <button
+          type="button"
+          class="sidebar-mobile-close-btn"
+          aria-label="Close navigation menu"
+          @click="closeMobileSidebar"
+        >
+          <UIcon name="i-heroicons-x-mark" class="w-5 h-5" />
         </button>
       </div>
 
       <!-- ─── Navigation Sections ────────────────────────────────────── -->
       <nav class="sidebar-nav app-sidebar__full-nav" :aria-label="ariaLabel || 'Main navigation'">
         <template v-for="(section, idx) in filteredNavSections" :key="section.title">
-          <div v-if="!isRail" class="sidebar-section-label app-sidebar__section-title">
+          <div v-if="!effectiveRail" class="sidebar-section-label app-sidebar__section-title">
             {{ section.title }}
           </div>
           <div v-else-if="idx > 0" class="sidebar-section-divider" />
@@ -68,28 +80,28 @@
             :to="item.to"
             class="nav-item app-sidebar__nav-link"
             :class="{ active: isActive(item.to, item.exact), 'is-active': isActive(item.to, item.exact) }"
-            :title="isRail ? `${section.title}: ${item.label}${item.shortcut ? ` [${item.shortcut}]` : ''}` : undefined"
+            :title="effectiveRail ? `${section.title}: ${item.label}${item.shortcut ? ` [${item.shortcut}]` : ''}` : undefined"
             @click="closeMobileSidebar"
           >
             <UIcon :name="item.icon" class="nav-icon" />
-            <span v-show="!isRail" class="app-sidebar__nav-label truncate flex-1">{{ item.label }}</span>
-            <span v-if="!isRail && item.badge" class="app-sidebar__nav-badge">{{ item.badge }}</span>
-            <span v-else-if="!isRail && item.shortcut" class="app-sidebar__nav-shortcut">{{ item.shortcut }}</span>
+            <span v-show="!effectiveRail" class="app-sidebar__nav-label truncate flex-1">{{ item.label }}</span>
+            <span v-if="!effectiveRail && item.badge" class="app-sidebar__nav-badge">{{ item.badge }}</span>
+            <span v-else-if="!effectiveRail && item.shortcut" class="app-sidebar__nav-shortcut">{{ item.shortcut }}</span>
           </NuxtLink>
         </template>
       </nav>
 
       <!-- ─── Bottom Footer Actions ──────────────────────────────────── -->
-      <div class="sidebar-footer app-sidebar__footer" :class="{ 'is-rail': isRail }">
+      <div class="sidebar-footer app-sidebar__footer" :class="{ 'is-rail': effectiveRail }">
         <div
           class="sidebar-user-card"
-          :class="{ 'is-collapsed': isRail }"
-          :title="isRail ? `${userName} (${userRole})` : undefined"
+          :class="{ 'is-collapsed': effectiveRail }"
+          :title="effectiveRail ? `${userName} (${userRole})` : undefined"
         >
           <div class="sidebar-user-avatar app-sidebar__user-avatar">
             {{ userInitials }}
           </div>
-          <div v-show="!isRail" class="min-w-0 flex-1">
+          <div v-show="!effectiveRail" class="min-w-0 flex-1">
             <div class="sidebar-user-name truncate" :title="userName">
               {{ userName }}
             </div>
@@ -98,7 +110,7 @@
             </div>
           </div>
           <button
-            v-if="!isRail && showShortcuts"
+            v-if="!effectiveRail && showShortcuts"
             type="button"
             class="app-sidebar__logout-btn"
             title="Keyboard Shortcuts [?]"
@@ -111,11 +123,11 @@
         <button
           type="button"
           class="nav-item sidebar-signout-btn"
-          :title="isRail ? t('common.sign_out', 'Sign out') : undefined"
+          :title="effectiveRail ? t('common.sign_out', 'Sign out') : undefined"
           @click="onLogout"
         >
           <UIcon name="i-heroicons-arrow-right-on-rectangle" class="nav-icon" />
-          <span v-show="!isRail">{{ t('common.sign_out', 'Sign out') }}</span>
+          <span v-show="!effectiveRail">{{ t('common.sign_out', 'Sign out') }}</span>
         </button>
       </div>
     </aside>
@@ -123,8 +135,8 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, unref, watch, onMounted } from 'vue'
-import { useRouter, useRuntimeConfig } from '#app'
+import { computed, ref, unref, watch, onMounted, onBeforeUnmount } from 'vue'
+import { useRoute, useRouter, useRuntimeConfig } from '#app'
 import { useAuthStore } from '~/stores/auth'
 import { useSidebar } from '~/composables/useSidebar'
 import { useAppTranslation } from '~/composables/useAppTranslation'
@@ -158,6 +170,7 @@ const emit = defineEmits<{
 
 const config = useRuntimeConfig()
 const authStore = useAuthStore()
+const route = useRoute()
 const router = useRouter()
 const { t } = useAppTranslation()
 const {
@@ -181,6 +194,26 @@ watch(
   },
 )
 
+// Close mobile drawer automatically on route changes
+watch(
+  () => route.fullPath,
+  () => {
+    if (isMobileOpen.value) {
+      closeMobileSidebar()
+    }
+  },
+)
+
+// Lock body scroll when mobile drawer is open
+watch(
+  isMobileOpen,
+  (open) => {
+    if (import.meta.client) {
+      document.body.style.overflow = open ? 'hidden' : ''
+    }
+  },
+)
+
 const isRail = computed(() => {
   if (props.mode === 'rail') return true
   if (props.mode === 'full') return false
@@ -188,6 +221,9 @@ const isRail = computed(() => {
   if (props.defaultCollapsed !== undefined) return internalCollapsed.value
   return globalCollapsed.value
 })
+
+// When open as a mobile drawer, always render full labels
+const effectiveRail = computed(() => (isMobileOpen.value ? false : isRail.value))
 
 function toggleCollapse() {
   const nextVal = !isRail.value
@@ -245,8 +281,24 @@ async function onLogout() {
   await router.push('/login')
 }
 
+function handleKeydown(e: KeyboardEvent) {
+  if (e.key === 'Escape' && isMobileOpen.value) {
+    closeMobileSidebar()
+  }
+}
+
 onMounted(() => {
   initSidebar()
+  if (import.meta.client) {
+    window.addEventListener('keydown', handleKeydown)
+  }
+})
+
+onBeforeUnmount(() => {
+  if (import.meta.client) {
+    window.removeEventListener('keydown', handleKeydown)
+    document.body.style.overflow = ''
+  }
 })
 </script>
 
@@ -255,14 +307,41 @@ onMounted(() => {
   display: none;
 }
 
-@media (max-width: 768px) {
+.sidebar-mobile-close-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-md, 6px);
+  border: 1px solid var(--border-subtle, #e5e7eb);
+  background: var(--surface-card, #ffffff);
+  color: var(--text-secondary, #475569);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.sidebar-mobile-close-btn:hover {
+  background: var(--surface-hover, #f1f5f9);
+  color: var(--text-primary, #0f172a);
+}
+
+@media (max-width: 767px) {
   .sidebar-mobile-backdrop {
     display: block;
     position: fixed;
     inset: 0;
     background: rgba(15, 23, 42, 0.45);
     backdrop-filter: blur(1px);
-    z-index: 35;
+    z-index: 45;
+  }
+
+  .sidebar-collapse-btn {
+    display: none !important;
+  }
+
+  .sidebar-mobile-close-btn {
+    display: inline-flex;
   }
 }
 

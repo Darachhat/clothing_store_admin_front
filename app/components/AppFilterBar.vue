@@ -23,22 +23,25 @@
         </button>
       </div>
 
-      <!-- Custom Filter Controls Slot -->
-      <slot />
+      <!-- Custom Filter Controls Slot (Supports both default slot and #filters slot) -->
+      <div v-if="$slots.default || $slots.filters" class="app-filter-bar__slots">
+        <slot />
+        <slot name="filters" />
+      </div>
 
       <!-- Right Side Result Count & Reset -->
-      <div class="app-filter-bar__right">
+      <div v-if="totalCount !== undefined || $slots.right" class="app-filter-bar__right">
         <span v-if="totalCount !== undefined" class="app-filter-count">
           Showing <strong>{{ shownCount !== undefined ? shownCount : totalCount }}</strong>
           <template v-if="shownCount !== undefined && shownCount !== totalCount"> of <strong>{{ totalCount }}</strong></template>
-          {{ countLabel || 'records' }}
+          {{ resolvedCountLabel }}
         </span>
         <slot name="right" />
       </div>
     </div>
 
     <!-- Active Filter Chips -->
-    <div v-if="(chips && chips.length > 0) || hasActiveSearch" class="app-filter-chips">
+    <div v-if="(resolvedChips.length > 0) || hasActiveSearch" class="app-filter-chips">
       <span class="app-filter-chips__label">Active filters:</span>
 
       <span v-if="hasActiveSearch" class="app-filter-chip">
@@ -49,7 +52,7 @@
         </button>
       </span>
 
-      <span v-for="chip in chips" :key="chip.key" class="app-filter-chip">
+      <span v-for="chip in resolvedChips" :key="chip.key" class="app-filter-chip">
         <span class="app-filter-chip__key">{{ chip.label }}:</span>
         <span class="app-filter-chip__val">{{ chip.value }}</span>
         <button type="button" class="app-filter-chip__remove" @click="$emit('remove-chip', chip.key)">
@@ -76,9 +79,11 @@ const props = withDefaults(defineProps<{
   searchable?: boolean
   searchPlaceholder?: string
   chips?: FilterChipItem[]
+  activeChips?: FilterChipItem[]
   totalCount?: number
   shownCount?: number
   countLabel?: string
+  resultLabel?: string
 }>(), {
   searchable: true,
 })
@@ -90,6 +95,8 @@ defineEmits<{
   'clear-all': []
 }>()
 
+const resolvedChips = computed<FilterChipItem[]>(() => props.chips || props.activeChips || [])
+const resolvedCountLabel = computed<string>(() => props.countLabel || props.resultLabel || 'records')
 const hasActiveSearch = computed(() => Boolean(props.search && props.search.trim().length > 0))
 </script>
 
@@ -114,10 +121,59 @@ const hasActiveSearch = computed(() => Boolean(props.search && props.search.trim
 
 .app-filter-search {
   position: relative;
-  flex: 1;
-  min-width: 220px;
+  flex: 1 1 220px;
+  min-width: 180px;
   display: flex;
   align-items: center;
+}
+
+.app-filter-bar__slots {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 639px) {
+  .app-filter-bar {
+    padding: 10px 12px;
+  }
+
+  .app-filter-bar__controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .app-filter-search {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .app-filter-bar__slots {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+    gap: 8px;
+    width: 100%;
+  }
+
+  .app-filter-bar__slots :deep(> *) {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .app-filter-bar__right {
+    margin-left: 0 !important;
+    justify-content: space-between;
+    width: 100%;
+  }
+}
+
+@media (max-width: 374px) {
+  .app-filter-bar__slots {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .app-filter-search__icon {
@@ -158,8 +214,8 @@ const hasActiveSearch = computed(() => Boolean(props.search && props.search.trim
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   border-radius: var(--radius-sm, 4px);
   border: none;
   background: transparent;
@@ -259,4 +315,3 @@ const hasActiveSearch = computed(() => Boolean(props.search && props.search.trim
   color: var(--text-primary, #0f172a);
 }
 </style>
-

@@ -214,7 +214,7 @@
     </AppCard>
 
     <!-- Create User Modal -->
-    <AppModal v-model="showCreateModal">
+    <AppModal v-model="showCreateModal" size="lg">
       <AppCard>
         <template #header>
           <div class="flex items-center justify-between">
@@ -224,7 +224,7 @@
         </template>
 
         <form class="space-y-4" @submit.prevent="handleCreateUser">
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Username *</label>
               <input
@@ -247,7 +247,7 @@
             </div>
           </div>
 
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Email Address *</label>
               <input
@@ -271,7 +271,7 @@
             </div>
           </div>
 
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Employee Code</label>
               <input
@@ -298,7 +298,7 @@
 
           <div>
             <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Assigned Roles (Multi-Role Supported) *</label>
-            <div class="grid grid-cols-2 gap-2 p-2.5 border border-gray-200 rounded-md">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 p-2.5 border border-gray-200 rounded-md">
               <label
                 v-for="r in roles"
                 :key="r.id"
@@ -328,7 +328,7 @@
     </AppModal>
 
     <!-- Edit User & Role Management Modal -->
-    <AppModal v-model="showEditModal">
+    <AppModal v-model="showEditModal" size="lg">
       <AppCard>
         <template #header>
           <div class="flex items-center justify-between">
@@ -341,7 +341,7 @@
         </template>
 
         <form class="space-y-4" @submit.prevent="handleUpdateUser">
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Full Name</label>
               <input
@@ -362,7 +362,7 @@
             </div>
           </div>
 
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
               <input
@@ -388,12 +388,12 @@
           </div>
 
           <!-- Telegram Identity Summary -->
-          <div class="p-3 rounded-md border border-gray-200 bg-gray-50 dark:bg-gray-800/50 flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <UIcon name="i-heroicons-paper-airplane" class="w-4 h-4 text-gray-500" />
-              <div class="text-xs">
+          <div class="p-3 rounded-md border border-gray-200 bg-gray-50 dark:bg-gray-800/50 flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2 min-w-0">
+              <UIcon name="i-heroicons-paper-airplane" class="w-4 h-4 text-gray-500 flex-shrink-0" />
+              <div class="text-xs min-w-0">
                 <div class="font-medium text-gray-900 dark:text-white">Telegram External Identity</div>
-                <div v-if="selectedUser?.telegram_id && !editForm.unlink_telegram" class="text-gray-500 font-mono">
+                <div v-if="selectedUser?.telegram_id && !editForm.unlink_telegram" class="text-gray-500 font-mono truncate">
                   Linked: {{ selectedUser.telegram_username ? `@${selectedUser.telegram_username}` : '' }} (ID: {{ selectedUser.telegram_id }})
                   <span v-if="selectedUser.telegram_linked_at" class="block text-[11px] text-gray-400 font-sans">
                     Linked at: {{ formatDateTime(selectedUser.telegram_linked_at) }}
@@ -415,14 +415,14 @@
 
           <!-- Multi-Role Assignment -->
           <div>
-            <div class="flex items-center justify-between mb-1">
+            <div class="flex flex-wrap items-center justify-between gap-1 mb-1">
               <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">Assigned Roles</label>
               <span v-if="isEditingSelf" class="text-[11px] text-gray-500 flex items-center gap-1">
                 <UIcon name="i-heroicons-lock-closed" class="w-3.5 h-3.5" />
                 Self-role modification is locked
               </span>
             </div>
-            <div class="grid grid-cols-2 gap-2 p-2.5 border border-gray-200 rounded-md">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 p-2.5 border border-gray-200 rounded-md">
               <label
                 v-for="r in roles"
                 :key="r.id"
@@ -444,7 +444,7 @@
             </div>
           </div>
 
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Account Status</label>
               <select

@@ -246,8 +246,8 @@
           <!-- Physical Thermal Paper Simulation -->
           <div
             id="thermal-receipt-preview"
-            class="bg-white text-gray-900 shadow-xl border border-gray-200 p-4 transition-all duration-300 font-mono select-none"
-            :class="form.paper_width === '80mm' ? 'w-[320px] text-[11px]' : 'w-[260px] text-[10px]'"
+            class="bg-white text-gray-900 shadow-xl border border-gray-200 p-4 transition-all duration-300 font-mono select-none overflow-x-auto"
+            :class="form.paper_width === '80mm' ? 'w-full max-w-[320px] text-[11px]' : 'w-full max-w-[260px] text-[10px]'"
             style="font-family: 'Courier New', Courier, monospace;"
           >
             <!-- Receipt Header -->

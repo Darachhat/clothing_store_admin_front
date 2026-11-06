@@ -118,7 +118,7 @@
       size="md"
     >
       <form class="form-grid" @submit.prevent="handleReceive">
-        <div v-for="(item, idx) in receiveItems" :key="idx" class="flex items-center justify-between gap-3 p-3 rounded-lg bg-gray-50 border border-gray-200">
+        <div v-for="(item, idx) in receiveItems" :key="idx" class="flex flex-wrap items-center justify-between gap-3 p-3 rounded-lg bg-gray-50 border border-gray-200">
           <div class="min-w-0 flex-1">
             <div class="font-mono text-xs font-semibold text-gray-900">{{ item.sku_display }}</div>
             <div class="text-xs text-gray-500">

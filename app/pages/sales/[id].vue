@@ -868,8 +868,18 @@ onMounted(async () => {
   padding: 20px;
   max-height: 68vh;
   overflow-y: auto;
+  overflow-x: auto;
   display: flex;
   justify-content: center;
+}
+@media (max-width: 820px) {
+  .preview-canvas {
+    padding: 12px;
+    justify-content: flex-start;
+  }
+  .preview-canvas :deep(.kh-invoice-a4) {
+    min-width: 620px;
+  }
 }
 
 .print-only-invoice { display: none; }

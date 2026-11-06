@@ -100,7 +100,7 @@
 
         <div class="form-field">
           <label class="field-label">Adjustment Type <span class="required">*</span></label>
-          <div class="flex gap-4 pt-1">
+          <div class="flex flex-wrap gap-3 pt-1">
             <label class="flex items-center gap-2 cursor-pointer">
               <input v-model="form.type" type="radio" value="add" />
               <span class="text-sm font-medium text-emerald-700">+ Add Stock</span>

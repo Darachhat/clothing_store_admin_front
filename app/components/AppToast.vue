@@ -61,6 +61,20 @@ const { toasts, dismiss } = useAppToast()
   backdrop-filter: blur(8px);
 }
 
+@media (max-width: 639px) {
+  .a-toast-stack {
+    top: 12px;
+    right: 12px;
+    left: 12px;
+  }
+
+  .a-toast {
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+  }
+}
+
 .a-toast--green   .a-toast__icon { color: var(--status-green, #10b981); }
 .a-toast--red     .a-toast__icon { color: var(--status-red, #ef4444); }
 .a-toast--amber   .a-toast__icon { color: var(--status-amber, #f59e0b); }

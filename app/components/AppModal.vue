@@ -108,8 +108,9 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
   overflow: hidden;
+  min-width: 0;
 }
 
 .modal-panel--sm { max-width: 420px; }
@@ -131,6 +132,7 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  min-width: 0;
 }
 
 .modal-title {
@@ -151,8 +153,8 @@ onBeforeUnmount(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   background: none;
   border: 1px solid transparent;
   color: var(--text-tertiary, #64748b);
@@ -170,7 +172,9 @@ onBeforeUnmount(() => {
 .modal-body {
   padding: 20px;
   overflow-y: auto;
+  overflow-x: hidden;
   flex: 1;
+  min-width: 0;
 }
 
 /* Seamless support when a legacy page wraps <AppCard> directly inside <AppModal> */
@@ -185,11 +189,39 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 8px;
   padding: 13px 20px;
   border-top: 1px solid var(--border-subtle, #e5e7eb);
   background: var(--surface-inset, #f8fafc);
   flex-shrink: 0;
+}
+
+@media (max-width: 639px) {
+  .modal-backdrop {
+    padding: 8px;
+  }
+
+  .modal-panel {
+    max-height: calc(100dvh - 16px);
+    border-radius: 10px;
+  }
+
+  .modal-header {
+    padding: 12px 14px;
+  }
+
+  .modal-body {
+    padding: 14px;
+  }
+
+  .modal-body > :deep(.app-card:only-child) {
+    margin: -14px;
+  }
+
+  .modal-footer {
+    padding: 11px 14px;
+  }
 }
 
 .modal-enter-active,

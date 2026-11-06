@@ -175,31 +175,33 @@
             <AppButton size="xs" variant="default" icon="i-heroicons-plus" label="Add Item" @click="addLine" />
           </div>
 
-          <div v-for="(line, i) in form.items" :key="i" class="grid grid-cols-12 gap-2 items-center">
-            <select v-model="line.variant_id" required class="col-span-6 field-input" @change="onSelectVariant(line)">
+          <div v-for="(line, i) in form.items" :key="i" class="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center p-2.5 sm:p-0 rounded-lg sm:rounded-none border sm:border-none border-gray-200 bg-gray-50 sm:bg-transparent">
+            <select v-model="line.variant_id" required class="sm:col-span-6 field-input" @change="onSelectVariant(line)">
               <option value="" disabled>Select Variant (SKU)...</option>
               <option v-for="v in variantsList" :key="v.id" :value="v.id">
                 {{ v.sku }} — {{ v.product?.name || v.product_name || 'Product' }} (Cost: ${{ v.cost_price }})
               </option>
             </select>
-            <input
-              v-model.number="line.quantity_ordered"
-              type="number"
-              min="1"
-              placeholder="Qty"
-              required
-              class="col-span-2 field-input text-right mono"
-            />
-            <input
-              v-model.number="line.unit_cost"
-              type="number"
-              step="0.01"
-              min="0"
-              placeholder="Unit Cost"
-              required
-              class="col-span-3 field-input text-right mono"
-            />
-            <div class="col-span-1 flex justify-end">
+            <div class="grid grid-cols-2 sm:contents gap-2">
+              <input
+                v-model.number="line.quantity_ordered"
+                type="number"
+                min="1"
+                placeholder="Qty"
+                required
+                class="sm:col-span-2 field-input text-right mono"
+              />
+              <input
+                v-model.number="line.unit_cost"
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="Unit Cost"
+                required
+                class="sm:col-span-3 field-input text-right mono"
+              />
+            </div>
+            <div class="sm:col-span-1 flex justify-end">
               <AppButton
                 v-if="form.items.length > 1"
                 size="xs"
@@ -235,7 +237,7 @@
           <div
             v-for="item in receiveItems"
             :key="item.purchase_item_id || item.variant_id"
-            class="flex items-center justify-between bg-gray-50 p-3 rounded-lg border border-gray-200"
+            class="flex flex-wrap items-center justify-between gap-2 bg-gray-50 p-3 rounded-lg border border-gray-200"
           >
             <div>
               <p class="font-medium text-sm text-gray-900 mono">

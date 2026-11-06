@@ -33,20 +33,6 @@
               v-model="form.username"
               type="text"
               class="login-input"
-              placeholder="username or Telegram username"
-              autocomplete="username"
-              autofocus
-              required
-            />
-          </div>
-
-          <div class="login-field">
-            <label class="login-label" for="password">Password</label>
-            <input
-              id="username"
-              v-model="form.username"
-              type="text"
-              class="login-input"
               placeholder="admin or +85569382165"
               autocomplete="username"
               autofocus
@@ -341,16 +327,24 @@ onMounted(async () => {
 
 .login-brand {
   display: none;
-  width: 400px;
-  min-width: 400px;
+  width: 320px;
+  min-width: 300px;
   background: var(--brand-900, #111827);
-  padding: var(--space-6, 48px) var(--space-4, 32px);
+  padding: var(--space-5, 40px) var(--space-3, 24px);
   flex-direction: column;
   justify-content: center;
 }
 
 @media (min-width: 768px) {
   .login-brand { display: flex; }
+}
+
+@media (min-width: 1024px) {
+  .login-brand {
+    width: 400px;
+    min-width: 400px;
+    padding: var(--space-6, 48px) var(--space-4, 32px);
+  }
 }
 
 .login-brand__inner { display: flex; flex-direction: column; gap: var(--space-3, 24px); }

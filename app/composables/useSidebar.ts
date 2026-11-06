@@ -168,6 +168,8 @@ export function useSidebar() {
       const saved = localStorage.getItem(SIDEBAR_STORAGE_KEY)
       if (saved !== null) {
         isCollapsed.value = saved === '1'
+      } else if (window.innerWidth >= 768 && window.innerWidth < 1024) {
+        isCollapsed.value = true
       }
     }
   }

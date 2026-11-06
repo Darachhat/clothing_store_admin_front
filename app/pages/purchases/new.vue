@@ -195,6 +195,24 @@ onMounted(async () => {
   display: flex;
   align-items: flex-start;
   gap: 10px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 639px) {
+  .item-row {
+    padding: 10px;
+    border: 1px solid var(--border-subtle, #e5e7eb);
+    border-radius: var(--radius-md, 6px);
+    background: var(--surface-inset, #f8fafc);
+  }
+  .item-row > .flex-1 {
+    flex: 1 1 100%;
+  }
+  .item-row > .w-28,
+  .item-row > .w-32 {
+    flex: 1 1 calc(50% - 8px);
+    width: auto !important;
+  }
 }
 
 .item-remove {

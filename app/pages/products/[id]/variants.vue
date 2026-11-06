@@ -424,8 +424,9 @@ onMounted(async () => {
   background: #f1f5f9;
   border: 1px solid var(--border-subtle, #e5e7eb);
   border-radius: var(--radius-md, 6px);
-  padding: 20px;
+  padding: 16px;
   width: 100%;
+  overflow-x: auto;
   display: flex;
   justify-content: center;
 }
