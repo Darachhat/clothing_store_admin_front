@@ -1,216 +1,233 @@
 <template>
-  <div class="max-w-3xl mx-auto space-y-6">
-    <div class="flex items-center gap-3">
-      <AppButton
-        to="/products"
-        variant="ghost"
-        icon="i-heroicons-arrow-left"
-        label="Back to Products"
-      />
-      <div>
-        <h2 class="text-xl font-bold text-gray-900 dark:text-white">Create New Product</h2>
-        <p class="text-sm text-gray-500 dark:text-gray-400">Add an apparel product to your catalog</p>
+  <div class="page-root">
+    <AppPageHeader
+      title="New Product"
+      description="Create a master catalog product with category classification, pricing, and image media."
+      :breadcrumbs="[
+        { label: 'Catalog', to: '/products' },
+        { label: 'Products', to: '/products' },
+        { label: 'New Product' },
+      ]"
+    />
+
+    <form class="product-form-layout" @submit.prevent="handleSubmit">
+      <!-- Left Column: Core Details & Pricing -->
+      <div class="product-form-main">
+        <AppCard title="Basic Information">
+          <div class="form-grid">
+            <div class="form-row">
+              <AppInput
+                v-model="form.name"
+                label="Product Name"
+                placeholder="e.g. Classic Linen Oxford Shirt"
+                required
+                :error="errors.name"
+              />
+              <AppInput
+                v-model="form.sku_prefix"
+                label="SKU Prefix"
+                placeholder="e.g. OXF-SHIRT"
+                required
+                :error="errors.sku_prefix"
+              />
+            </div>
+
+            <div class="form-row">
+              <AppSelect v-model="form.category_id" label="Category" :options="categoryOptions" />
+              <AppSelect v-model="form.brand_id" label="Brand" :options="brandOptions" />
+            </div>
+
+            <div class="form-row">
+              <AppSelect v-model="form.gender" label="Gender" :options="genderOptions" />
+              <AppSelect v-model="form.season" label="Season" :options="seasonOptions" />
+            </div>
+
+            <div class="form-field">
+              <label class="field-label">Description</label>
+              <textarea
+                v-model="form.description"
+                class="field-input field-textarea"
+                rows="3"
+                placeholder="Optional fabric composition, fit notes, and care instructions…"
+              />
+            </div>
+          </div>
+        </AppCard>
+
+        <AppCard title="Pricing & Valuation">
+          <div class="form-row">
+            <AppInput
+              v-model="form.cost_price"
+              label="Unit Cost Price (USD)"
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="0.00"
+              required
+              :error="errors.cost_price"
+            />
+            <AppInput
+              v-model="form.retail_price"
+              label="Retail Selling Price (USD)"
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="0.00"
+              required
+              :error="errors.retail_price"
+            />
+          </div>
+        </AppCard>
       </div>
-    </div>
 
-    <AppCard>
-      <form class="space-y-5" @submit.prevent="submitProduct">
-        <div>
-          <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-            Product Name <span class="text-red-500">*</span>
-          </label>
-          <AppInput
-            v-model="form.name"
-            placeholder="e.g. Classic Cotton T-Shirt, Slim Fit Denim Jeans"
-            size="lg"
-            required
-          />
-        </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-            Description
-          </label>
-          <textarea
-            v-model="form.description"
-            placeholder="Detailed description, fabric composition, wash & care instructions..."
-            rows="3"
-            class="w-full text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white p-2.5 focus:outline-none focus:ring-1 focus:ring-gray-400"
-          />
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-              Category
-            </label>
-            <AppSelect
-              v-model="form.category_id"
-              :options="categoryOptions"
-              placeholder="Select product category"
-            />
+      <!-- Right Column: Status & Media -->
+      <div class="product-form-side">
+        <AppCard title="Visibility & Status">
+          <div class="form-grid">
+            <AppSelect v-model="form.status" label="Catalog Status" :options="statusOptions" />
+            <p class="field-hint">
+              Active products are immediately available for variant creation and POS checkout.
+            </p>
           </div>
+        </AppCard>
 
-          <div>
-            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-              Brand
-            </label>
-            <AppSelect
-              v-model="form.brand_id"
-              :options="brandOptions"
-              placeholder="Select brand / manufacturer"
-            />
-          </div>
+        <AppCard title="Product Image">
+          <AppFileUpload v-model="form.image_url" label="Upload Photo" />
+        </AppCard>
+
+        <div class="form-actions-bar">
+          <AppButton type="button" variant="default" label="Cancel" to="/products" />
+          <AppButton type="submit" variant="primary" label="Create Product" icon="i-heroicons-check" :loading="saving" />
         </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-              Supplier (Optional)
-            </label>
-            <AppSelect
-              v-model="form.supplier_id"
-              :options="supplierOptions"
-              placeholder="Select procurement supplier"
-            />
-          </div>
-
-          <div>
-            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-              Status
-            </label>
-            <AppSelect
-              v-model="form.status_code"
-              :options="[
-                { label: 'Active', value: 'ACTIVE' },
-                { label: 'Draft / Inactive', value: 'INACTIVE' }
-              ]"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-            Product Main Photo
-          </label>
-          <AppFileUpload
-            v-model="form.image_url"
-            folder="products"
-            hint="Upload high-res product photo (PNG, JPG, WEBP)"
-          />
-        </div>
-
-        <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 dark:border-gray-800">
-          <AppButton
-            to="/products"
-            variant="ghost"
-            label="Cancel"
-          />
-          <AppButton
-            type="submit"
-            variant="primary"
-            :loading="isSubmitting"
-            label="Create Product"
-          />
-        </div>
-      </form>
-    </AppCard>
+      </div>
+    </form>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { useProductApi, useCatalogApi, useSupplierApi } from '~/composables/useApi'
-import { useAppToast } from '~/composables/useAppToast'
+import type { Category, Brand } from '~/types'
 
-definePageMeta({
-  middleware: ['auth'],
-})
-
+definePageMeta({ middleware: ['auth'] })
 useHead({ title: 'New Product — Clothing Store Admin' })
 
 const { createProduct } = useProductApi()
 const { listCategories, listBrands } = useCatalogApi()
-const { listSuppliers } = useSupplierApi()
 const { addToast } = useAppToast()
-const router = useRouter()
 
-const isSubmitting = ref(false)
-
-const categoryOptions = ref<{ label: string; value: string }[]>([])
-const brandOptions = ref<{ label: string; value: string }[]>([])
-const supplierOptions = ref<{ label: string; value: string }[]>([])
+const categories = ref<Category[]>([])
+const brands = ref<Brand[]>([])
+const saving = ref(false)
 
 const form = reactive({
   name: '',
-  description: '',
+  sku_prefix: '',
   category_id: '',
   brand_id: '',
-  supplier_id: '',
-  status_code: 'ACTIVE',
-  image_url: '',
+  gender: 'UNISEX',
+  season: '',
+  cost_price: '',
+  retail_price: '',
+  description: '',
+  image_url: null as string | null,
+  status: 'ACTIVE',
 })
 
-async function loadDropdowns() {
-  try {
-    const [cats, brands, suppliers]: [any, any, any] = await Promise.all([
-      listCategories(),
-      listBrands(),
-      listSuppliers(),
-    ])
+const errors = reactive<Record<string, string>>({})
 
-    const catItems = Array.isArray(cats) ? cats : (cats?.items || [])
-    categoryOptions.value = catItems.map((c: any) => ({ label: c.name, value: c.id }))
+const categoryOptions = computed(() => [
+  { label: 'None', value: '' },
+  ...categories.value.map(c => ({ label: c.name, value: c.id })),
+])
 
-    const brandItems = Array.isArray(brands) ? brands : (brands?.items || [])
-    brandOptions.value = brandItems.map((b: any) => ({ label: b.name, value: b.id }))
+const brandOptions = computed(() => [
+  { label: 'None', value: '' },
+  ...brands.value.map(b => ({ label: b.name, value: b.id })),
+])
 
-    const supItems = Array.isArray(suppliers) ? suppliers : (suppliers?.items || [])
-    supplierOptions.value = supItems.map((s: any) => ({ label: s.name, value: s.id }))
-  } catch (err) {
-    console.warn('Failed to load product creation dropdowns:', err)
-  }
+const genderOptions = [
+  { label: 'Unisex', value: 'UNISEX' },
+  { label: 'Men', value: 'MEN' },
+  { label: 'Women', value: 'WOMEN' },
+  { label: 'Kids', value: 'KIDS' },
+]
+
+const seasonOptions = [
+  { label: 'All Season', value: '' },
+  { label: 'Spring / Summer', value: 'SS' },
+  { label: 'Autumn / Winter', value: 'AW' },
+]
+
+const statusOptions = [
+  { label: 'Active', value: 'ACTIVE' },
+  { label: 'Inactive', value: 'INACTIVE' },
+]
+
+function validate() {
+  Object.keys(errors).forEach(k => delete errors[k])
+  if (!form.name.trim()) errors.name = 'Name is required'
+  if (!form.sku_prefix.trim()) errors.sku_prefix = 'SKU prefix is required'
+  if (!form.cost_price || isNaN(Number(form.cost_price))) errors.cost_price = 'Valid cost price is required'
+  if (!form.retail_price || isNaN(Number(form.retail_price))) errors.retail_price = 'Valid retail price is required'
+  return Object.keys(errors).length === 0
 }
 
-async function submitProduct() {
-  if (!form.name.trim()) return
-  isSubmitting.value = true
+async function handleSubmit() {
+  if (!validate()) return
+  saving.value = true
   try {
-    const payload = {
+    const product = await createProduct({
       name: form.name.trim(),
-      description: form.description?.trim() || null,
+      sku_prefix: form.sku_prefix.trim().toUpperCase(),
       category_id: form.category_id || null,
       brand_id: form.brand_id || null,
-      supplier_id: form.supplier_id || null,
-      status_code: form.status_code,
-      image_url: form.image_url?.trim() || null,
-    }
-
-    const res: any = await createProduct(payload)
-    addToast({
-      title: 'Product Created',
-      description: `${res?.name || form.name} was added to the catalog.`,
-      color: 'green',
+      gender: form.gender,
+      season: form.season || null,
+      cost_price: Number(form.cost_price),
+      retail_price: Number(form.retail_price),
+      description: form.description || null,
+      image_url: form.image_url || null,
+      status_code: form.status,
     })
-    // Navigate to variants configuration for the new product
-    if (res?.id) {
-      router.push(`/products/${res.id}/variants`)
-    } else {
-      router.push('/products')
-    }
-  } catch (err: any) {
-    addToast({
-      title: 'Failed to create product',
-      description: err?.data?.detail || err?.message || 'Server error creating product',
-      color: 'red',
-    })
+    addToast({ type: 'success', title: 'Product created' })
+    await navigateTo(`/products/${(product as any).id}`)
+  } catch (e: any) {
+    addToast({ type: 'error', title: 'Error', message: e?.data?.detail ?? String(e) })
   } finally {
-    isSubmitting.value = false
+    saving.value = false
   }
 }
 
-onMounted(() => {
-  loadDropdowns()
+onMounted(async () => {
+  const [cats, brs] = await Promise.all([listCategories(), listBrands()])
+  categories.value = cats ?? []
+  brands.value = brs ?? []
 })
 </script>
+
+<style scoped>
+.product-form-layout {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 960px) {
+  .product-form-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.product-form-main,
+.product-form-side {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-actions-bar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+</style>

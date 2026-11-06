@@ -1,5 +1,52 @@
 // Centralized API Contract Types - Re-exported from Generated Backend OpenAPI Schemas
+import type {
+  BRAND_RESPONSE_SCHEMA,
+  CATEGORY_RESPONSE_SCHEMA,
+  CUSTOMER_RESPONSE_SCHEMA,
+  PRODUCT_WITH_VARIANTS_SCHEMA,
+  PRODUCT_VARIANT_RESPONSE_SCHEMA,
+  PURCHASE_ORDER_RESPONSE_SCHEMA,
+} from './api.generated'
+
 export * from './api.generated'
+
+export type Brand = BRAND_RESPONSE_SCHEMA & {
+  code?: string
+}
+
+export type Category = CATEGORY_RESPONSE_SCHEMA & {
+  code?: string
+}
+
+export type Customer = CUSTOMER_RESPONSE_SCHEMA & {
+  code?: string
+  full_name?: string
+  loyalty_points?: number
+  total_spent?: number
+}
+
+export type Product = PRODUCT_WITH_VARIANTS_SCHEMA & {
+  sku_prefix?: string
+  category_name?: string | null
+  brand_name?: string | null
+  gender?: string
+  season?: string | null
+  cost_price?: number | string
+  retail_price?: number | string
+  variant_count?: number
+}
+
+export type ProductVariant = PRODUCT_VARIANT_RESPONSE_SCHEMA & {
+  color_code?: string | null
+  cost_price_override?: number | string | null
+  retail_price_override?: number | string | null
+}
+
+export type PurchaseOrder = PURCHASE_ORDER_RESPONSE_SCHEMA & {
+  supplier_name?: string | null
+  expected_at?: string | null
+  received_at?: string | null
+}
 
 // Frontend-only View Models and Presentation Types
 export interface PosTerminal {
@@ -8,11 +55,15 @@ export interface PosTerminal {
   warehouse_id: string
   code: string
   name: string
-  status_code: 'ACTIVE' | 'INACTIVE' | 'MAINTENANCE'
+  status_code: 'ACTIVE' | 'INACTIVE' | 'MAINTENANCE' | string
+  device_identifier?: string | null
+  receipt_prefix?: string | null
   last_active_at: string | null
   notes: string | null
   created_at: string
   updated_at: string
+  branch_name?: string
+  warehouse_name?: string
   branch?: {
     id: string
     name: string
@@ -30,14 +81,20 @@ export interface PosTerminalCreate {
   warehouse_id: string
   code: string
   name: string
-  notes?: string
+  device_identifier?: string | null
+  receipt_prefix?: string | null
+  status_code?: string
+  notes?: string | null
 }
 
 export interface PosTerminalUpdate {
+  branch_id?: string
   warehouse_id?: string
   name?: string
+  device_identifier?: string | null
+  receipt_prefix?: string | null
   status_code?: string
-  notes?: string
+  notes?: string | null
 }
 
 export interface DashboardData {
@@ -51,6 +108,8 @@ export interface DashboardData {
 }
 
 // Translations CMS Types
+export type SupportedLocale = 'en' | 'km' | 'cn' | 'jp' | 'kr'
+
 export interface TranslationItem {
   id: string
   ref_id?: string
@@ -106,4 +165,3 @@ export interface TranslationPurgeResult {
   status: string
   message: string
 }
-

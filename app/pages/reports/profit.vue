@@ -1,79 +1,103 @@
 <template>
-  <div class="space-y-4">
-    <div class="flex items-center justify-between">
-      <div>
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Profit &amp; Loss</h2>
-        <p class="text-sm text-gray-500 dark:text-gray-400">Revenue, COGS, gross profit, and net income</p>
-      </div>
-      <AppButton variant="default" label="Export CSV" @click="exportCsv" />
-    </div>
+  <div class="page-root">
+    <AppPageHeader
+      title="Profit &amp; Loss"
+      description="Gross revenue, operating expenses, discounts, refunds, and net profit margin."
+      :breadcrumbs="[{ label: 'Reports', to: '/reports' }, { label: 'Profit & Loss' }]"
+      back-to="/reports"
+    >
+      <template #actions>
+        <AppButton variant="default" size="sm" icon="i-heroicons-arrow-down-tray" @click="exportCsv">
+          Export CSV
+        </AppButton>
+      </template>
+    </AppPageHeader>
 
     <!-- Date Picker -->
     <AppCard>
-      <div class="flex gap-3 flex-wrap items-end">
-        <div>
-          <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">From</label>
-          <input v-model="fromDate" type="date" class="rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm" />
+      <div class="report-filter-row">
+        <div class="form-field">
+          <label class="field-label">From Date</label>
+          <input v-model="fromDate" type="date" class="field-input" />
         </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">To</label>
-          <input v-model="toDate" type="date" class="rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm" />
+        <div class="form-field">
+          <label class="field-label">To Date</label>
+          <input v-model="toDate" type="date" class="field-input" />
         </div>
-        <AppButton variant="primary" label="Run Report" :loading="loading" @click="fetchReport" />
+        <AppButton variant="primary" icon="i-heroicons-play" :loading="loading" @click="fetchReport">
+          Run Report
+        </AppButton>
       </div>
     </AppCard>
 
     <!-- P&L KPIs -->
-    <div class="grid grid-cols-2 lg:grid-cols-3 gap-4">
-      <AppCard>
-        <p class="text-xs font-semibold text-gray-500 uppercase mb-1">Gross Revenue</p>
-        <p class="text-2xl font-bold text-emerald-600">${{ fmt(report.revenue) }}</p>
-      </AppCard>
-      <AppCard>
-        <p class="text-xs font-semibold text-gray-500 uppercase mb-1">Total Expenses</p>
-        <p class="text-2xl font-bold text-red-600">${{ fmt(report.expenses) }}</p>
-      </AppCard>
-      <AppCard>
-        <p class="text-xs font-semibold text-gray-500 uppercase mb-1">Gross Profit</p>
-        <p class="text-2xl font-bold" :class="Number(report.gross_profit) >= 0 ? 'text-emerald-600' : 'text-red-600'">
-          ${{ fmt(report.gross_profit) }}
-        </p>
-      </AppCard>
-      <AppCard>
-        <p class="text-xs font-semibold text-gray-500 uppercase mb-1">Total Discounts</p>
-        <p class="text-2xl font-bold text-amber-500">${{ fmt(report.discounts) }}</p>
-      </AppCard>
-      <AppCard>
-        <p class="text-xs font-semibold text-gray-500 uppercase mb-1">Returns / Refunds</p>
-        <p class="text-2xl font-bold text-orange-500">${{ fmt(report.refunds) }}</p>
-      </AppCard>
-      <AppCard>
-        <p class="text-xs font-semibold text-gray-500 uppercase mb-1">Net Profit</p>
-        <p class="text-3xl font-extrabold" :class="Number(report.net_profit) >= 0 ? 'text-emerald-600' : 'text-red-600'">
-          ${{ fmt(report.net_profit) }}
-        </p>
-        <p class="text-xs text-gray-500 mt-1">Margin: {{ report.margin }}%</p>
-      </AppCard>
+    <div class="pnl-kpi-grid">
+      <AppStatCard
+        label="Gross Revenue"
+        :value="`$${fmt(report.revenue)}`"
+        sublabel="Total sales revenue"
+        icon="i-heroicons-banknotes"
+        tone="success"
+        :loading="loading"
+      />
+      <AppStatCard
+        label="Total Expenses"
+        :value="`$${fmt(report.expenses)}`"
+        sublabel="Approved operating expenses"
+        icon="i-heroicons-receipt-refund"
+        tone="danger"
+        :loading="loading"
+      />
+      <AppStatCard
+        label="Gross Profit"
+        :value="`$${fmt(report.gross_profit)}`"
+        sublabel="Revenue minus COGS"
+        icon="i-heroicons-chart-bar"
+        :tone="Number(report.gross_profit) >= 0 ? 'success' : 'danger'"
+        :loading="loading"
+      />
+      <AppStatCard
+        label="Total Discounts"
+        :value="`$${fmt(report.discounts)}`"
+        sublabel="Promotional & manual discounts"
+        icon="i-heroicons-tag"
+        tone="warning"
+        :loading="loading"
+      />
+      <AppStatCard
+        label="Returns / Refunds"
+        :value="`$${fmt(report.refunds)}`"
+        sublabel="Refunded sales value"
+        icon="i-heroicons-arrow-uturn-left"
+        tone="warning"
+        :loading="loading"
+      />
+      <AppStatCard
+        label="Net Profit"
+        :value="`$${fmt(report.net_profit)}`"
+        :sublabel="`Net Margin: ${report.margin}%`"
+        icon="i-heroicons-scale"
+        :tone="Number(report.net_profit) >= 0 ? 'primary' : 'danger'"
+        :loading="loading"
+      />
     </div>
 
     <!-- Breakdown table by period -->
-    <AppCard v-if="rows.length > 0">
-      <template #header>
-        <p class="text-sm font-semibold text-gray-700 dark:text-gray-200">Period Breakdown</p>
-      </template>
+    <AppCard v-if="rows.length > 0" title="Period Breakdown" :no-pad="true">
       <AppTable
         :columns="tableColumns"
         :rows="rows"
-        :empty-state="{ icon: 'i-heroicons-currency-dollar', label: 'No data' }"
+        :loading="loading"
+        empty-text="No period breakdown rows."
       >
         <template #cell-revenue="{ row }">
-          <span class="text-emerald-600 font-semibold">${{ fmt(row.revenue) }}</span>
+          <span class="val-positive">${{ fmt(row.revenue) }}</span>
         </template>
         <template #cell-expenses="{ row }">
-          <span class="text-red-500">${{ fmt(row.expenses) }}</span>
+          <span class="val-negative">${{ fmt(row.expenses) }}</span>
         </template>
         <template #cell-net_profit="{ row }">
-          <span :class="Number(row.net_profit) >= 0 ? 'text-emerald-600 font-bold' : 'text-red-600 font-bold'">
+          <span :class="Number(row.net_profit) >= 0 ? 'val-positive' : 'val-negative'">
             ${{ fmt(row.net_profit) }}
           </span>
         </template>
@@ -84,9 +108,10 @@
 
 <script setup lang="ts">
 definePageMeta({ middleware: ['auth'] })
+useHead({ title: 'Profit & Loss — Clothing Store' })
 
 const reportApi = useReportApi()
-const toast = useAppToast()
+const { addToast } = useAppToast()
 
 const loading = ref(false)
 const fromDate = ref(new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10))
@@ -104,10 +129,10 @@ const report = ref({
 const rows = ref<any[]>([])
 
 const tableColumns = [
-  { key: 'period', label: 'Period' },
-  { key: 'revenue', label: 'Revenue' },
-  { key: 'expenses', label: 'Expenses' },
-  { key: 'net_profit', label: 'Net Profit' },
+  { key: 'period', label: 'Period', sortable: true },
+  { key: 'revenue', label: 'Revenue', sortable: true },
+  { key: 'expenses', label: 'Expenses', sortable: true },
+  { key: 'net_profit', label: 'Net Profit', sortable: true },
 ]
 
 function fmt(val: any) {
@@ -121,7 +146,6 @@ async function fetchReport() {
       from_date: fromDate.value,
       to_date: toDate.value,
     }) as any
-    // Handle both flat response and nested
     report.value = {
       revenue: data.revenue || data.total_revenue || 0,
       expenses: data.expenses || data.total_expenses || 0,
@@ -133,7 +157,7 @@ async function fetchReport() {
     }
     rows.value = data.rows || []
   } catch (err: any) {
-    toast.add({ title: 'Error', description: err?.data?.detail || err.message, color: 'red' })
+    addToast({ type: 'error', title: 'Error', message: err?.data?.detail || err.message })
   } finally {
     loading.value = false
   }
@@ -162,3 +186,42 @@ function exportCsv() {
 
 onMounted(fetchReport)
 </script>
+
+<style scoped>
+.report-filter-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.pnl-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+@media (max-width: 1024px) {
+  .pnl-kpi-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .pnl-kpi-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.val-positive {
+  font-weight: 600;
+  color: var(--status-success-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.val-negative {
+  font-weight: 600;
+  color: var(--status-danger-text);
+  font-variant-numeric: tabular-nums;
+}
+</style>

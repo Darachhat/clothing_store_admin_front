@@ -1,230 +1,195 @@
 <template>
   <div class="page-root">
-    <!-- Header -->
-    <div class="page-header">
-      <div class="page-header__left">
-        <NuxtLink to="/products" class="back-link">
-          <UIcon name="i-heroicons-arrow-left" class="w-3.5 h-3.5" />
-          Products
-        </NuxtLink>
-        <h2 class="page-title">{{ product?.name ?? '…' }}</h2>
-        <p class="page-subtitle">{{ product?.code }}</p>
-      </div>
-      <div class="page-header__actions">
-        <AppButton variant="ghost" :to="`/products/${id}/variants`">Manage Variants</AppButton>
-        <AppButton variant="default" :to="`/products/${id}/edit`">Edit Product</AppButton>
-      </div>
-    </div>
+    <AppPageHeader
+      :title="product?.name || 'Product Detail'"
+      :description="product ? `SKU Prefix: ${product.sku_prefix}` : 'Loading product details...'"
+      :breadcrumbs="[
+        { label: 'Catalog', to: '/products' },
+        { label: 'Products', to: '/products' },
+        { label: product?.name || 'Detail' },
+      ]"
+    >
+      <template v-if="product" #badge>
+        <AppBadge :color="statusColor((product as any).status_code || product.status)" size="sm">
+          {{ (product as any).status_code || product.status || 'ACTIVE' }}
+        </AppBadge>
+      </template>
+      <template v-if="product" #actions>
+        <AppButton variant="default" size="sm" icon="i-heroicons-pencil-square" label="Edit Product" :to="`/products/${id}/edit`" />
+        <AppButton variant="primary" size="sm" icon="i-heroicons-squares-plus" label="Manage Variants" :to="`/products/${id}/variants`" />
+      </template>
+    </AppPageHeader>
 
-    <!-- Loading -->
-    <div v-if="loading" class="state-card">
-      <UIcon name="i-heroicons-arrow-path" class="spinner w-5 h-5" />
-      Loading product…
-    </div>
+    <div v-if="loading" class="state-card">Loading product details…</div>
 
     <template v-else-if="product">
       <div class="detail-grid">
-        <!-- Left: Info -->
-        <div class="detail-col">
-          <!-- Product image -->
-          <AppCard>
-            <div class="product-image-wrap">
-              <img v-if="product.image_url" :src="product.image_url" :alt="product.name" class="product-image" />
-              <div v-else class="product-image-placeholder">
-                <UIcon name="i-heroicons-photo" class="w-10 h-10 text-slate-400" />
-              </div>
-            </div>
-          </AppCard>
-
-          <!-- Details -->
+        <div class="space-y-4">
           <AppCard title="Product Details">
+            <div v-if="product.image_url" class="product-detail-image-wrap">
+              <img :src="product.image_url" :alt="product.name" class="product-detail-image" />
+            </div>
+
             <dl class="detail-list">
               <div class="detail-row">
-                <dt>Code</dt>
-                <dd><code class="mono">{{ product.code }}</code></dd>
+                <dt>SKU Prefix</dt>
+                <dd><code class="mono font-semibold">{{ product.sku_prefix }}</code></dd>
+              </div>
+              <div class="detail-row">
+                <dt>Category</dt>
+                <dd>{{ product.category_name ?? '—' }}</dd>
+              </div>
+              <div class="detail-row">
+                <dt>Brand</dt>
+                <dd>{{ product.brand_name ?? '—' }}</dd>
+              </div>
+              <div class="detail-row">
+                <dt>Gender</dt>
+                <dd>{{ product.gender }}</dd>
+              </div>
+              <div class="detail-row">
+                <dt>Season</dt>
+                <dd>{{ product.season ?? 'All Season' }}</dd>
+              </div>
+              <div class="detail-row">
+                <dt>Cost Price</dt>
+                <dd class="mono">${{ Number(product.cost_price).toFixed(2) }}</dd>
+              </div>
+              <div class="detail-row">
+                <dt>Retail Price</dt>
+                <dd class="mono font-bold text-gray-900">${{ Number(product.retail_price).toFixed(2) }}</dd>
               </div>
               <div class="detail-row">
                 <dt>Status</dt>
                 <dd>
-                  <AppBadge :color="product.status === 'ACTIVE' ? 'green' : product.status === 'DISCONTINUED' ? 'red' : 'default'">
-                    {{ product.status }}
+                  <AppBadge :color="statusColor((product as any).status_code || product.status)" size="sm">
+                    {{ (product as any).status_code || product.status || 'ACTIVE' }}
                   </AppBadge>
                 </dd>
               </div>
-              <div class="detail-row">
-                <dt>Category</dt>
-                <dd>{{ product.category?.name ?? '—' }}</dd>
-              </div>
-              <div class="detail-row">
-                <dt>Brand</dt>
-                <dd>{{ product.brand?.name ?? '—' }}</dd>
-              </div>
-              <div class="detail-row">
-                <dt>Slug</dt>
-                <dd><code class="mono">{{ product.slug }}</code></dd>
-              </div>
-              <div class="detail-row">
-                <dt>Created</dt>
-                <dd>{{ fmtDate(product.created_at || '') }}</dd>
-              </div>
-              <div class="detail-row">
-                <dt>Updated</dt>
-                <dd>{{ fmtDate(product.updated_at || '') }}</dd>
+              <div v-if="product.description" class="detail-row detail-row--block">
+                <dt>Description</dt>
+                <dd>{{ product.description }}</dd>
               </div>
             </dl>
           </AppCard>
         </div>
 
-        <!-- Right: Description + Variants -->
-        <div class="detail-col">
-          <AppCard title="Description">
-            <p v-if="product.description" class="description-text">{{ product.description }}</p>
-            <p v-else class="empty-text">No description.</p>
-          </AppCard>
-
-          <AppCard title="Variants">
-            <div v-if="!product.variants?.length" class="empty-text">No variants yet.</div>
-            <AppTable
-              v-else
-              :columns="variantCols"
-              :rows="product.variants"
-              :loading="false"
-              empty-text="No variants."
-            >
-              <template #cell-status="{ value }">
-                <AppBadge :color="value === 'ACTIVE' ? 'green' : 'default'">{{ value }}</AppBadge>
-              </template>
-              <template #cell-selling_price="{ value }">
-                ${{ Number(value).toFixed(2) }}
-              </template>
-            </AppTable>
-            <div style="margin-top:12px;">
-              <AppButton variant="default" size="sm" :to="`/products/${id}/variants`">Manage Variants →</AppButton>
-            </div>
-          </AppCard>
-        </div>
+        <AppCard :title="`Variants (${variants.length})`" :no-pad="true">
+          <template #header-right>
+            <AppButton size="xs" variant="default" icon="i-heroicons-plus" label="Add / Edit Variants" :to="`/products/${id}/variants`" />
+          </template>
+          <AppTable :columns="variantCols" :rows="variants" :loading="false" empty-text="No variants configured yet.">
+            <template #cell-sku="{ value }">
+              <code class="mono font-semibold">{{ value }}</code>
+            </template>
+            <template #cell-retail_price_override="{ value }">
+              <span class="mono">{{ value != null ? `$${Number(value).toFixed(2)}` : `$${Number(product.retail_price).toFixed(2)}` }}</span>
+            </template>
+            <template #cell-status="{ row }">
+              <AppBadge :color="(row.status_code || row.status) === 'ACTIVE' ? 'green' : 'default'" size="sm">
+                {{ row.status_code || row.status || 'ACTIVE' }}
+              </AppBadge>
+            </template>
+          </AppTable>
+        </AppCard>
       </div>
     </template>
 
-    <div v-else class="state-card">Product not found.</div>
+    <AppErrorState
+      v-else
+      title="Product not found"
+      message="The requested product could not be found."
+      @retry="loadData"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import type { Product } from '~/types'
+import type { Product, ProductVariant } from '~/types'
 
 definePageMeta({ middleware: ['auth'] })
 
 const route = useRoute()
 const id = route.params.id as string
-useHead({ title: 'Product Detail — Clothing Store' })
+useHead({ title: 'Product Detail — Clothing Store Admin' })
 
 const { getProduct } = useProductApi()
+const { listVariants } = useVariantApi()
+
 const product = ref<Product | null>(null)
+const variants = ref<ProductVariant[]>([])
 const loading = ref(true)
 
 const variantCols = [
-  { key: 'sku', label: 'SKU' },
-  { key: 'selling_price', label: 'Price' },
+  { key: 'sku', label: 'SKU', sortable: true },
+  { key: 'size', label: 'Size', sortable: true },
+  { key: 'color', label: 'Color', sortable: true },
+  { key: 'retail_price_override', label: 'Price', sortable: true },
   { key: 'status', label: 'Status' },
 ]
 
-function fmtDate(d: string) {
-  return new Date(d).toLocaleDateString()
+function statusColor(s: string) {
+  const map: Record<string, string> = { ACTIVE: 'green', INACTIVE: 'yellow', ARCHIVED: 'default' }
+  return map[s] ?? 'default'
 }
 
-onMounted(async () => {
+async function loadData() {
+  loading.value = true
   try {
-    product.value = await getProduct(id) as Product
+    const [p, v] = await Promise.all([
+      getProduct(id),
+      listVariants({ product_id: id }),
+    ])
+    product.value = p
+    variants.value = v ?? []
   } finally {
     loading.value = false
   }
-})
+}
+
+onMounted(loadData)
 </script>
 
 <style scoped>
-.page-root { display: flex; flex-direction: column; gap: 16px; }
-
-.page-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-.page-header__left { display: flex; flex-direction: column; gap: 2px; }
-.page-header__actions { display: flex; gap: 8px; align-items: center; }
-
-.back-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 12px;
-  color: var(--text-tertiary);
-  text-decoration: none;
-  margin-bottom: 4px;
-}
-.back-link:hover { color: var(--text-primary); }
-
-.page-title { font-size: 16px; font-weight: 600; color: var(--text-primary); letter-spacing: -0.01em; }
-.page-subtitle { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
-
-.state-card {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 48px;
-  background: var(--surface-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  color: var(--text-tertiary);
-  font-size: 13px;
-}
-
-.spinner { animation: spin 1s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-
 .detail-grid {
   display: grid;
-  grid-template-columns: 280px 1fr;
+  grid-template-columns: 360px 1fr;
   gap: 16px;
   align-items: start;
 }
-@media (max-width: 768px) {
-  .detail-grid { grid-template-columns: 1fr; }
+
+@media (max-width: 900px) {
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
-.detail-col { display: flex; flex-direction: column; gap: 16px; }
-
-.product-image-wrap {
-  width: 100%;
-  aspect-ratio: 1;
+.product-detail-image-wrap {
+  margin-bottom: 14px;
+  border-radius: var(--radius-lg, 8px);
+  border: 1px solid var(--border-subtle, #e5e7eb);
+  background: var(--surface-inset, #f8fafc);
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--surface-inset);
-  border-radius: var(--radius-md);
-  overflow: hidden;
+  max-height: 220px;
 }
-.product-image { width: 100%; height: 100%; object-fit: cover; }
-.product-image-placeholder { color: var(--text-muted); }
 
-.detail-list { display: flex; flex-direction: column; gap: 0; }
-.detail-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px solid var(--border-subtle);
-  font-size: 13px;
+.product-detail-image {
+  width: 100%;
+  max-height: 220px;
+  object-fit: contain;
 }
-.detail-row:last-child { border-bottom: none; }
-.detail-row dt { color: var(--text-tertiary); }
-.detail-row dd { color: var(--text-primary); font-weight: 500; }
 
-.mono { font-family: var(--font-mono, monospace); font-size: 12px; }
+.detail-row--block {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
 
-.description-text { font-size: 13px; color: var(--text-secondary); line-height: 1.6; white-space: pre-wrap; }
-.empty-text { font-size: 13px; color: var(--text-tertiary); font-style: italic; }
+.detail-row--block dd {
+  text-align: left;
+}
 </style>

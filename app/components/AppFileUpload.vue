@@ -92,7 +92,7 @@ import { useUpload } from '~/composables/useUpload'
 
 const props = withDefaults(
   defineProps<{
-    modelValue?: string
+    modelValue?: string | null
     label?: string
     hint?: string
     folder?: string

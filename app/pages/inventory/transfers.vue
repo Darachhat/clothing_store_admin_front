@@ -1,45 +1,99 @@
 <template>
-  <div class="space-y-4">
-    <div class="flex items-center justify-between">
-      <div>
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Stock Transfers</h2>
-        <p class="text-sm text-gray-500 dark:text-gray-400">Move inventory between warehouses and branches</p>
-      </div>
-      <AppButton label="New Transfer" variant="primary" @click="openCreateModal" />
-    </div>
+  <div class="page-root">
+    <AppPageHeader
+      title="Stock Transfers"
+      description="Create, dispatch, and receive inter-warehouse inventory transfers."
+      :breadcrumbs="[
+        { label: 'Inventory', to: '/inventory' },
+        { label: 'Transfers' },
+      ]"
+      primary-label="New Transfer"
+      primary-icon="i-heroicons-plus"
+      @primary-click="openCreateModal"
+    >
+      <template #secondary>
+        <AppButton size="sm" variant="default" icon="i-heroicons-arrow-path" label="Refresh" :loading="loading" @click="fetchTransfers" />
+      </template>
+    </AppPageHeader>
 
-    <!-- Transfers Table -->
-    <AppCard>
+    <AppFilterBar
+      v-model:search="searchQuery"
+      search-placeholder="Search transfers by number, source/destination warehouse, or notes..."
+      :chips="activeChips"
+      :shown-count="filteredTransfers.length"
+      :total-count="transfers.length"
+      count-label="transfers"
+      @remove-chip="statusFilter = ''"
+      @clear-all="searchQuery = ''; statusFilter = ''"
+    >
+      <AppSelect
+        v-model="statusFilter"
+        :options="[
+          { label: 'All Statuses', value: '' },
+          { label: 'Draft', value: 'DRAFT' },
+          { label: 'Dispatched / In Transit', value: 'IN_TRANSIT' },
+          { label: 'Received', value: 'RECEIVED' },
+          { label: 'Cancelled', value: 'CANCELLED' },
+        ]"
+        style="min-width: 170px;"
+      />
+    </AppFilterBar>
+
+    <AppCard :no-pad="true">
       <AppTable
         :columns="columns"
-        :rows="transfers"
+        :rows="filteredTransfers"
         :loading="loading"
-        :empty-state="{ icon: 'i-heroicons-truck', label: 'No transfers found' }"
+        :empty-state="{
+          icon: 'i-heroicons-truck',
+          label: 'No stock transfers found',
+          description: 'Create a transfer to move inventory between store warehouses.',
+        }"
       >
         <template #cell-transfer_number="{ row }">
-          <span class="font-mono font-medium text-primary-600 dark:text-primary-400">{{ row.transfer_number }}</span>
+          <span class="mono font-semibold text-gray-900">{{ row.transfer_number }}</span>
+        </template>
+
+        <template #cell-from_warehouse_display="{ row }">
+          <span class="font-medium text-gray-800">{{ row.from_warehouse_display }}</span>
+        </template>
+
+        <template #cell-to_warehouse_display="{ row }">
+          <span class="font-medium text-gray-800">{{ row.to_warehouse_display }}</span>
         </template>
 
         <template #cell-status="{ row }">
-          <AppBadge :color="getStatusColor(row.status)" :label="row.status" size="sm" variant="subtle" />
+          <AppBadge :color="statusColor(row.status_code || row.status)" size="sm">
+            {{ row.status_code || row.status }}
+          </AppBadge>
+        </template>
+
+        <template #cell-created_at="{ row }">
+          <span class="text-xs text-gray-500">{{ new Date(row.created_at).toLocaleDateString() }}</span>
         </template>
 
         <template #cell-actions="{ row }">
-          <div class="flex gap-1">
+          <div class="flex items-center justify-end gap-1">
             <AppButton
-              v-if="row.status === 'PENDING'"
-              size="sm" color="blue" variant="default" label="Approve"
-              @click="approveTransfer(row.id)"
+              v-if="(row.status_code || row.status) === 'DRAFT'"
+              size="xs"
+              variant="primary"
+              label="Dispatch"
+              @click="promptAction(row, 'dispatch')"
             />
             <AppButton
-              v-if="row.status === 'APPROVED'"
-              size="sm" color="amber" variant="default" label="Dispatch"
-              @click="dispatchTransfer(row.id)"
+              v-if="['DISPATCHED', 'IN_TRANSIT'].includes(row.status_code || row.status)"
+              size="xs"
+              variant="primary"
+              label="Receive"
+              @click="promptAction(row, 'receive')"
             />
             <AppButton
-              v-if="row.status === 'IN_TRANSIT'"
-              size="sm" color="emerald" variant="default" label="Receive"
-              @click="receiveTransfer(row.id)"
+              v-if="['DRAFT', 'DISPATCHED', 'IN_TRANSIT'].includes(row.status_code || row.status)"
+              size="xs"
+              variant="danger"
+              label="Cancel"
+              @click="promptAction(row, 'cancel')"
             />
           </div>
         </template>
@@ -47,127 +101,223 @@
     </AppCard>
 
     <!-- Create Transfer Modal -->
-    <AppModal v-model="showModal" :ui="{ width: 'sm:max-w-xl' }">
-      <AppCard>
-        <template #header>
+    <AppModal
+      v-model="showCreateModal"
+      title="Create Stock Transfer"
+      description="Select source and destination warehouses and specify the SKUs to move."
+      size="lg"
+    >
+      <form class="form-grid" @submit.prevent="submitCreate">
+        <div class="form-row">
+          <div class="form-field">
+            <label class="field-label">Source Warehouse (From) <span class="required">*</span></label>
+            <select v-model="form.from_warehouse_id" required class="field-input">
+              <option value="" disabled>Select source warehouse...</option>
+              <option v-for="w in warehousesList" :key="w.id" :value="w.id">
+                {{ w.branchName ? `${w.branchName} — ${w.name}` : w.name }}
+              </option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="field-label">Destination Warehouse (To) <span class="required">*</span></label>
+            <select v-model="form.to_warehouse_id" required class="field-input">
+              <option value="" disabled>Select destination warehouse...</option>
+              <option v-for="w in warehousesList" :key="w.id" :value="w.id" :disabled="w.id === form.from_warehouse_id">
+                {{ w.branchName ? `${w.branchName} — ${w.name}` : w.name }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label class="field-label">Notes</label>
+          <input v-model="form.notes" type="text" placeholder="Optional transfer notes..." class="field-input" />
+        </div>
+
+        <div class="space-y-2">
           <div class="flex items-center justify-between">
-            <h3 class="text-base font-semibold">Create Stock Transfer</h3>
-            <AppButton variant="ghost" size="sm" icon="i-heroicons-x-mark" @click="showModal = false" />
+            <label class="field-label">Items to Transfer <span class="required">*</span></label>
+            <AppButton size="xs" variant="default" icon="i-heroicons-plus" label="Add Line" @click="addLine" />
           </div>
-        </template>
+          <div v-for="(line, i) in form.items" :key="i" class="flex gap-2 items-center">
+            <select v-model="line.variant_id" required class="field-input flex-1">
+              <option value="" disabled>Select product variant (SKU)...</option>
+              <option v-for="v in variantsList" :key="v.id" :value="v.id">
+                {{ v.sku }} — {{ v.product_name || 'Product' }} ({{ [v.color, v.size].filter(Boolean).join(' / ') }})
+              </option>
+            </select>
+            <input
+              v-model.number="line.quantity"
+              type="number"
+              min="1"
+              placeholder="Qty"
+              required
+              class="field-input w-24 text-right mono"
+            />
+            <AppButton
+              v-if="form.items.length > 1"
+              size="xs"
+              variant="ghost"
+              icon="i-heroicons-trash"
+              @click="form.items.splice(i, 1)"
+            />
+          </div>
+        </div>
 
-        <form class="space-y-4" @submit.prevent="handleCreate">
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">From Warehouse *</label>
-              <select v-model="form.from_warehouse_id" required class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm">
-                <option value="" disabled>Select source</option>
-                <option v-for="w in warehouses" :key="w.id" :value="w.id">{{ w.name }}</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">To Warehouse *</label>
-              <select v-model="form.to_warehouse_id" required class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm">
-                <option value="" disabled>Select destination</option>
-                <option v-for="w in warehouses" :key="w.id" :value="w.id">{{ w.name }}</option>
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <div class="flex items-center justify-between mb-2">
-              <label class="text-xs font-medium text-gray-700 dark:text-gray-300">Items *</label>
-              <AppButton size="sm" variant="default" label="Add Item" @click="addItem" />
-            </div>
-            <div class="space-y-2 max-h-40 overflow-y-auto">
-              <div v-for="(item, idx) in form.items" :key="idx" class="flex gap-2 items-center bg-gray-50 dark:bg-gray-800/50 p-2 rounded-lg">
-                <select v-model="item.variant_id" required class="flex-1 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 py-1.5 text-xs">
-                  <option value="" disabled>Select SKU</option>
-                  <option v-for="v in variants" :key="v.id" :value="v.id">{{ v.sku }}</option>
-                </select>
-                <input v-model.number="item.quantity" type="number" min="1" required placeholder="Qty"
-                  class="w-20 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 py-1.5 text-xs" />
-                <AppButton variant="danger" size="sm" icon="i-heroicons-trash" @click="form.items.splice(idx, 1)" />
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Notes</label>
-            <input v-model="form.notes" type="text" placeholder="Transfer reason or reference"
-              class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm" />
-          </div>
-
-          <div class="flex justify-end gap-2 pt-2">
-            <AppButton variant="ghost" label="Cancel" @click="showModal = false" />
-            <AppButton type="submit" variant="primary" label="Create Transfer" :loading="saving" />
-          </div>
-        </form>
-      </AppCard>
+        <div class="modal-actions">
+          <AppButton type="button" variant="ghost" label="Cancel" @click="showCreateModal = false" />
+          <AppButton type="submit" variant="primary" label="Create Transfer" :loading="saving" />
+        </div>
+      </form>
     </AppModal>
+
+    <!-- Action Confirmation Dialog -->
+    <AppConfirmDialog
+      v-model="showActionConfirm"
+      :title="actionConfirmTitle"
+      :variant="pendingAction === 'cancel' ? 'danger' : 'primary'"
+      :confirm-label="actionConfirmTitle"
+      :loading="processingAction"
+      :message="actionConfirmMessage"
+      @confirm="executeTransferAction"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-definePageMeta({ middleware: ['auth'] })
+import type { FilterChipItem } from '~/components/AppFilterBar.vue'
 
-const invApi = useInventoryApi()
-const variantApi = useVariantApi()
+definePageMeta({ middleware: ['auth'] })
+useHead({ title: 'Stock Transfers — Clothing Store Admin' })
+
+const inventoryApi = useInventoryApi()
 const branchApi = useBranchApi()
+const variantApi = useVariantApi()
 const toast = useAppToast()
 
 const loading = ref(false)
 const saving = ref(false)
+const processingAction = ref(false)
 const transfers = ref<any[]>([])
-const warehouses = ref<any[]>([])
-const variants = ref<any[]>([])
-const showModal = ref(false)
+const warehousesList = ref<any[]>([])
+const variantsList = ref<any[]>([])
+
+const searchQuery = ref('')
+const statusFilter = ref('')
+
+const showCreateModal = ref(false)
+const showActionConfirm = ref(false)
+const actionTarget = ref<any>(null)
+const pendingAction = ref<'dispatch' | 'receive' | 'cancel'>('dispatch')
 
 const form = ref({
   from_warehouse_id: '',
   to_warehouse_id: '',
   notes: '',
-  items: [{ variant_id: '', quantity: 1 }] as any[],
+  items: [{ variant_id: '', quantity: 1 }],
 })
 
 const columns = [
-  { key: 'transfer_number', label: 'Transfer #' },
-  { key: 'status', label: 'Status' },
+  { key: 'transfer_number', label: 'Transfer #', sortable: true },
+  { key: 'from_warehouse_display', label: 'From Warehouse', sortable: true },
+  { key: 'to_warehouse_display', label: 'To Warehouse', sortable: true },
+  { key: 'status', label: 'Status', sortable: true },
   { key: 'notes', label: 'Notes' },
-  { key: 'created_at', label: 'Created', format: (v: string) => new Date(v).toLocaleDateString() },
-  { key: 'actions', label: 'Actions' },
+  { key: 'created_at', label: 'Created', sortable: true },
+  { key: 'actions', label: 'Actions', align: 'right' as const },
 ]
 
-function getStatusColor(status: string) {
-  switch (status) {
-    case 'PENDING': return 'gray'
-    case 'APPROVED': return 'blue'
-    case 'IN_TRANSIT': return 'amber'
-    case 'COMPLETED': return 'emerald'
-    case 'CANCELLED': return 'red'
-    default: return 'gray'
+const warehouseMap = computed<Record<string, string>>(() => {
+  const m: Record<string, string> = {}
+  for (const w of warehousesList.value) {
+    if (w?.id) m[w.id] = w.branchName ? `${w.branchName} — ${w.name}` : w.name
   }
+  return m
+})
+
+const enrichedTransfers = computed(() =>
+  transfers.value.map(t => ({
+    ...t,
+    from_warehouse_display: t.from_warehouse_name || warehouseMap.value[t.from_warehouse_id] || String(t.from_warehouse_id || '').slice(0, 8),
+    to_warehouse_display: t.to_warehouse_name || warehouseMap.value[t.to_warehouse_id] || String(t.to_warehouse_id || '').slice(0, 8),
+  })),
+)
+
+const filteredTransfers = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase()
+  return enrichedTransfers.value.filter((t) => {
+    const st = t.status_code || t.status
+    if (statusFilter.value) {
+      if (statusFilter.value === 'IN_TRANSIT' && !['DISPATCHED', 'IN_TRANSIT'].includes(st)) return false
+      else if (statusFilter.value !== 'IN_TRANSIT' && st !== statusFilter.value) return false
+    }
+    if (q) {
+      const hay = [t.transfer_number, t.from_warehouse_display, t.to_warehouse_display, t.notes]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+      if (!hay.includes(q)) return false
+    }
+    return true
+  })
+})
+
+const activeChips = computed<FilterChipItem[]>(() =>
+  statusFilter.value ? [{ key: 'status', label: 'Status', value: statusFilter.value }] : [],
+)
+
+function statusColor(status: string) {
+  const map: Record<string, string> = {
+    DRAFT: 'default',
+    DISPATCHED: 'yellow',
+    IN_TRANSIT: 'yellow',
+    RECEIVED: 'green',
+    CANCELLED: 'red',
+  }
+  return map[status] || 'default'
 }
 
-function addItem() {
-  form.value.items.push({ variant_id: variants.value[0]?.id || '', quantity: 1 })
+function addLine() {
+  form.value.items.push({ variant_id: '', quantity: 1 })
 }
 
-function openCreateModal() {
+async function openCreateModal() {
   form.value = {
-    from_warehouse_id: warehouses.value[0]?.id || '',
-    to_warehouse_id: warehouses.value[1]?.id || '',
+    from_warehouse_id: warehousesList.value[0]?.id || '',
+    to_warehouse_id: warehousesList.value[1]?.id || '',
     notes: '',
-    items: [{ variant_id: variants.value[0]?.id || '', quantity: 1 }],
+    items: [{ variant_id: '', quantity: 1 }],
   }
-  showModal.value = true
+  showCreateModal.value = true
+}
+
+async function fetchLookups() {
+  try {
+    const [bList, vList] = await Promise.all([
+      branchApi.listBranches().catch(() => []),
+      variantApi.listVariants({ limit: 200 }).catch(() => []),
+    ])
+    variantsList.value = (vList as any[]) || []
+    const allWh: any[] = []
+    for (const b of (bList as any[]) || []) {
+      if (b.warehouses?.length) {
+        for (const w of b.warehouses) allWh.push({ ...w, branchName: b.name })
+      } else {
+        try {
+          const whs = await branchApi.listWarehouses(b.id) as any[]
+          for (const w of whs || []) allWh.push({ ...w, branchName: b.name })
+        } catch {}
+      }
+    }
+    warehousesList.value = allWh
+  } catch {}
 }
 
 async function fetchTransfers() {
   loading.value = true
   try {
-    const data = await invApi.listTransfers({ limit: 50 }) as any[]
-    transfers.value = data
+    const data = await inventoryApi.listTransfers() as any[]
+    transfers.value = data || []
   } catch (err: any) {
     toast.add({ title: 'Error', description: err?.data?.detail || err.message, color: 'red' })
   } finally {
@@ -175,38 +325,16 @@ async function fetchTransfers() {
   }
 }
 
-async function fetchMeta() {
-  try {
-    const [stocks, vars, branches] = await Promise.all([
-      invApi.listStocks({}) as any,
-      variantApi.listVariants({ limit: 500 }) as any,
-      branchApi.listBranches().catch(() => []),
-    ])
-    const wMap = new Map()
-    ;(branches || []).forEach((b: any) => {
-      ;(b.warehouses || []).forEach((w: any) => {
-        wMap.set(w.id, { id: w.id, name: `${b.name} — ${w.name}` })
-      })
-    })
-    ;(stocks as any[]).forEach((s: any) => {
-      if (!wMap.has(s.warehouse_id)) wMap.set(s.warehouse_id, { id: s.warehouse_id, name: `Warehouse ${s.warehouse_id.slice(0, 8)}` })
-    })
-    warehouses.value = Array.from(wMap.values())
-    variants.value = vars || []
-  } catch (e) { console.error(e) }
-}
-
-async function handleCreate() {
+async function submitCreate() {
+  if (form.value.from_warehouse_id === form.value.to_warehouse_id) {
+    toast.add({ title: 'Validation Error', description: 'Source and destination warehouses must be different.', color: 'amber' })
+    return
+  }
   saving.value = true
   try {
-    await invApi.createTransfer({
-      from_warehouse_id: form.value.from_warehouse_id,
-      to_warehouse_id: form.value.to_warehouse_id,
-      notes: form.value.notes,
-      items: form.value.items,
-    })
-    toast.add({ title: 'Success', description: 'Transfer created', color: 'green' })
-    showModal.value = false
+    await inventoryApi.createTransfer(form.value)
+    toast.add({ title: 'Transfer Created', description: 'New stock transfer created', color: 'green' })
+    showCreateModal.value = false
     await fetchTransfers()
   } catch (err: any) {
     toast.add({ title: 'Error', description: err?.data?.detail || err.message, color: 'red' })
@@ -215,38 +343,54 @@ async function handleCreate() {
   }
 }
 
-async function approveTransfer(id: string) {
-  try {
-    await invApi.approveTransfer(id)
-    toast.add({ title: 'Approved', description: 'Transfer approved', color: 'green' })
-    await fetchTransfers()
-  } catch (err: any) {
-    toast.add({ title: 'Error', description: err?.data?.detail || err.message, color: 'red' })
+const actionConfirmTitle = computed(() => {
+  if (pendingAction.value === 'dispatch') return 'Dispatch Transfer'
+  if (pendingAction.value === 'receive') return 'Receive Transfer'
+  return 'Cancel Transfer'
+})
+
+const actionConfirmMessage = computed(() => {
+  const num = actionTarget.value?.transfer_number || ''
+  if (pendingAction.value === 'dispatch') {
+    return `Dispatch transfer ${num}? Stock will be deducted from ${actionTarget.value?.from_warehouse_display} and marked In Transit.`
   }
+  if (pendingAction.value === 'receive') {
+    return `Mark transfer ${num} as received? Stock will be added to ${actionTarget.value?.to_warehouse_display}.`
+  }
+  return `Are you sure you want to cancel transfer ${num}?`
+})
+
+function promptAction(row: any, action: 'dispatch' | 'receive' | 'cancel') {
+  actionTarget.value = row
+  pendingAction.value = action
+  showActionConfirm.value = true
 }
 
-async function dispatchTransfer(id: string) {
+async function executeTransferAction() {
+  if (!actionTarget.value) return
+  processingAction.value = true
   try {
-    await invApi.dispatchTransfer(id)
-    toast.add({ title: 'Dispatched', description: 'Transfer dispatched', color: 'amber' })
+    if (pendingAction.value === 'dispatch') {
+      await inventoryApi.dispatchTransfer(actionTarget.value.id)
+      toast.add({ title: 'Dispatched', description: 'Transfer marked as in transit', color: 'green' })
+    } else if (pendingAction.value === 'receive') {
+      await inventoryApi.receiveTransfer(actionTarget.value.id, {})
+      toast.add({ title: 'Received', description: 'Transfer stock received into destination warehouse', color: 'green' })
+    } else {
+      await inventoryApi.cancelTransfer(actionTarget.value.id)
+      toast.add({ title: 'Cancelled', description: 'Stock transfer cancelled', color: 'green' })
+    }
+    showActionConfirm.value = false
     await fetchTransfers()
   } catch (err: any) {
     toast.add({ title: 'Error', description: err?.data?.detail || err.message, color: 'red' })
-  }
-}
-
-async function receiveTransfer(id: string) {
-  try {
-    await invApi.receiveTransfer(id)
-    toast.add({ title: 'Received', description: 'Transfer completed, stock updated!', color: 'green' })
-    await fetchTransfers()
-  } catch (err: any) {
-    toast.add({ title: 'Error', description: err?.data?.detail || err.message, color: 'red' })
+  } finally {
+    processingAction.value = false
   }
 }
 
 onMounted(async () => {
-  await fetchMeta()
+  await fetchLookups()
   await fetchTransfers()
 })
 </script>

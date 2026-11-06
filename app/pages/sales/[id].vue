@@ -649,6 +649,18 @@
     </template>
 
     <div v-else class="state-card no-print">Sale not found.</div>
+
+    <!-- Cancel Sale Confirm Dialog -->
+    <AppConfirmDialog
+      v-model="showCancelConfirm"
+      title="Cancel Sale"
+      :description="`Are you sure you want to cancel invoice ${sale?.invoice_number || id}?`"
+      consequence="This action will void the pending sale record and cannot be undone."
+      confirm-label="Cancel Sale"
+      variant="danger"
+      :loading="cancelling"
+      @confirm="confirmCancelSale"
+    />
   </div>
 </template>
 
@@ -678,6 +690,8 @@ const sale = ref<Sale | null>(null)
 const loading = ref(true)
 const printMode = ref<'THERMAL' | 'A4'>('A4')
 const showPreviewModal = ref(false)
+const showCancelConfirm = ref(false)
+const cancelling = ref(false)
 
 const itemCols = [
   { key: 'product', label: 'បរិយាយទំនិញ / Product' },
@@ -735,14 +749,21 @@ async function printSale(mode: 'THERMAL' | 'A4') {
   await printWithKhmerFonts()
 }
 
-async function handleCancel() {
-  if (!confirm('Cancel this sale? This cannot be undone.')) return
+function handleCancel() {
+  showCancelConfirm.value = true
+}
+
+async function confirmCancelSale() {
+  cancelling.value = true
   try {
     await cancelSale(id)
+    showCancelConfirm.value = false
     addToast({ type: 'success', title: 'Sale cancelled' })
     sale.value = await getSale(id) as Sale
   } catch (e: any) {
     addToast({ type: 'error', title: 'Error', message: e?.data?.detail ?? String(e) })
+  } finally {
+    cancelling.value = false
   }
 }
 

@@ -1,36 +1,36 @@
 <template>
-  <div class="space-y-6">
+  <div class="page-root">
     <!-- Page Header -->
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-      <div>
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Integrations &amp; Gateways</h2>
-        <p class="text-sm text-gray-500 dark:text-gray-400">
-          Manage database-stored ABA PayWay payment gateway credentials and Telegram notification bots
-        </p>
-      </div>
-
-      <!-- Tab Switcher -->
-      <div class="inline-flex rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-1">
-        <button
-          type="button"
-          class="flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
-          :class="activeTab === 'payway' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'"
-          @click="activeTab = 'payway'"
-        >
-          <UIcon name="i-heroicons-credit-card" class="w-4 h-4" />
-          <span>ABA PayWay Gateway</span>
-        </button>
-        <button
-          type="button"
-          class="flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
-          :class="activeTab === 'telegram' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'"
-          @click="activeTab = 'telegram'"
-        >
-          <UIcon name="i-heroicons-paper-airplane" class="w-4 h-4" />
-          <span>Telegram Notifications</span>
-        </button>
-      </div>
-    </div>
+    <AppPageHeader
+      title="Integrations &amp; Gateways"
+      description="Manage database-stored ABA PayWay payment gateway credentials and Telegram notification bots."
+      :breadcrumbs="[{ label: 'System Settings', to: '/settings' }, { label: 'Integrations & Gateways' }]"
+      back-to="/settings"
+    >
+      <template #actions>
+        <!-- Tab Switcher -->
+        <div class="inline-flex rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-1">
+          <button
+            type="button"
+            class="flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+            :class="activeTab === 'payway' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'"
+            @click="activeTab = 'payway'"
+          >
+            <UIcon name="i-heroicons-credit-card" class="w-4 h-4" />
+            <span>ABA PayWay Gateway</span>
+          </button>
+          <button
+            type="button"
+            class="flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
+            :class="activeTab === 'telegram' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'"
+            @click="activeTab = 'telegram'"
+          >
+            <UIcon name="i-heroicons-paper-airplane" class="w-4 h-4" />
+            <span>Telegram Notifications</span>
+          </button>
+        </div>
+      </template>
+    </AppPageHeader>
 
     <!-- ═══════════════════════════════════════════════════════════════════════ -->
     <!-- TAB 1: ABA PAYWAY GATEWAY CONFIGURATION                                 -->
@@ -525,13 +525,27 @@
         </div>
       </form>
     </AppModal>
+
+    <AppConfirmDialog
+      v-model="showDeleteChatConfirm"
+      title="Remove Alert Channel"
+      description="Are you sure you want to remove this Telegram alert channel?"
+      consequence="Outbound store notifications routed to this channel code will no longer be delivered."
+      confirm-label="Remove Channel"
+      variant="danger"
+      :loading="deletingChat"
+      @confirm="confirmDeleteChat"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 
-const toast = useToast()
+definePageMeta({ middleware: ['auth'] })
+useHead({ title: 'Integrations & Gateways — Clothing Store' })
+
+const toast = useAppToast()
 const gatewayApi = usePaymentGatewayApi()
 const tgApi = useTelegramSystemApi()
 
@@ -724,14 +738,28 @@ async function handleSaveChat() {
   }
 }
 
-async function handleDeleteChat(id: string) {
-  if (!confirm('Are you sure you want to remove this alert channel?')) return
+const showDeleteChatConfirm = ref(false)
+const chatIdToDelete = ref('')
+const deletingChat = ref(false)
+
+function handleDeleteChat(id: string) {
+  chatIdToDelete.value = id
+  showDeleteChatConfirm.value = true
+}
+
+async function confirmDeleteChat() {
+  if (!chatIdToDelete.value) return
+  deletingChat.value = true
   try {
-    await tgApi.deleteChat(id)
+    await tgApi.deleteChat(chatIdToDelete.value)
     toast.add({ title: 'Deleted', description: 'Alert channel removed', color: 'green' })
+    showDeleteChatConfirm.value = false
+    chatIdToDelete.value = ''
     await loadTelegramData()
   } catch (err: any) {
     toast.add({ title: 'Error', description: err.message || 'Failed to delete alert channel', color: 'red' })
+  } finally {
+    deletingChat.value = false
   }
 }
 

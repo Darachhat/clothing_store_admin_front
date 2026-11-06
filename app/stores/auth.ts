@@ -50,7 +50,13 @@ export const useAuthStore = defineStore('auth', {
   },
 
   actions: {
-    async login(username: string, password: string) {
+    async login(usernameOrObj: string | { email?: string; username?: string; password: string }, password?: string) {
+      const username = typeof usernameOrObj === 'string'
+        ? usernameOrObj
+        : (usernameOrObj.username || usernameOrObj.email || '')
+      const pwd = typeof usernameOrObj === 'string'
+        ? (password || '')
+        : usernameOrObj.password
       const data = await $fetch<{
         access_token: string
         refresh_token: string
@@ -58,7 +64,7 @@ export const useAuthStore = defineStore('auth', {
       }>(API_ENDPOINTS.auth.login, {
         baseURL: getApiBase(),
         method: 'POST',
-        body: { username, password },
+        body: { username, password: pwd },
         timeout: 12000,
       })
 

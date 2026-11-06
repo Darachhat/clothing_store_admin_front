@@ -1,15 +1,17 @@
-<!-- AppCard — flat white surface, 8px grid, 1px border -->
 <template>
-  <div class="a-card" :class="[noPad && 'a-card--no-pad', flush && 'a-card--flush']">
-    <div v-if="$slots.header || title" class="a-card__header">
+  <div class="app-card">
+    <div v-if="title || $slots.header" class="app-card__header">
       <slot name="header">
-        <span>{{ title }}</span>
+        <span class="app-card__title">{{ title }}</span>
       </slot>
+      <div v-if="$slots['header-right']" class="app-card__header-right">
+        <slot name="header-right" />
+      </div>
     </div>
-    <div class="a-card__body">
+    <div class="app-card__body" :class="{ 'no-pad': noPad }">
       <slot />
     </div>
-    <div v-if="$slots.footer" class="a-card__footer">
+    <div v-if="$slots.footer" class="app-card__footer">
       <slot name="footer" />
     </div>
   </div>
@@ -19,40 +21,61 @@
 defineProps<{
   title?: string
   noPad?: boolean
-  flush?: boolean  // no border-radius, edge-to-edge
 }>()
 </script>
 
 <style scoped>
-.a-card {
-  background: var(--surface-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
+.app-card {
+  background: var(--surface-card, #ffffff);
+  border: 1px solid var(--border-subtle, #e5e7eb);
+  border-radius: var(--radius-lg, 8px);
   overflow: hidden;
+  box-shadow: var(--shadow-xs, 0 1px 2px rgba(15, 23, 42, 0.04));
 }
-.a-card--flush {
-  border-radius: 0;
-  border-left: none;
-  border-right: none;
+
+.app-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 13px 18px;
+  border-bottom: 1px solid var(--border-subtle, #e5e7eb);
 }
-.a-card--no-pad .a-card__body {
+
+.app-card__header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.app-card__title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-primary, #0f172a);
+  letter-spacing: -0.01em;
+}
+
+.app-card__body {
+  padding: 18px;
+}
+
+.app-card__body.no-pad {
   padding: 0;
 }
-.a-card__header {
-  padding: 16px 20px 0;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-primary);
-  letter-spacing: -0.01em;
-  border-bottom: 1px solid var(--border-subtle);
-  padding-bottom: 12px;
+
+/* Automatic flush table handling when AppTable is the sole child of AppCard */
+.app-card__body > :deep(.app-table-wrap:only-child) {
+  margin: -18px;
 }
-.a-card__body {
-  padding: 20px;
+
+.app-card__body.no-pad > :deep(.app-table-wrap:only-child) {
+  margin: 0;
 }
-.a-card__footer {
-  padding: 12px 20px;
-  border-top: 1px solid var(--border-subtle);
-  background: var(--surface-bg);
+
+.app-card__footer {
+  padding: 12px 18px;
+  border-top: 1px solid var(--border-subtle, #e5e7eb);
+  background: var(--surface-inset, #f8fafc);
 }
 </style>

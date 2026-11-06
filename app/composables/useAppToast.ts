@@ -5,7 +5,7 @@ export interface Toast {
   id:          string
   title:       string
   description?: string
-  color?:      'green' | 'red' | 'amber' | 'default'
+  color?:      'green' | 'red' | 'amber' | 'yellow' | 'blue' | 'primary' | 'default'
   timeout?:    number
 }
 

@@ -1,819 +1,1474 @@
 <template>
-  <div class="space-y-6">
-    <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div>
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">POS Terminals &amp; Live Monitor</h2>
-        <p class="text-sm text-gray-500 dark:text-gray-400">
-          Real-time station heartbeat, cashier shift sessions, cash drawer oversight, and hardware assignments
-        </p>
-      </div>
-      <div class="flex items-center gap-2">
-        <!-- Live Auto-Refresh Toggle -->
-        <button
-          type="button"
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-          :class="{ '!text-emerald-700 dark:!text-emerald-400': autoRefreshEnabled }"
-          @click="toggleAutoRefresh"
-        >
-          <span
-            class="w-2 h-2 rounded-full"
-            :class="autoRefreshEnabled ? 'bg-emerald-500 animate-pulse' : 'bg-gray-400'"
+  <div class="page-root">
+    <!-- A. Standardized Page Heading -->
+    <AppPageHeader
+      title="POS Registers"
+      description="Manage registers, cashier shifts, workstation connections, and hardware assignments."
+      :breadcrumbs="[
+        { label: 'Store', to: '/settings/terminals' },
+        { label: 'POS Registers' },
+      ]"
+      primary-label="Add Register"
+      primary-icon="i-heroicons-plus"
+      @primary-click="openCreateModal"
+    >
+      <template #secondary>
+        <div class="refresh-toolbar">
+          <span v-if="lastRefreshedAt" class="refresh-timestamp" title="Last successful data refresh">
+            <UIcon name="i-heroicons-clock" class="w-3.5 h-3.5" />
+            <span>Updated {{ lastRefreshedAt }}</span>
+          </span>
+
+          <button
+            type="button"
+            class="auto-refresh-toggle"
+            :class="{ 'is-active': autoRefresh }"
+            title="Toggle 15-second live workstation heartbeat polling"
+            @click="toggleAutoRefresh"
+          >
+            <span class="auto-refresh-dot" :class="{ 'is-pulsing': autoRefresh && !loading }" />
+            <span>Auto-refresh (15s)</span>
+          </button>
+
+          <AppButton
+            size="sm"
+            variant="default"
+            icon="i-heroicons-arrow-path"
+            label="Refresh"
+            :loading="loading"
+            @click="fetchData"
           />
-          <span>Auto-refresh (15s): {{ autoRefreshEnabled ? 'ON' : 'OFF' }}</span>
-        </button>
+        </div>
+      </template>
+    </AppPageHeader>
 
-        <AppButton
-          variant="ghost"
-          icon="i-heroicons-arrow-path"
-          label="Refresh"
-          :loading="loading"
-          @click="fetchData"
-        />
-        <AppButton
-          variant="primary"
-          icon="i-heroicons-plus"
-          label="Add Register"
-          @click="openCreateModal"
-        />
+    <!-- B. KPI Cards (Accurate Backend-Derived Counts & Clear Definitions) -->
+    <div class="kpi-grid">
+      <AppStatCard
+        label="Total Registers"
+        :value="terminals.length"
+        icon="i-heroicons-computer-desktop"
+        tone="neutral"
+        :loading="initialLoading"
+        :sublabel="`${activeConfigCount} Active · ${maintenanceOrInactiveCount} Maintenance / Inactive`"
+      />
+
+      <AppStatCard
+        label="Online Workstations"
+        :value="onlineCount"
+        icon="i-heroicons-signal"
+        :tone="onlineCount > 0 ? 'green' : 'neutral'"
+        :badge="onlineCount > 0 ? 'Live' : '0 Active'"
+        :badge-color="onlineCount > 0 ? 'green' : 'default'"
+        :loading="initialLoading"
+        :sublabel="`${idleCount} Idle (< 5m) · ${offlineWorkstationCount} Disconnected (> 5m)`"
+      />
+
+      <AppStatCard
+        label="Active Open Shifts"
+        :value="openShiftsCount"
+        icon="i-heroicons-banknotes"
+        :tone="openShiftsCount > 0 ? 'blue' : 'neutral'"
+        :badge="openShiftsCount > 0 ? 'Open Drawers' : 'All Closed'"
+        :badge-color="openShiftsCount > 0 ? 'blue' : 'default'"
+        :loading="initialLoading"
+        :sublabel="`Total opening float: $${totalOpeningFloatUsd.toFixed(2)}`"
+      />
+
+      <AppStatCard
+        label="Offline / Maintenance"
+        :value="offlineOrMaintenanceCount"
+        icon="i-heroicons-wrench-screwdriver"
+        :tone="maintenanceOrInactiveCount > 0 ? 'amber' : 'neutral'"
+        :loading="initialLoading"
+        :sublabel="`${maintenanceOrInactiveCount} Config Disabled · ${offlineWorkstationCount} No Heartbeat`"
+      />
+    </div>
+
+    <!-- Operational Consistency Note when Open Shifts > Online Workstations -->
+    <div
+      v-if="!initialLoading && openShiftsCount > onlineCount"
+      class="consistency-banner"
+    >
+      <div class="consistency-banner__left">
+        <UIcon name="i-heroicons-information-circle" class="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+        <div>
+          <span class="font-semibold text-gray-900">
+            {{ openShiftsCount }} cashier {{ openShiftsCount === 1 ? 'shift remains' : 'shifts remain' }} OPEN while {{ onlineCount }} {{ onlineCount === 1 ? 'workstation is' : 'workstations are' }} sending live heartbeats.
+          </span>
+          <span class="text-gray-600 ml-1">
+            Cashier shifts stay open in the database until explicitly closed, even if the cashier closes their browser tab. You can inspect or end open shifts from the table below.
+          </span>
+        </div>
       </div>
     </div>
 
-    <!-- KPI Summary Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
-      <AppCard>
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Total Registers</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1">{{ terminals.length }}</p>
-          </div>
-          <div class="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-600 dark:text-gray-300">
-            <UIcon name="i-heroicons-computer-desktop" class="w-5 h-5" />
-          </div>
-        </div>
-      </AppCard>
+    <!-- C. Search & Multi-Facet Filter Bar -->
+    <AppFilterBar
+      v-model:search="searchQuery"
+      search-placeholder="Search by register name, code, cashier, or branch..."
+      :chips="activeFilterChips"
+      :shown-count="paginatedTerminals.length"
+      :total-count="filteredTerminals.length"
+      count-label="registers"
+      @remove-chip="removeFilterChip"
+      @clear-all="resetFilters"
+    >
+      <AppSelect
+        v-model="connectionFilter"
+        :options="[
+          { label: 'All Connections', value: '' },
+          { label: 'Online (< 45s)', value: 'ONLINE' },
+          { label: 'Idle (< 5m)', value: 'IDLE' },
+          { label: 'Offline', value: 'OFFLINE' },
+        ]"
+        style="min-width: 150px;"
+      />
 
-      <AppCard>
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Online Workstations</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1">{{ onlineCount }}</p>
-          </div>
-          <div class="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-            <UIcon name="i-heroicons-signal" class="w-5 h-5" />
-          </div>
-        </div>
-      </AppCard>
+      <AppSelect
+        v-model="branchFilter"
+        :options="branchFilterOptions"
+        style="min-width: 155px;"
+      />
 
-      <AppCard>
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Active Open Shifts</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1">{{ openShiftsCount }}</p>
-          </div>
-          <div class="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-blue-600 dark:text-blue-400">
-            <UIcon name="i-heroicons-banknotes" class="w-5 h-5" />
-          </div>
-        </div>
-      </AppCard>
+      <AppSelect
+        v-model="warehouseFilter"
+        :options="warehouseFilterOptions"
+        style="min-width: 165px;"
+      />
 
-      <AppCard>
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-xs font-medium text-gray-500 dark:text-gray-400">Maintenance / Offline</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white mt-1">{{ offlineCount }}</p>
-          </div>
-          <div class="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-500">
-            <UIcon name="i-heroicons-pause-circle" class="w-5 h-5" />
-          </div>
-        </div>
-      </AppCard>
-    </div>
+      <AppSelect
+        v-model="configStatusFilter"
+        :options="[
+          { label: 'All Config Statuses', value: '' },
+          { label: 'Active', value: 'ACTIVE' },
+          { label: 'Maintenance', value: 'MAINTENANCE' },
+          { label: 'Inactive', value: 'INACTIVE' },
+        ]"
+        style="min-width: 160px;"
+      />
+    </AppFilterBar>
 
-    <!-- Terminals Live Monitor Table Card -->
-    <AppCard>
+    <!-- Error State -->
+    <AppErrorState
+      v-if="loadError"
+      title="Failed to load POS registers"
+      :message="loadError"
+      @retry="fetchData"
+    />
+
+    <!-- Register Table -->
+    <AppCard v-else :no-pad="true">
       <AppTable
         :columns="columns"
-        :rows="terminals"
-        :loading="loading"
-        :empty-state="{ icon: 'i-heroicons-computer-desktop', label: 'No POS registers registered yet' }"
+        :rows="paginatedTerminals"
+        :loading="initialLoading"
+        :empty-state="{
+          icon: 'i-heroicons-computer-desktop',
+          label: hasAnyFilter ? 'No registers match the current filters' : 'No POS registers configured yet',
+          description: hasAnyFilter
+            ? 'Try clearing one or more filters to view all registers.'
+            : 'Add a POS register to assign branch/warehouse defaults and track cashier shifts.',
+        }"
       >
-        <!-- Register Identifier -->
+        <!-- 1. Register (Name + Code + Hardware summary) -->
         <template #cell-code="{ row }">
-          <div class="flex items-center gap-2.5">
-            <div class="w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-700 dark:text-gray-300 font-mono font-semibold text-xs border border-gray-200 dark:border-gray-700">
-              <UIcon name="i-heroicons-computer-desktop" class="w-4 h-4" />
+          <div class="register-cell">
+            <div class="register-cell__top">
+              <span class="register-name">{{ row.name }}</span>
+              <span class="register-code">{{ row.code }}</span>
             </div>
-            <div>
-              <p class="font-semibold text-gray-900 dark:text-white text-sm font-mono leading-tight">{{ row.code }}</p>
-              <p class="text-xs text-gray-500 leading-tight mt-0.5">{{ row.name }}</p>
-            </div>
-          </div>
-        </template>
-
-        <!-- Branch -->
-        <template #cell-branch="{ row }">
-          <div>
-            <p class="text-sm font-medium text-gray-800 dark:text-gray-200 leading-tight">{{ row.branch?.name || 'Branch' }}</p>
-            <p class="text-xs text-gray-500 font-mono leading-tight mt-0.5">{{ row.branch?.code }}</p>
-          </div>
-        </template>
-
-        <!-- Warehouse -->
-        <template #cell-warehouse="{ row }">
-          <div class="flex items-center gap-1.5">
-            <UIcon name="i-heroicons-building-storefront" class="w-3.5 h-3.5 text-gray-400" />
-            <span class="text-sm text-gray-700 dark:text-gray-300">{{ row.warehouse?.name || 'Main Warehouse' }}</span>
-          </div>
-        </template>
-
-        <!-- Live Heartbeat Status -->
-        <template #cell-heartbeat="{ row }">
-          <div class="flex items-center gap-2">
-            <span
-              class="w-2.5 h-2.5 rounded-full flex-shrink-0"
-              :class="getHeartbeatClass(row.last_active_at)"
-            />
-            <div class="text-xs">
-              <span class="font-medium text-gray-800 dark:text-gray-200">
-                {{ getHeartbeatLabel(row.last_active_at) }}
+            <div class="register-meta">
+              <span v-if="row.device_identifier" class="truncate max-w-[200px]" :title="row.device_identifier">
+                {{ row.device_identifier }}
               </span>
-              <p v-if="row.last_active_at" class="text-[11px] text-gray-400">
-                {{ formatRelativeTime(row.last_active_at) }}
-              </p>
-            </div>
-          </div>
-        </template>
-
-        <!-- Cashier Shift Status -->
-        <template #cell-shift="{ row }">
-          <div v-if="activeShiftsByTerminalId[row.id]" class="space-y-1">
-            <div class="flex items-center gap-1.5">
-              <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border border-gray-200 dark:border-gray-700">
-                OPEN SHIFT
-              </span>
-              <span class="text-xs font-medium text-gray-800 dark:text-gray-200">
-                {{ activeShiftsByTerminalId[row.id].cashier_name || 'Cashier' }}
+              <span v-else class="text-gray-400">Standard Web POS</span>
+              <span v-if="row.receipt_prefix" class="register-prefix">
+                Prefix: {{ row.receipt_prefix }}
               </span>
             </div>
-            <div class="flex items-center gap-2 text-[11px] text-gray-500">
-              <span>Float: ${{ Number(activeShiftsByTerminalId[row.id].opening_float_usd || 0).toFixed(2) }}</span>
-              <button
-                type="button"
-                class="text-blue-600 dark:text-blue-400 hover:underline font-medium"
-                @click="viewShiftSummary(activeShiftsByTerminalId[row.id].id)"
-              >
-                Inspect
-              </button>
-            </div>
-          </div>
-          <div v-else class="text-xs text-gray-400 italic">
-            No active shift
           </div>
         </template>
 
-        <!-- Terminal Status -->
-        <template #cell-status="{ row }">
-          <AppBadge
-            :color="row.status_code === 'ACTIVE' ? 'emerald' : row.status_code === 'MAINTENANCE' ? 'amber' : 'gray'"
-            :label="row.status_code"
-            size="sm"
-            variant="subtle"
-          />
+        <!-- 2. Branch -->
+        <template #cell-branch_display="{ row }">
+          <div class="location-cell">
+            <span class="location-cell__name">{{ row.branch_display }}</span>
+            <span v-if="row.branch_code" class="location-cell__code">{{ row.branch_code }}</span>
+          </div>
         </template>
 
-        <!-- Actions -->
-        <template #cell-actions="{ row }">
-          <div class="flex items-center gap-1">
-            <AppButton
+        <!-- 3. Warehouse -->
+        <template #cell-warehouse_display="{ row }">
+          <div class="location-cell">
+            <span class="location-cell__name">{{ row.warehouse_display }}</span>
+            <span v-if="row.warehouse_is_default" class="location-cell__sub">Default Fulfilment</span>
+          </div>
+        </template>
+
+        <!-- 4. Connection (Heartbeat status + Last seen) -->
+        <template #cell-connection="{ row }">
+          <div class="connection-cell">
+            <AppBadge
+              :color="row.connection_state === 'ONLINE' ? 'green' : row.connection_state === 'IDLE' ? 'yellow' : 'default'"
               size="sm"
+            >
+              {{ row.connection_label }}
+            </AppBadge>
+            <span class="connection-cell__seen" :title="row.last_active_at ? new Date(row.last_active_at).toLocaleString() : 'Never connected'">
+              {{ formatLastSeen(row.last_active_at) }}
+            </span>
+          </div>
+        </template>
+
+        <!-- 5. Active Shift (Status, Start time, Opening float) -->
+        <template #cell-active_shift="{ row }">
+          <div v-if="row.active_shift" class="shift-cell">
+            <div class="shift-cell__top">
+              <AppBadge color="blue" size="sm">OPEN</AppBadge>
+              <span class="shift-cell__float">
+                Float: ${{ Number(row.active_shift.opening_cash_usd || 0).toFixed(2) }}
+              </span>
+            </div>
+            <div class="shift-cell__meta">
+              Started {{ formatShiftTime(row.active_shift.opened_at) }}
+              <template v-if="Number(row.active_shift.opening_cash_khr || 0) > 0">
+                · ៛{{ Number(row.active_shift.opening_cash_khr).toLocaleString() }}
+              </template>
+            </div>
+          </div>
+          <span v-else class="text-xs text-gray-400">Closed / No active shift</span>
+        </template>
+
+        <!-- 6. Cashier -->
+        <template #cell-cashier_display="{ row }">
+          <div v-if="row.active_shift" class="cashier-cell">
+            <span class="cashier-avatar">
+              {{ (row.cashier_display || 'C').charAt(0).toUpperCase() }}
+            </span>
+            <div class="min-w-0">
+              <div class="cashier-name truncate">{{ row.cashier_display }}</div>
+              <div class="cashier-sub">Active Drawer</div>
+            </div>
+          </div>
+          <span v-else class="text-xs text-gray-400">Unassigned</span>
+        </template>
+
+        <!-- 7. Configuration Status -->
+        <template #cell-status_code="{ row }">
+          <AppBadge
+            :color="row.status_code === 'ACTIVE' ? 'green' : row.status_code === 'MAINTENANCE' ? 'yellow' : 'default'"
+            size="sm"
+          >
+            {{ row.status_code }}
+          </AppBadge>
+        </template>
+
+        <!-- 8. Actions (Inspect, Edit, End Shift, Activate/Deactivate) -->
+        <template #cell-actions="{ row }">
+          <div class="flex items-center justify-end gap-1">
+            <AppButton
+              size="xs"
               variant="ghost"
-              icon="i-heroicons-pencil"
+              icon="i-heroicons-eye"
+              label="Inspect"
+              @click="inspectTerminal(row)"
+            />
+            <AppButton
+              size="xs"
+              variant="ghost"
+              icon="i-heroicons-pencil-square"
               label="Edit"
               @click="openEditModal(row)"
             />
-            <!-- Remote Force Close Shift if shift is open -->
             <AppButton
-              v-if="activeShiftsByTerminalId[row.id]"
-              size="sm"
-              variant="ghost"
+              v-if="row.active_shift"
+              size="xs"
+              variant="danger"
               icon="i-heroicons-lock-closed"
               label="End Shift"
-              @click="openForceCloseModal(row, activeShiftsByTerminalId[row.id])"
+              @click="openForceCloseModal(row)"
             />
             <AppButton
-              v-if="row.status_code === 'ACTIVE'"
-              size="sm"
-              variant="ghost"
-              icon="i-heroicons-pause"
-              label="Deactivate"
-              @click="toggleTerminalStatus(row, 'INACTIVE')"
-            />
-            <AppButton
-              v-else
-              size="sm"
-              variant="ghost"
-              icon="i-heroicons-check"
-              label="Activate"
-              @click="toggleTerminalStatus(row, 'ACTIVE')"
+              size="xs"
+              :variant="row.status_code === 'ACTIVE' ? 'ghost' : 'default'"
+              :icon="row.status_code === 'ACTIVE' ? 'i-heroicons-pause-circle' : 'i-heroicons-check-circle'"
+              :label="row.status_code === 'ACTIVE' ? 'Deactivate' : 'Activate'"
+              @click="promptToggleStatus(row)"
             />
           </div>
+        </template>
+
+        <template v-if="filteredTerminals.length > pageSize" #footer>
+          <AppPagination
+            v-model:page="currentPage"
+            :page-size="pageSize"
+            :total="filteredTerminals.length"
+          />
         </template>
       </AppTable>
     </AppCard>
 
-    <!-- Shift Details / Summary Modal -->
-    <AppModal v-model="showSummaryModal">
-      <AppCard v-if="selectedShiftSummary">
-        <template #header>
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <UIcon name="i-heroicons-chart-pie" class="w-5 h-5 text-gray-500" />
-              <h3 class="text-base font-semibold text-gray-900 dark:text-white">
-                Live Shift Summary: {{ selectedShiftSummary.terminal_code }}
-              </h3>
-            </div>
-            <AppButton variant="ghost" size="sm" icon="i-heroicons-x-mark" @click="showSummaryModal = false" />
-          </div>
-        </template>
-
-        <div class="space-y-4">
-          <!-- Metadata strip -->
-          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700 text-xs">
-            <div>
-              <p class="text-gray-500">Cashier</p>
-              <p class="font-semibold text-gray-900 dark:text-white mt-0.5">{{ selectedShiftSummary.cashier_name }}</p>
-            </div>
-            <div>
-              <p class="text-gray-500">Branch</p>
-              <p class="font-semibold text-gray-900 dark:text-white mt-0.5">{{ selectedShiftSummary.branch_name }}</p>
-            </div>
-            <div>
-              <p class="text-gray-500">Opened At</p>
-              <p class="font-semibold text-gray-900 dark:text-white mt-0.5">{{ new Date(selectedShiftSummary.opened_at).toLocaleTimeString() }}</p>
-            </div>
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- MODAL 1: CREATE / EDIT POS REGISTER                                     -->
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <AppModal
+      v-model="showModal"
+      :title="editingTerminal ? `Edit Register — ${editingTerminal.code}` : 'Add POS Register'"
+      description="Configure register identity, branch/warehouse inventory binding, and receipt numbering."
+      size="md"
+    >
+      <form class="form-grid" @submit.prevent="handleSubmit">
+        <div class="form-row">
+          <div class="form-field">
+            <label class="field-label">Register Code <span class="required">*</span></label>
+            <input
+              v-model="form.code"
+              type="text"
+              required
+              :disabled="!!editingTerminal"
+              placeholder="e.g. POS-01"
+              class="field-input font-mono uppercase"
+            />
+            <span class="field-hint">Unique workstation code (cannot be changed later)</span>
           </div>
 
-          <!-- Sales Overview Breakdown -->
-          <div class="space-y-2">
-            <h4 class="text-xs font-bold uppercase tracking-wider text-gray-500">Tender &amp; Revenue Breakdown</h4>
-            <div class="divide-y divide-gray-200 dark:divide-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden text-sm">
-              <div class="flex items-center justify-between px-3 py-2 bg-white dark:bg-gray-800">
-                <span class="text-gray-600 dark:text-gray-300">Opening Cash Float</span>
-                <span class="font-mono font-medium">${{ Number(selectedShiftSummary.opening_float_usd || 0).toFixed(2) }}</span>
-              </div>
-              <div class="flex items-center justify-between px-3 py-2 bg-white dark:bg-gray-800">
-                <span class="text-gray-600 dark:text-gray-300">Cash Sales ({{ selectedShiftSummary.cash_payments_count }} txns)</span>
-                <span class="font-mono font-medium text-emerald-600 dark:text-emerald-400">+${{ Number(selectedShiftSummary.cash_sales_amount || 0).toFixed(2) }}</span>
-              </div>
-              <div class="flex items-center justify-between px-3 py-2 bg-white dark:bg-gray-800">
-                <span class="text-gray-600 dark:text-gray-300">ABA KHQR Sales ({{ selectedShiftSummary.aba_payments_count }} txns)</span>
-                <span class="font-mono font-medium text-blue-600 dark:text-blue-400">${{ Number(selectedShiftSummary.aba_sales_amount || 0).toFixed(2) }}</span>
-              </div>
-              <div class="flex items-center justify-between px-3 py-2 bg-white dark:bg-gray-800">
-                <span class="text-gray-600 dark:text-gray-300">Credit / Debit Card Sales</span>
-                <span class="font-mono font-medium">${{ Number(selectedShiftSummary.card_sales_amount || 0).toFixed(2) }}</span>
-              </div>
-              <div class="flex items-center justify-between px-3 py-2 bg-gray-50 dark:bg-gray-800/80 font-bold">
-                <span>Total Gross Sales ({{ selectedShiftSummary.total_sales_count }} sales)</span>
-                <span class="font-mono">${{ Number(selectedShiftSummary.total_sales_amount || 0).toFixed(2) }}</span>
-              </div>
-              <div class="flex items-center justify-between px-3 py-2 bg-emerald-50 dark:bg-emerald-950/20 font-bold text-emerald-700 dark:text-emerald-300">
-                <span>Current Expected Cash in Drawer</span>
-                <span class="font-mono">${{ Number(selectedShiftSummary.expected_cash_usd || 0).toFixed(2) }}</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="flex justify-end pt-2 border-t border-gray-200 dark:border-gray-700">
-            <AppButton variant="ghost" label="Close" @click="showSummaryModal = false" />
+          <div class="form-field">
+            <label class="field-label">Register Name <span class="required">*</span></label>
+            <input
+              v-model="form.name"
+              type="text"
+              required
+              placeholder="e.g. Front Counter Register 1"
+              class="field-input"
+            />
+            <span class="field-hint">Display name shown on shift &amp; audit logs</span>
           </div>
         </div>
-      </AppCard>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label class="field-label">Assigned Branch <span class="required">*</span></label>
+            <select
+              v-model="form.branch_id"
+              required
+              class="field-input"
+              @change="onBranchChange"
+            >
+              <option value="" disabled>Select branch...</option>
+              <option v-for="b in branches" :key="b.id" :value="b.id">
+                {{ b.name }} ({{ b.code }})
+              </option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label class="field-label">Fulfilment Warehouse <span class="required">*</span></label>
+            <select
+              v-model="form.warehouse_id"
+              required
+              class="field-input"
+            >
+              <option value="" disabled>Select warehouse...</option>
+              <option v-for="w in branchWarehouses" :key="w.id" :value="w.id">
+                {{ w.name }}{{ w.is_default ? ' (Default)' : '' }}
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label class="field-label">Invoice / Receipt Prefix</label>
+            <input
+              v-model="form.receipt_prefix"
+              type="text"
+              placeholder="e.g. POS01-"
+              class="field-input font-mono uppercase"
+            />
+          </div>
+
+          <div class="form-field">
+            <label class="field-label">Configuration Status</label>
+            <select v-model="form.status_code" class="field-input">
+              <option value="ACTIVE">ACTIVE — Ready for Checkout</option>
+              <option value="MAINTENANCE">MAINTENANCE — Temporarily Disabled</option>
+              <option value="INACTIVE">INACTIVE — Decommissioned</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label class="field-label">Hardware / Peripheral Profile</label>
+          <input
+            v-model="form.device_identifier"
+            type="text"
+            placeholder="e.g. iPad Pro 12.9 + Epson TM-T82III 80mm + 2D USB Scanner"
+            class="field-input"
+          />
+        </div>
+
+        <div class="form-field">
+          <label class="field-label">Operational Notes</label>
+          <textarea
+            v-model="form.notes"
+            rows="2"
+            placeholder="Optional notes regarding cash drawer key, IP printer address, or location..."
+            class="field-input field-textarea"
+          />
+        </div>
+
+        <div class="modal-actions">
+          <AppButton type="button" variant="ghost" label="Cancel" @click="showModal = false" />
+          <AppButton
+            type="submit"
+            variant="primary"
+            :label="editingTerminal ? 'Save Register Changes' : 'Create POS Register'"
+            :loading="saving"
+          />
+        </div>
+      </form>
     </AppModal>
 
-    <!-- Force End Shift Modal -->
-    <AppModal v-model="showForceCloseModal">
-      <AppCard v-if="closingShift">
-        <template #header>
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <UIcon name="i-heroicons-exclamation-triangle" class="w-5 h-5 text-amber-500" />
-              <h3 class="text-base font-semibold text-gray-900 dark:text-white">
-                Remote Force Close Shift: {{ closingTerminal?.code }}
-              </h3>
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- DRAWER 2: CONTEXTUAL REGISTER & SHIFT INSPECTION                        -->
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <AppDetailDrawer
+      v-model="showInspectModal"
+      :title="inspectedTerminal ? `${inspectedTerminal.name} (${inspectedTerminal.code})` : 'Register Details'"
+      :subtitle="inspectedTerminal ? `${inspectedTerminal.branch_display} · ${inspectedTerminal.warehouse_display}` : ''"
+      size="md"
+    >
+      <template v-if="inspectedTerminal" #badge>
+        <AppBadge
+          :color="inspectedTerminal.status_code === 'ACTIVE' ? 'green' : inspectedTerminal.status_code === 'MAINTENANCE' ? 'yellow' : 'default'"
+          size="sm"
+        >
+          {{ inspectedTerminal.status_code }}
+        </AppBadge>
+      </template>
+
+      <template v-if="inspectedTerminal">
+        <!-- Section 1: Workstation & Hardware Configuration -->
+        <AppCard title="Workstation & Location Binding">
+          <dl class="detail-list">
+            <div class="detail-row">
+              <dt>Register Code</dt>
+              <dd><code class="mono font-semibold">{{ inspectedTerminal.code }}</code></dd>
             </div>
-            <AppButton variant="ghost" size="sm" icon="i-heroicons-x-mark" @click="showForceCloseModal = false" />
+            <div class="detail-row">
+              <dt>Branch</dt>
+              <dd>{{ inspectedTerminal.branch_display }} <span v-if="inspectedTerminal.branch_code" class="mono text-gray-500">({{ inspectedTerminal.branch_code }})</span></dd>
+            </div>
+            <div class="detail-row">
+              <dt>Inventory Warehouse</dt>
+              <dd>{{ inspectedTerminal.warehouse_display }}</dd>
+            </div>
+            <div class="detail-row">
+              <dt>Workstation Connection</dt>
+              <dd>
+                <AppBadge
+                  :color="inspectedTerminal.connection_state === 'ONLINE' ? 'green' : inspectedTerminal.connection_state === 'IDLE' ? 'yellow' : 'default'"
+                  size="sm"
+                >
+                  {{ inspectedTerminal.connection_label }}
+                </AppBadge>
+              </dd>
+            </div>
+            <div class="detail-row">
+              <dt>Last Heartbeat</dt>
+              <dd class="mono text-xs">
+                {{ inspectedTerminal.last_active_at ? new Date(inspectedTerminal.last_active_at).toLocaleString() : 'Never connected' }}
+                <span class="text-gray-400 ml-1">({{ formatLastSeen(inspectedTerminal.last_active_at) }})</span>
+              </dd>
+            </div>
+            <div class="detail-row">
+              <dt>Receipt Prefix</dt>
+              <dd class="mono">{{ inspectedTerminal.receipt_prefix || `${inspectedTerminal.code}-` }}</dd>
+            </div>
+            <div class="detail-row">
+              <dt>Hardware Profile</dt>
+              <dd>{{ inspectedTerminal.device_identifier || 'Standard Web POS' }}</dd>
+            </div>
+            <div v-if="inspectedTerminal.notes" class="detail-row">
+              <dt>Notes</dt>
+              <dd>{{ inspectedTerminal.notes }}</dd>
+            </div>
+          </dl>
+        </AppCard>
+
+        <!-- Section 2: Active Cashier Shift & Live Cash Summary -->
+        <AppCard title="Active Cashier Shift">
+          <template v-if="inspectedTerminal.active_shift" #header-right>
+            <AppBadge color="blue" size="sm">OPEN SHIFT</AppBadge>
+          </template>
+
+          <div v-if="inspectedTerminal.active_shift" class="space-y-4">
+            <dl class="detail-list">
+              <div class="detail-row">
+                <dt>Assigned Cashier</dt>
+                <dd class="font-semibold">{{ inspectedTerminal.cashier_display }}</dd>
+              </div>
+              <div class="detail-row">
+                <dt>Shift Opened At</dt>
+                <dd class="mono text-xs">{{ new Date(inspectedTerminal.active_shift.opened_at).toLocaleString() }}</dd>
+              </div>
+              <div class="detail-row">
+                <dt>Opening Float (USD)</dt>
+                <dd class="mono font-bold text-emerald-700">${{ Number(inspectedTerminal.active_shift.opening_cash_usd || 0).toFixed(2) }}</dd>
+              </div>
+              <div class="detail-row">
+                <dt>Opening Float (KHR)</dt>
+                <dd class="mono font-semibold">៛{{ Number(inspectedTerminal.active_shift.opening_cash_khr || 0).toLocaleString() }}</dd>
+              </div>
+            </dl>
+
+            <!-- Live Shift Cash Summary (from GET /shifts/{id}/summary) -->
+            <div v-if="loadingShiftSummary" class="p-3 rounded-lg bg-gray-50 border border-gray-200 text-xs text-gray-500">
+              Loading live shift cash summary...
+            </div>
+            <div v-else-if="inspectedShiftSummary" class="p-3.5 rounded-lg bg-gray-50 border border-gray-200 space-y-2">
+              <div class="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                Live Drawer Cash &amp; Sales Summary
+              </div>
+              <dl class="detail-list">
+                <div class="detail-row">
+                  <dt>Completed Sales in Shift</dt>
+                  <dd class="font-semibold">{{ inspectedShiftSummary.sales_count ?? inspectedShiftSummary.total_sales_count ?? 0 }} orders</dd>
+                </div>
+                <div class="detail-row">
+                  <dt>Total Shift Revenue (USD)</dt>
+                  <dd class="mono font-semibold">${{ Number(inspectedShiftSummary.total_sales_usd ?? inspectedShiftSummary.total_revenue_usd ?? 0).toFixed(2) }}</dd>
+                </div>
+                <div class="detail-row">
+                  <dt>Expected Drawer Cash (USD)</dt>
+                  <dd class="mono font-bold text-gray-900">
+                    ${{ Number(inspectedShiftSummary.expected_cash_usd ?? inspectedTerminal.active_shift.opening_cash_usd ?? 0).toFixed(2) }}
+                  </dd>
+                </div>
+              </dl>
+            </div>
           </div>
-        </template>
 
-        <form class="space-y-4" @submit.prevent="handleForceCloseShift">
-          <p class="text-xs text-gray-600 dark:text-gray-300">
-            This will immediately close cashier <span class="font-bold text-gray-900 dark:text-white">{{ closingShift.cashier_name }}</span>'s
-            shift on register <span class="font-mono font-bold">{{ closingTerminal?.code }}</span>.
-          </p>
+          <AppEmptyState
+            v-else
+            icon="i-heroicons-lock-closed"
+            title="No Open Shift on This Register"
+            description="A cashier can open a new shift on this register by signing into the POS checkout application."
+          />
+        </AppCard>
+      </template>
 
-          <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Final Counted Cash Float (USD) *
-            </label>
+      <template v-if="inspectedTerminal" #footer>
+        <AppButton
+          variant="default"
+          icon="i-heroicons-pencil-square"
+          label="Edit Register"
+          @click="showInspectModal = false; openEditModal(inspectedTerminal)"
+        />
+        <AppButton
+          v-if="inspectedTerminal.active_shift"
+          variant="danger"
+          icon="i-heroicons-lock-closed"
+          label="End Shift"
+          @click="showInspectModal = false; openForceCloseModal(inspectedTerminal)"
+        />
+        <AppButton variant="ghost" label="Close" @click="showInspectModal = false" />
+      </template>
+    </AppDetailDrawer>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- MODAL 3: END SHIFT / FORCE CLOSE CONFIRMATION                           -->
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <AppModal
+      v-model="showForceCloseModal"
+      title="End Active Cashier Shift"
+      description="Reconcile counted drawer cash and close this register's active shift."
+      size="sm"
+    >
+      <form v-if="targetShiftTerminal?.active_shift" class="form-grid" @submit.prevent="handleForceCloseShift">
+        <div class="shift-warning-box">
+          <div class="flex items-start gap-2.5">
+            <UIcon name="i-heroicons-exclamation-triangle" class="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
+            <div class="text-xs space-y-1">
+              <p class="font-semibold text-gray-900">
+                Ending shift on {{ targetShiftTerminal.name }} ({{ targetShiftTerminal.code }})
+              </p>
+              <p class="text-gray-600">
+                Cashier: <strong>{{ targetShiftTerminal.cashier_display }}</strong> ·
+                Opening Float: <strong>${{ Number(targetShiftTerminal.active_shift.opening_cash_usd || 0).toFixed(2) }}</strong>
+              </p>
+              <p class="text-gray-500">
+                Once closed, the cashier workstation will require a new shift before processing sales.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-field">
+            <label class="field-label">Counted Closing Cash (USD) <span class="required">*</span></label>
             <input
               v-model.number="forceCloseForm.closing_cash_usd"
               type="number"
               step="0.01"
               min="0"
               required
-              class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm font-mono"
+              class="field-input font-mono"
             />
           </div>
 
-          <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Admin Notes / Reason *
-            </label>
-            <textarea
-              v-model="forceCloseForm.notes"
-              rows="2"
+          <div class="form-field">
+            <label class="field-label">Counted Closing Cash (KHR) <span class="required">*</span></label>
+            <input
+              v-model.number="forceCloseForm.closing_cash_khr"
+              type="number"
+              step="100"
+              min="0"
               required
-              placeholder="e.g. Cashier shift abandoned; closed remotely by Store Manager after counting physical drawer."
-              class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
+              class="field-input font-mono"
             />
           </div>
+        </div>
 
-          <div class="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-            <AppButton variant="ghost" label="Cancel" @click="showForceCloseModal = false" />
-            <AppButton type="submit" variant="primary" label="Confirm &amp; End Shift" :loading="saving" />
-          </div>
-        </form>
-      </AppCard>
+        <div class="form-field">
+          <label class="field-label">Supervisor / Closure Reason <span class="required">*</span></label>
+          <textarea
+            v-model="forceCloseForm.notes"
+            rows="2"
+            required
+            placeholder="e.g. End-of-day administrative shift closure by manager"
+            class="field-input field-textarea"
+          />
+        </div>
+
+        <div class="modal-actions">
+          <AppButton type="button" variant="ghost" label="Cancel" :disabled="closingShift" @click="showForceCloseModal = false" />
+          <AppButton
+            type="submit"
+            variant="danger"
+            icon="i-heroicons-lock-closed"
+            label="Confirm & End Shift"
+            :loading="closingShift"
+          />
+        </div>
+      </form>
     </AppModal>
 
-    <!-- Create Terminal Modal -->
-    <AppModal v-model="showCreateModal">
-      <AppCard>
-        <template #header>
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <UIcon name="i-heroicons-computer-desktop" class="w-5 h-5 text-gray-500" />
-              <h3 class="text-base font-semibold text-gray-900 dark:text-white">Register New POS Station</h3>
-            </div>
-            <AppButton variant="ghost" size="sm" icon="i-heroicons-x-mark" @click="showCreateModal = false" />
-          </div>
-        </template>
-
-        <form class="space-y-4" @submit.prevent="handleCreateTerminal">
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Terminal Code *</label>
-              <input
-                v-model="createForm.code"
-                type="text"
-                required
-                placeholder="e.g. POS-02"
-                class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm uppercase font-mono"
-              />
-              <p class="text-[11px] text-gray-400 mt-0.5">Unique hardware or station identifier</p>
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Register Name *</label>
-              <input
-                v-model="createForm.name"
-                type="text"
-                required
-                placeholder="e.g. Counter Register 2"
-                class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
-              />
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Assigned Branch *</label>
-              <select
-                v-model="createForm.branch_id"
-                required
-                class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
-                @change="onBranchChange"
-              >
-                <option value="" disabled>Select Branch</option>
-                <option v-for="b in branches" :key="b.id" :value="b.id">
-                  {{ b.name }} ({{ b.code }})
-                </option>
-              </select>
-            </div>
-
-            <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Fulfillment Warehouse *</label>
-              <select
-                v-model="createForm.warehouse_id"
-                required
-                class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
-              >
-                <option value="" disabled>Select Warehouse</option>
-                <option v-for="w in filteredWarehouses" :key="w.id" :value="w.id">
-                  {{ w.name }} <template v-if="w.is_default">(Default)</template>
-                </option>
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Notes / Location Description</label>
-            <input
-              v-model="createForm.notes"
-              type="text"
-              placeholder="e.g. Ground floor main entrance checkout station"
-              class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
-            />
-          </div>
-
-          <div class="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-            <AppButton variant="ghost" label="Cancel" @click="showCreateModal = false" />
-            <AppButton type="submit" variant="primary" label="Register Station" :loading="saving" />
-          </div>
-        </form>
-      </AppCard>
-    </AppModal>
-
-    <!-- Edit Terminal Modal -->
-    <AppModal v-model="showEditModal">
-      <AppCard>
-        <template #header>
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <UIcon name="i-heroicons-pencil" class="w-5 h-5 text-gray-500" />
-              <h3 class="text-base font-semibold text-gray-900 dark:text-white">Edit POS Station: {{ editingTerminal?.code }}</h3>
-            </div>
-            <AppButton variant="ghost" size="sm" icon="i-heroicons-x-mark" @click="showEditModal = false" />
-          </div>
-        </template>
-
-        <form v-if="editingTerminal" class="space-y-4" @submit.prevent="handleUpdateTerminal">
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Terminal Code</label>
-              <input
-                :value="editingTerminal.code"
-                disabled
-                type="text"
-                class="w-full rounded-md border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800/60 px-3 py-2 text-sm uppercase font-mono text-gray-500 cursor-not-allowed"
-              />
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Register Name *</label>
-              <input
-                v-model="editForm.name"
-                type="text"
-                required
-                class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
-              />
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Fulfillment Warehouse</label>
-              <select
-                v-model="editForm.warehouse_id"
-                class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
-              >
-                <option v-for="w in editWarehouses" :key="w.id" :value="w.id">
-                  {{ w.name }} <template v-if="w.is_default">(Default)</template>
-                </option>
-              </select>
-            </div>
-
-            <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Station Status</label>
-              <select
-                v-model="editForm.status_code"
-                class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
-              >
-                <option value="ACTIVE">ACTIVE</option>
-                <option value="INACTIVE">INACTIVE</option>
-                <option value="MAINTENANCE">MAINTENANCE</option>
-              </select>
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Notes</label>
-            <input
-              v-model="editForm.notes"
-              type="text"
-              class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
-            />
-          </div>
-
-          <div class="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-            <AppButton variant="ghost" label="Cancel" @click="showEditModal = false" />
-            <AppButton type="submit" variant="primary" label="Save Changes" :loading="saving" />
-          </div>
-        </form>
-      </AppCard>
-    </AppModal>
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- DIALOG 4: ACTIVATE / DEACTIVATE REGISTER CONFIRMATION                   -->
+    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <AppConfirmDialog
+      v-model="showStatusConfirm"
+      :title="statusConfirmTarget?.status_code === 'ACTIVE' ? 'Deactivate POS Register' : 'Activate POS Register'"
+      :variant="statusConfirmTarget?.status_code === 'ACTIVE' ? 'danger' : 'primary'"
+      :confirm-label="statusConfirmTarget?.status_code === 'ACTIVE' ? 'Deactivate Register' : 'Activate Register'"
+      :loading="togglingStatus"
+      :message="
+        statusConfirmTarget?.status_code === 'ACTIVE'
+          ? `Are you sure you want to deactivate register ${statusConfirmTarget?.name} (${statusConfirmTarget?.code})?`
+          : `Re-activate register ${statusConfirmTarget?.name} (${statusConfirmTarget?.code}) so cashiers can bind to it and open shifts?`
+      "
+      :consequence="
+        statusConfirmTarget?.status_code === 'ACTIVE'
+          ? 'Deactivated registers cannot start new cashier shifts or process POS checkouts until re-activated.'
+          : 'This register will immediately become available for POS workstation binding.'
+      "
+      @confirm="executeToggleStatus"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import type { PosTerminal, Branch, Warehouse } from '~/types'
+import type { FilterChipItem } from '~/components/AppFilterBar.vue'
 
 definePageMeta({ middleware: ['auth'] })
+useHead({ title: 'POS Registers — Clothing Store Admin' })
 
 const terminalApi = useTerminalApi()
 const shiftApi = useShiftApi()
 const branchApi = useBranchApi()
+const userApi = useUserApi()
 const toast = useAppToast()
 
+const initialLoading = ref(true)
 const loading = ref(false)
+const loadError = ref<string | null>(null)
 const saving = ref(false)
-const terminals = ref<PosTerminal[]>([])
-const activeShiftsByTerminalId = ref<Record<string, any>>({})
-const branches = ref<Branch[]>([])
-const allWarehouses = ref<Warehouse[]>([])
+const closingShift = ref(false)
+const togglingStatus = ref(false)
+const autoRefresh = ref(true)
+const lastRefreshedAt = ref('')
 
-// Auto-refresh state
-const autoRefreshEnabled = ref(true)
-let autoRefreshTimer: ReturnType<typeof setInterval> | null = null
+const terminals = ref<any[]>([])
+const openShifts = ref<any[]>([])
+const branches = ref<any[]>([])
+const allWarehouses = ref<any[]>([])
+const usersMap = ref<Record<string, any>>({})
 
-// Modals
-const showCreateModal = ref(false)
-const showEditModal = ref(false)
-const showSummaryModal = ref(false)
+// Filters & Pagination
+const searchQuery = ref('')
+const connectionFilter = ref('')
+const branchFilter = ref('')
+const warehouseFilter = ref('')
+const configStatusFilter = ref('')
+const currentPage = ref(1)
+const pageSize = 20
+
+// Modals & Drawers
+const showModal = ref(false)
+const editingTerminal = ref<any>(null)
+const showInspectModal = ref(false)
+const inspectedTerminal = ref<any>(null)
+const inspectedShiftSummary = ref<any>(null)
+const loadingShiftSummary = ref(false)
+
 const showForceCloseModal = ref(false)
+const targetShiftTerminal = ref<any>(null)
+const forceCloseForm = reactive({
+  closing_cash_usd: 0,
+  closing_cash_khr: 0,
+  notes: 'Administrative remote shift closure',
+})
 
-const editingTerminal = ref<PosTerminal | null>(null)
-const selectedShiftSummary = ref<any | null>(null)
-const closingTerminal = ref<PosTerminal | null>(null)
-const closingShift = ref<any | null>(null)
+const showStatusConfirm = ref(false)
+const statusConfirmTarget = ref<any>(null)
 
-const createForm = ref({
-  branch_id: '',
-  warehouse_id: '',
+const form = reactive({
   code: '',
   name: '',
-  notes: '',
-})
-
-const editForm = ref({
-  name: '',
+  branch_id: '',
   warehouse_id: '',
+  device_identifier: '',
+  receipt_prefix: '',
+  notes: '',
   status_code: 'ACTIVE',
-  notes: '',
-})
-
-const forceCloseForm = ref({
-  closing_cash_usd: 0,
-  notes: '',
 })
 
 const columns = [
-  { key: 'code', label: 'Register' },
-  { key: 'branch', label: 'Branch' },
-  { key: 'warehouse', label: 'Warehouse' },
-  { key: 'heartbeat', label: 'Connection' },
-  { key: 'shift', label: 'Active Shift' },
-  { key: 'status', label: 'Config' },
-  { key: 'actions', label: 'Actions' },
+  { key: 'code', label: 'Register', sortable: true },
+  { key: 'branch_display', label: 'Branch', sortable: true },
+  { key: 'warehouse_display', label: 'Warehouse', sortable: true },
+  { key: 'connection', label: 'Connection', sortable: true },
+  { key: 'active_shift', label: 'Active Shift' },
+  { key: 'cashier_display', label: 'Cashier', sortable: true },
+  { key: 'status_code', label: 'Configuration Status', sortable: true },
+  { key: 'actions', label: 'Actions', align: 'right' as const },
 ]
 
-// Heartbeat & status calculation helpers
-function getHeartbeatSeconds(isoString?: string | null): number {
-  if (!isoString) return Infinity
-  return Math.floor((Date.now() - new Date(isoString).getTime()) / 1000)
+// ── Heartbeat & Connection Helpers ───────────────────────────────────────────
+function getHeartbeatSeconds(lastActiveAt?: string | null): number {
+  if (!lastActiveAt) return Infinity
+  const diffMs = Date.now() - new Date(lastActiveAt).getTime()
+  return Math.max(0, Math.floor(diffMs / 1000))
 }
 
-function getHeartbeatClass(isoString?: string | null): string {
-  const diffSec = getHeartbeatSeconds(isoString)
-  if (diffSec < 45) return 'bg-emerald-500 animate-pulse'
-  if (diffSec < 120) return 'bg-amber-500'
-  return 'bg-gray-400'
+function getConnectionState(lastActiveAt?: string | null): 'ONLINE' | 'IDLE' | 'OFFLINE' {
+  const secs = getHeartbeatSeconds(lastActiveAt)
+  if (secs < 45) return 'ONLINE'
+  if (secs < 300) return 'IDLE'
+  return 'OFFLINE'
 }
 
-function getHeartbeatLabel(isoString?: string | null): string {
-  const diffSec = getHeartbeatSeconds(isoString)
-  if (diffSec < 45) return 'Online'
-  if (diffSec < 120) return 'Idle'
+function getConnectionLabel(state: 'ONLINE' | 'IDLE' | 'OFFLINE'): string {
+  if (state === 'ONLINE') return 'Online'
+  if (state === 'IDLE') return 'Idle'
   return 'Offline'
 }
 
-const onlineCount = computed(() => {
-  return terminals.value.filter(t => getHeartbeatSeconds(t.last_active_at) < 45).length
-})
-
-const openShiftsCount = computed(() => {
-  return Object.keys(activeShiftsByTerminalId.value).length
-})
-
-const offlineCount = computed(() => {
-  return terminals.value.filter(t => getHeartbeatSeconds(t.last_active_at) >= 45).length
-})
-
-const filteredWarehouses = computed(() => {
-  if (!createForm.value.branch_id) return allWarehouses.value
-  return allWarehouses.value.filter(w => (w as any).branch_id === createForm.value.branch_id)
-})
-
-const editWarehouses = computed(() => {
-  if (!editingTerminal.value) return allWarehouses.value
-  return allWarehouses.value.filter(w => (w as any).branch_id === editingTerminal.value?.branch_id)
-})
-
-function formatRelativeTime(isoString: string) {
-  const diffSec = Math.floor((Date.now() - new Date(isoString).getTime()) / 1000)
-  if (diffSec < 60) return `${diffSec}s ago`
-  if (diffSec < 3600) return `${Math.floor(diffSec / 60)}m ago`
-  if (diffSec < 86400) return `${Math.floor(diffSec / 3600)}h ago`
-  return `${Math.floor(diffSec / 86400)}d ago`
+function formatLastSeen(lastActiveAt?: string | null): string {
+  if (!lastActiveAt) return 'Never seen'
+  const secs = getHeartbeatSeconds(lastActiveAt)
+  if (secs < 15) return 'Heartbeat just now'
+  if (secs < 60) return `Seen ${secs}s ago`
+  const mins = Math.floor(secs / 60)
+  if (mins < 60) return `Seen ${mins}m ago`
+  const hours = Math.floor(mins / 60)
+  if (hours < 24) return `Seen ${hours}h ago`
+  const days = Math.floor(hours / 24)
+  return `Seen ${days}d ago`
 }
 
-function onBranchChange() {
-  const defaultWh = filteredWarehouses.value.find(w => (w as any).is_default) || filteredWarehouses.value[0]
-  if (defaultWh) {
-    createForm.value.warehouse_id = defaultWh.id
-  } else {
-    createForm.value.warehouse_id = ''
+function formatShiftTime(iso?: string | null): string {
+  if (!iso) return '—'
+  const d = new Date(iso)
+  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+}
+
+// ── Enriched Rows (Resolving Branch, Warehouse, Shift & Cashier accurately) ──
+const branchLookup = computed<Record<string, any>>(() => {
+  const map: Record<string, any> = {}
+  for (const b of branches.value) {
+    if (b?.id) map[b.id] = b
+  }
+  return map
+})
+
+const warehouseLookup = computed<Record<string, any>>(() => {
+  const map: Record<string, any> = {}
+  for (const w of allWarehouses.value) {
+    if (w?.id) map[w.id] = w
+  }
+  return map
+})
+
+const enrichedTerminals = computed(() => {
+  const shiftMap = new Map<string, any>()
+  for (const s of openShifts.value) {
+    if (s.terminal_id && (s.status_code === 'OPEN' || s.status === 'OPEN')) {
+      shiftMap.set(s.terminal_id, s)
+    }
+  }
+
+  return terminals.value.map((t) => {
+    const branchObj = branchLookup.value[t.branch_id] || t.branch
+    const warehouseObj = warehouseLookup.value[t.warehouse_id] || t.warehouse
+    const activeShift = shiftMap.get(t.id) || null
+    const connState = getConnectionState(t.last_active_at)
+
+    const cashierUser = activeShift?.cashier_id ? usersMap.value[activeShift.cashier_id] : null
+    const cashierDisplay =
+      activeShift?.cashier_name ||
+      activeShift?.cashier?.full_name ||
+      cashierUser?.full_name ||
+      (activeShift?.cashier_id ? `Cashier #${String(activeShift.cashier_id).slice(0, 6)}` : '')
+
+    return {
+      ...t,
+      branch_display: t.branch_name || branchObj?.name || 'Unassigned Branch',
+      branch_code: branchObj?.code || '',
+      warehouse_display: t.warehouse_name || warehouseObj?.name || 'Unassigned Warehouse',
+      warehouse_is_default: Boolean(warehouseObj?.is_default),
+      connection_state: connState,
+      connection_label: getConnectionLabel(connState),
+      connection: connState,
+      active_shift: activeShift,
+      cashier_display: cashierDisplay,
+    }
+  })
+})
+
+// ── Accurate KPI Metrics ─────────────────────────────────────────────────────
+const activeConfigCount = computed(() =>
+  enrichedTerminals.value.filter(t => t.status_code === 'ACTIVE').length,
+)
+
+const maintenanceOrInactiveCount = computed(() =>
+  enrichedTerminals.value.filter(t => t.status_code !== 'ACTIVE').length,
+)
+
+const onlineCount = computed(() =>
+  enrichedTerminals.value.filter(t => t.connection_state === 'ONLINE').length,
+)
+
+const idleCount = computed(() =>
+  enrichedTerminals.value.filter(t => t.connection_state === 'IDLE').length,
+)
+
+const offlineWorkstationCount = computed(() =>
+  enrichedTerminals.value.filter(t => t.connection_state === 'OFFLINE').length,
+)
+
+const openShiftsCount = computed(() =>
+  enrichedTerminals.value.filter(t => Boolean(t.active_shift)).length,
+)
+
+const totalOpeningFloatUsd = computed(() =>
+  enrichedTerminals.value.reduce((sum, t) => sum + Number(t.active_shift?.opening_cash_usd || 0), 0),
+)
+
+const offlineOrMaintenanceCount = computed(() =>
+  enrichedTerminals.value.filter(t => t.status_code !== 'ACTIVE' || t.connection_state === 'OFFLINE').length,
+)
+
+// ── Filter Options & Filtered Rows ───────────────────────────────────────────
+const branchFilterOptions = computed(() => [
+  { label: 'All Branches', value: '' },
+  ...branches.value.map(b => ({ label: `${b.name} (${b.code})`, value: b.id })),
+])
+
+const warehouseFilterOptions = computed(() => {
+  const list = branchFilter.value
+    ? allWarehouses.value.filter(w => w.branch_id === branchFilter.value)
+    : allWarehouses.value
+  return [
+    { label: 'All Warehouses', value: '' },
+    ...list.map(w => ({ label: w.name, value: w.id })),
+  ]
+})
+
+const branchWarehouses = computed(() =>
+  allWarehouses.value.filter(w => !form.branch_id || w.branch_id === form.branch_id),
+)
+
+const filteredTerminals = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase()
+  return enrichedTerminals.value.filter((t) => {
+    if (q) {
+      const hay = [
+        t.code,
+        t.name,
+        t.branch_display,
+        t.branch_code,
+        t.warehouse_display,
+        t.cashier_display,
+        t.device_identifier,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase()
+      if (!hay.includes(q)) return false
+    }
+    if (connectionFilter.value && t.connection_state !== connectionFilter.value) return false
+    if (branchFilter.value && t.branch_id !== branchFilter.value) return false
+    if (warehouseFilter.value && t.warehouse_id !== warehouseFilter.value) return false
+    if (configStatusFilter.value && t.status_code !== configStatusFilter.value) return false
+    return true
+  })
+})
+
+const paginatedTerminals = computed(() => {
+  const start = (currentPage.value - 1) * pageSize
+  return filteredTerminals.value.slice(start, start + pageSize)
+})
+
+const activeFilterChips = computed<FilterChipItem[]>(() => {
+  const chips: FilterChipItem[] = []
+  if (connectionFilter.value) {
+    chips.push({ key: 'connection', label: 'Connection', value: connectionFilter.value })
+  }
+  if (branchFilter.value) {
+    const b = branchLookup.value[branchFilter.value]
+    chips.push({ key: 'branch', label: 'Branch', value: b ? b.name : branchFilter.value })
+  }
+  if (warehouseFilter.value) {
+    const w = warehouseLookup.value[warehouseFilter.value]
+    chips.push({ key: 'warehouse', label: 'Warehouse', value: w ? w.name : warehouseFilter.value })
+  }
+  if (configStatusFilter.value) {
+    chips.push({ key: 'status', label: 'Config Status', value: configStatusFilter.value })
+  }
+  return chips
+})
+
+const hasAnyFilter = computed(() => Boolean(searchQuery.value.trim() || activeFilterChips.value.length > 0))
+
+function removeFilterChip(key: string) {
+  if (key === 'connection') connectionFilter.value = ''
+  if (key === 'branch') branchFilter.value = ''
+  if (key === 'warehouse') warehouseFilter.value = ''
+  if (key === 'status') configStatusFilter.value = ''
+  currentPage.value = 1
+}
+
+function resetFilters() {
+  searchQuery.value = ''
+  connectionFilter.value = ''
+  branchFilter.value = ''
+  warehouseFilter.value = ''
+  configStatusFilter.value = ''
+  currentPage.value = 1
+}
+
+watch([searchQuery, connectionFilter, branchFilter, warehouseFilter, configStatusFilter], () => {
+  currentPage.value = 1
+})
+
+// ── Data Fetching & Safe Polling ─────────────────────────────────────────────
+async function loadBranchesAndUsers() {
+  try {
+    const [bList, uList] = await Promise.all([
+      branchApi.listBranches().catch(() => []),
+      userApi.listUsers().catch(() => []),
+    ])
+    branches.value = (bList as any[]) || []
+
+    const uMap: Record<string, any> = {}
+    for (const u of (uList as any[]) || []) {
+      if (u?.id) uMap[u.id] = u
+    }
+    usersMap.value = uMap
+
+    const whList: any[] = []
+    for (const b of branches.value) {
+      if (Array.isArray(b.warehouses) && b.warehouses.length > 0) {
+        whList.push(...b.warehouses)
+      } else {
+        try {
+          const bWhs = await branchApi.listWarehouses(b.id)
+          whList.push(...((bWhs as any[]) || []))
+        } catch {
+          // Ignore branch warehouse fetch error
+        }
+      }
+    }
+    allWarehouses.value = whList
+  } catch {
+    // Fallback gracefully
   }
 }
 
 async function fetchData() {
+  if (loading.value) return
   loading.value = true
+  loadError.value = null
   try {
-    const [termList, branchList, whList, openShifts] = await Promise.all([
+    const [termData, shiftData] = await Promise.all([
       terminalApi.listTerminals(),
-      branchApi.listBranches(),
-      branchApi.listWarehouses(),
-      shiftApi.listShifts({ status_code: 'OPEN' }).catch(() => []),
+      shiftApi.listShifts({ status_code: 'OPEN', limit: 100 }).catch(() => []),
     ])
-    terminals.value = termList || []
-    branches.value = branchList || []
-    allWarehouses.value = whList || []
+    terminals.value = (termData as any[]) || []
+    openShifts.value = (shiftData as any[]) || []
+    lastRefreshedAt.value = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })
 
-    // Map open shifts by terminal ID
-    const shiftMap: Record<string, any> = {}
-    for (const s of openShifts || []) {
-      if (s.terminal_id) {
-        shiftMap[s.terminal_id] = s
-      }
+    // Keep inspected drawer in sync if open
+    if (inspectedTerminal.value) {
+      const updated = enrichedTerminals.value.find(t => t.id === inspectedTerminal.value.id)
+      if (updated) inspectedTerminal.value = updated
     }
-    activeShiftsByTerminalId.value = shiftMap
   } catch (err: any) {
-    toast.error('Failed to load POS terminals', err.data?.detail || err.message)
+    loadError.value = err?.data?.detail || err?.message || 'Unable to load POS register data.'
   } finally {
     loading.value = false
+    initialLoading.value = false
   }
 }
 
-function toggleAutoRefresh() {
-  autoRefreshEnabled.value = !autoRefreshEnabled.value
-  if (autoRefreshEnabled.value) {
-    startAutoRefresh()
-    toast.success('Live Monitor Active', 'Polling station heartbeats every 15 seconds.')
-  } else {
-    stopAutoRefresh()
-    toast.add({ title: 'Live Monitor Paused', description: 'Auto-refresh paused.', color: 'default' })
+// ── Modal & Action Handlers ──────────────────────────────────────────────────
+function onBranchChange() {
+  const firstWh = branchWarehouses.value.find(w => w.is_default) || branchWarehouses.value[0]
+  form.warehouse_id = firstWh ? firstWh.id : ''
+}
+
+function openCreateModal() {
+  editingTerminal.value = null
+  const defaultBranch = branches.value[0]
+  form.code = `POS-0${terminals.value.length + 1}`
+  form.name = `Register #${terminals.value.length + 1}`
+  form.branch_id = defaultBranch?.id || ''
+  onBranchChange()
+  form.device_identifier = ''
+  form.receipt_prefix = `POS0${terminals.value.length + 1}-`
+  form.notes = ''
+  form.status_code = 'ACTIVE'
+  showModal.value = true
+}
+
+function openEditModal(row: any) {
+  editingTerminal.value = row
+  form.code = row.code
+  form.name = row.name
+  form.branch_id = row.branch_id || branches.value[0]?.id || ''
+  form.warehouse_id = row.warehouse_id || ''
+  form.device_identifier = row.device_identifier || ''
+  form.receipt_prefix = row.receipt_prefix || ''
+  form.notes = row.notes || ''
+  form.status_code = row.status_code || 'ACTIVE'
+  showModal.value = true
+}
+
+async function handleSubmit() {
+  if (!form.branch_id || !form.warehouse_id) {
+    toast.add({ title: 'Validation Error', description: 'Please select both a Branch and a Warehouse.', color: 'amber' })
+    return
   }
-}
-
-function startAutoRefresh() {
-  stopAutoRefresh()
-  autoRefreshTimer = setInterval(() => {
-    fetchData()
-  }, 15000)
-}
-
-function stopAutoRefresh() {
-  if (autoRefreshTimer) {
-    clearInterval(autoRefreshTimer)
-    autoRefreshTimer = null
-  }
-}
-
-async function viewShiftSummary(shiftId: string) {
+  saving.value = true
   try {
-    const summary = await shiftApi.getShiftSummary(shiftId)
-    selectedShiftSummary.value = summary
-    showSummaryModal.value = true
+    if (editingTerminal.value) {
+      await terminalApi.updateTerminal(editingTerminal.value.id, {
+        name: form.name.trim(),
+        branch_id: form.branch_id,
+        warehouse_id: form.warehouse_id,
+        device_identifier: form.device_identifier.trim() || null,
+        receipt_prefix: form.receipt_prefix.trim() || null,
+        notes: form.notes.trim() || null,
+        status_code: form.status_code,
+      })
+      toast.add({ title: 'Register Updated', description: `${form.code} configuration saved.`, color: 'green' })
+    } else {
+      await terminalApi.createTerminal({
+        code: form.code.trim().toUpperCase(),
+        name: form.name.trim(),
+        branch_id: form.branch_id,
+        warehouse_id: form.warehouse_id,
+        device_identifier: form.device_identifier.trim() || null,
+        receipt_prefix: form.receipt_prefix.trim() || null,
+        notes: form.notes.trim() || null,
+        status_code: form.status_code,
+      })
+      toast.add({ title: 'Register Created', description: `${form.code.toUpperCase()} added to store.`, color: 'green' })
+    }
+    showModal.value = false
+    await fetchData()
   } catch (err: any) {
-    toast.error('Failed to load shift summary', err.data?.detail || err.message)
+    toast.add({ title: 'Save Failed', description: err?.data?.detail || err?.message, color: 'red' })
+  } finally {
+    saving.value = false
   }
 }
 
-function openForceCloseModal(terminal: PosTerminal, shift: any) {
-  closingTerminal.value = terminal
-  closingShift.value = shift
-  forceCloseForm.value = {
-    closing_cash_usd: Number(shift.opening_float_usd || 0),
-    notes: 'Shift closed remotely by Admin.',
+async function inspectTerminal(row: any) {
+  inspectedTerminal.value = row
+  inspectedShiftSummary.value = null
+  showInspectModal.value = true
+
+  if (row.active_shift?.id) {
+    loadingShiftSummary.value = true
+    try {
+      inspectedShiftSummary.value = await shiftApi.getShiftSummary(row.active_shift.id)
+    } catch {
+      inspectedShiftSummary.value = null
+    } finally {
+      loadingShiftSummary.value = false
+    }
   }
+}
+
+function openForceCloseModal(row: any) {
+  if (!row.active_shift) {
+    toast.add({ title: 'Cannot End Shift', description: 'This register does not have an open cashier shift.', color: 'amber' })
+    return
+  }
+  targetShiftTerminal.value = row
+  forceCloseForm.closing_cash_usd = Number(row.active_shift.opening_cash_usd || 0)
+  forceCloseForm.closing_cash_khr = Number(row.active_shift.opening_cash_khr || 0)
+  forceCloseForm.notes = 'Administrative remote shift closure'
   showForceCloseModal.value = true
 }
 
 async function handleForceCloseShift() {
-  if (!closingShift.value) return
-  saving.value = true
+  if (!targetShiftTerminal.value?.active_shift?.id) return
+  closingShift.value = true
   try {
-    await shiftApi.closeShift(closingShift.value.id, {
-      closing_cash_usd: forceCloseForm.value.closing_cash_usd,
-      notes: forceCloseForm.value.notes.trim(),
+    await shiftApi.closeShift(targetShiftTerminal.value.active_shift.id, {
+      closing_cash_usd: Number(forceCloseForm.closing_cash_usd || 0),
+      closing_cash_khr: Number(forceCloseForm.closing_cash_khr || 0),
+      notes: forceCloseForm.notes.trim() || 'Administrative remote shift closure',
     })
-    toast.success('Shift Closed', `Station ${closingTerminal.value?.code} shift closed successfully.`)
+    toast.add({
+      title: 'Shift Closed',
+      description: `Active shift on ${targetShiftTerminal.value.code} has been closed and reconciled.`,
+      color: 'green',
+    })
     showForceCloseModal.value = false
     await fetchData()
   } catch (err: any) {
-    toast.error('Failed to close shift', err.data?.detail || err.message)
-  } finally {
-    saving.value = false
-  }
-}
-
-function openCreateModal() {
-  const defaultBranch = branches.value[0]
-  const defaultBranchId = defaultBranch?.id || ''
-  createForm.value = {
-    branch_id: defaultBranchId,
-    warehouse_id: '',
-    code: `POS-0${terminals.value.length + 1}`,
-    name: `Register ${terminals.value.length + 1}`,
-    notes: '',
-  }
-  if (defaultBranchId) {
-    onBranchChange()
-  }
-  showCreateModal.value = true
-}
-
-function openEditModal(terminal: PosTerminal) {
-  editingTerminal.value = terminal
-  editForm.value = {
-    name: terminal.name,
-    warehouse_id: terminal.warehouse_id,
-    status_code: terminal.status_code,
-    notes: terminal.notes || '',
-  }
-  showEditModal.value = true
-}
-
-async function handleCreateTerminal() {
-  saving.value = true
-  try {
-    await terminalApi.createTerminal({
-      branch_id: createForm.value.branch_id,
-      warehouse_id: createForm.value.warehouse_id,
-      code: createForm.value.code.trim().toUpperCase(),
-      name: createForm.value.name.trim(),
-      notes: createForm.value.notes?.trim() || undefined,
+    toast.add({
+      title: 'Failed to End Shift',
+      description: err?.data?.detail || err?.message || 'Could not close shift.',
+      color: 'red',
     })
-    toast.success('POS Terminal Registered', `Station ${createForm.value.code} registered successfully.`)
-    showCreateModal.value = false
+  } finally {
+    closingShift.value = false
+  }
+}
+
+function promptToggleStatus(row: any) {
+  if (row.status_code === 'ACTIVE' && row.active_shift) {
+    toast.add({
+      title: 'Active Shift Open',
+      description: `Please end the open cashier shift on ${row.code} before deactivating this register.`,
+      color: 'amber',
+    })
+    return
+  }
+  statusConfirmTarget.value = row
+  showStatusConfirm.value = true
+}
+
+async function executeToggleStatus() {
+  if (!statusConfirmTarget.value) return
+  const target = statusConfirmTarget.value
+  const nextStatus = target.status_code === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE'
+  togglingStatus.value = true
+  try {
+    await terminalApi.updateTerminal(target.id, { status_code: nextStatus })
+    toast.add({
+      title: nextStatus === 'ACTIVE' ? 'Register Activated' : 'Register Deactivated',
+      description: `${target.name} (${target.code}) is now ${nextStatus}.`,
+      color: 'green',
+    })
+    showStatusConfirm.value = false
     await fetchData()
   } catch (err: any) {
-    toast.error('Failed to register terminal', err.data?.detail || err.message)
-  } finally {
-    saving.value = false
-  }
-}
-
-async function handleUpdateTerminal() {
-  if (!editingTerminal.value) return
-  saving.value = true
-  try {
-    await terminalApi.updateTerminal(editingTerminal.value.id, {
-      name: editForm.value.name.trim(),
-      warehouse_id: editForm.value.warehouse_id,
-      status_code: editForm.value.status_code,
-      notes: editForm.value.notes?.trim() || undefined,
+    toast.add({
+      title: 'Status Update Failed',
+      description: err?.data?.detail || err?.message,
+      color: 'red',
     })
-    toast.success('POS Terminal Updated', `Station ${editingTerminal.value.code} updated successfully.`)
-    showEditModal.value = false
-    await fetchData()
-  } catch (err: any) {
-    toast.error('Failed to update terminal', err.data?.detail || err.message)
   } finally {
-    saving.value = false
+    togglingStatus.value = false
   }
 }
 
-async function toggleTerminalStatus(terminal: PosTerminal, newStatus: string) {
-  try {
-    await terminalApi.updateTerminal(terminal.id, {
-      status_code: newStatus,
-    })
-    toast.success('Status Updated', `Station ${terminal.code} set to ${newStatus}.`)
-    await fetchData()
-  } catch (err: any) {
-    toast.error('Failed to change status', err.data?.detail || err.message)
+// ── Visibility-Aware Auto-Refresh Timer ──────────────────────────────────────
+let refreshTimer: ReturnType<typeof setInterval> | null = null
+
+function startTimer() {
+  stopTimer()
+  if (!autoRefresh.value) return
+  refreshTimer = setInterval(() => {
+    if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return
+    fetchData()
+  }, 15000)
+}
+
+function stopTimer() {
+  if (refreshTimer) {
+    clearInterval(refreshTimer)
+    refreshTimer = null
   }
 }
 
-onMounted(() => {
-  fetchData()
-  if (autoRefreshEnabled.value) {
-    startAutoRefresh()
+function toggleAutoRefresh() {
+  autoRefresh.value = !autoRefresh.value
+  if (autoRefresh.value) {
+    fetchData()
+    startTimer()
+  } else {
+    stopTimer()
+  }
+}
+
+function handleVisibilityChange() {
+  if (typeof document === 'undefined') return
+  if (document.visibilityState === 'visible' && autoRefresh.value) {
+    fetchData()
+  }
+}
+
+onMounted(async () => {
+  await loadBranchesAndUsers()
+  await fetchData()
+  startTimer()
+  if (import.meta.client) {
+    document.addEventListener('visibilitychange', handleVisibilityChange)
   }
 })
 
-onUnmounted(() => {
-  stopAutoRefresh()
+onBeforeUnmount(() => {
+  stopTimer()
+  if (import.meta.client) {
+    document.removeEventListener('visibilitychange', handleVisibilityChange)
+  }
 })
 </script>
+
+<style scoped>
+.refresh-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.refresh-timestamp {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  color: var(--text-tertiary, #64748b);
+  padding: 0 4px;
+}
+
+.auto-refresh-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: var(--radius-md, 6px);
+  border: 1px solid var(--border-subtle, #e5e7eb);
+  background: var(--surface-card, #ffffff);
+  color: var(--text-secondary, #475569);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+
+.auto-refresh-toggle:hover {
+  background: var(--surface-hover, #f1f5f9);
+}
+
+.auto-refresh-toggle.is-active {
+  background: var(--surface-inset, #f8fafc);
+  color: var(--text-primary, #0f172a);
+}
+
+.auto-refresh-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-muted, #94a3b8);
+}
+
+.auto-refresh-toggle.is-active .auto-refresh-dot {
+  background: var(--status-green, #15803d);
+}
+
+.auto-refresh-dot.is-pulsing {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.consistency-banner {
+  background: var(--status-amber-bg, #fffbeb);
+  border: 1px solid var(--border-subtle, #e5e7eb);
+  border-radius: var(--radius-lg, 8px);
+  padding: 10px 14px;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.consistency-banner__left {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.register-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.register-cell__top {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.register-name {
+  font-weight: 600;
+  color: var(--text-primary, #0f172a);
+  font-size: 13px;
+}
+
+.register-code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm, 4px);
+  background: var(--surface-inset, #f8fafc);
+  border: 1px solid var(--border-subtle, #e5e7eb);
+  color: var(--text-secondary, #475569);
+}
+
+.register-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--text-tertiary, #64748b);
+}
+
+.register-prefix {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-secondary, #475569);
+}
+
+.location-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.location-cell__name {
+  font-weight: 500;
+  color: var(--text-primary, #0f172a);
+  font-size: 12.5px;
+}
+
+.location-cell__code {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-tertiary, #64748b);
+}
+
+.location-cell__sub {
+  font-size: 10.5px;
+  color: var(--text-tertiary, #64748b);
+}
+
+.connection-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+}
+
+.connection-cell__seen {
+  font-size: 11px;
+  color: var(--text-tertiary, #64748b);
+}
+
+.shift-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.shift-cell__top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.shift-cell__float {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-primary, #0f172a);
+}
+
+.shift-cell__meta {
+  font-size: 11px;
+  color: var(--text-tertiary, #64748b);
+}
+
+.cashier-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cashier-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--surface-hover, #f1f5f9);
+  border: 1px solid var(--border-subtle, #e5e7eb);
+  color: var(--text-primary, #0f172a);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.cashier-name {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-primary, #0f172a);
+}
+
+.cashier-sub {
+  font-size: 10.5px;
+  color: var(--text-tertiary, #64748b);
+}
+
+.shift-warning-box {
+  padding: 12px;
+  border-radius: var(--radius-lg, 8px);
+  background: var(--status-amber-bg, #fffbeb);
+  border: 1px solid var(--border-subtle, #e5e7eb);
+}
+</style>

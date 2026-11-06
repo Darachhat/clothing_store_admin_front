@@ -1,54 +1,62 @@
 <template>
-  <div class="space-y-4">
+  <div class="page-root">
     <!-- Header -->
-    <div class="flex items-center justify-between">
-      <div>
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Roles & Permissions (RBAC)</h2>
-        <p class="text-sm text-gray-500 dark:text-gray-400">Configure role-based access control and system privileges</p>
-      </div>
-      <AppButton
-        label="Add Role"
-        variant="primary"
-        @click="openCreateModal"
-      />
-    </div>
+    <AppPageHeader
+      title="Roles &amp; Permissions"
+      description="Configure role-based access control (RBAC) and system permission assignments."
+      :breadcrumbs="[{ label: 'Administration' }, { label: 'Roles & Permissions' }]"
+    >
+      <template #actions>
+        <AppButton
+          label="Add Role"
+          variant="primary"
+          size="sm"
+          icon="i-heroicons-plus"
+          @click="openCreateModal"
+        />
+      </template>
+    </AppPageHeader>
 
     <!-- Roles Table -->
-    <AppCard>
+    <AppCard :no-pad="true">
       <AppTable
         :columns="columns"
         :rows="roles"
         :loading="loading"
-        :empty-state="{ icon: 'i-heroicons-shield-check', label: 'No roles found' }"
+        empty-text="No roles found."
+        empty-icon="i-heroicons-shield-check"
       >
         <template #cell-name="{ row }">
-          <div class="flex items-center gap-2">
-            <span class="font-bold text-gray-900 dark:text-white">{{ row.name }}</span>
-            <AppBadge v-if="row.is_system" variant="default" size="sm" label="System" />
+          <div class="role-name-cell">
+            <span class="role-name">{{ row.name }}</span>
+            <AppBadge v-if="row.is_system" color="default" size="sm">System</AppBadge>
           </div>
         </template>
 
         <template #cell-description="{ row }">
-          <span class="text-sm text-gray-500">{{ row.description || 'No description' }}</span>
+          <span class="role-desc">{{ row.description || 'No description' }}</span>
         </template>
 
         <template #cell-permissions="{ row }">
-          <div class="flex flex-wrap gap-1 max-w-md">
+          <div class="perm-chips">
             <AppBadge
               v-for="perm in (row.permissions || []).slice(0, 4)"
               :key="perm.id"
-              variant="primary" :label="perm.code"
+              color="indigo"
               size="sm"
-            />
-            <span v-if="(row.permissions || []).length > 4" class="text-xs text-gray-400 self-center">
+            >
+              {{ perm.code }}
+            </AppBadge>
+            <span v-if="(row.permissions || []).length > 4" class="perm-more">
               +{{ (row.permissions || []).length - 4 }} more
             </span>
+            <span v-if="!(row.permissions || []).length" class="role-desc">No permissions</span>
           </div>
         </template>
 
         <template #cell-actions="{ row }">
           <AppButton
-            size="sm"
+            size="xs"
             variant="ghost"
             icon="i-heroicons-pencil-square"
             label="Edit Permissions"
@@ -59,79 +67,91 @@
     </AppCard>
 
     <!-- Create / Edit Role Modal -->
-    <AppModal v-model="showCreateModal" :ui="{ width: 'sm:max-w-xl' }">
-      <AppCard>
-        <template #header>
-          <div class="flex items-center justify-between">
-            <h3 class="text-base font-semibold">{{ editingRoleId ? 'Edit Role & Permissions' : 'Create Custom Role' }}</h3>
-            <AppButton variant="ghost" size="sm" icon="i-heroicons-x-mark" @click="showCreateModal = false" />
-          </div>
-        </template>
+    <AppModal
+      v-model="showCreateModal"
+      :title="editingRoleId ? 'Edit Role & Permissions' : 'Create Custom Role'"
+      description="Assign granular permission codes to control module and API access."
+      size="lg"
+    >
+      <form class="form-grid" @submit.prevent="handleCreateRole">
+        <div class="form-field">
+          <label class="field-label">Role Name <span class="req">*</span></label>
+          <input
+            v-model="createForm.name"
+            type="text"
+            required
+            :disabled="Boolean(editingRoleId)"
+            placeholder="e.g. INVENTORY_CLERK"
+            class="field-input uppercase"
+          />
+        </div>
 
-        <form class="space-y-4" @submit.prevent="handleCreateRole">
-          <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Role Name *</label>
+        <div class="form-field">
+          <label class="field-label">Description</label>
+          <input
+            v-model="createForm.description"
+            type="text"
+            placeholder="Brief description of responsibilities"
+            class="field-input"
+          />
+        </div>
+
+        <div class="form-field">
+          <div class="perm-header-row">
+            <label class="field-label">Granted Permissions ({{ createForm.permission_ids.length }} selected)</label>
             <input
-              v-model="createForm.name"
+              v-model="permSearch"
               type="text"
-              required
-              placeholder="e.g. INVENTORY_CLERK"
-              class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm uppercase"
+              placeholder="Filter permissions..."
+              class="perm-search-input"
             />
           </div>
-
-          <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
-            <input
-              v-model="createForm.description"
-              type="text"
-              placeholder="Brief description of responsibilities"
-              class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
-            />
-          </div>
-
-          <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Granted Permissions</label>
-            <div class="grid grid-cols-2 gap-2 max-h-56 overflow-y-auto p-2 border border-gray-200 dark:border-gray-700 rounded-lg">
-              <label
-                v-for="perm in permissions"
-                :key="perm.id"
-                class="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 cursor-pointer"
-              >
-                <input
-                  v-model="createForm.permission_ids"
-                  type="checkbox"
-                  :value="perm.id"
-                  class="rounded text-primary-600 focus:ring-primary-500"
-                />
-                <span>{{ perm.name }} ({{ perm.code }})</span>
-              </label>
+          <div class="perm-checklist">
+            <label
+              v-for="perm in filteredPermissions"
+              :key="perm.id"
+              class="perm-check-item"
+            >
+              <input
+                v-model="createForm.permission_ids"
+                type="checkbox"
+                :value="perm.id"
+              />
+              <div class="perm-check-text">
+                <span class="perm-check-name">{{ perm.name }}</span>
+                <span class="perm-check-code">{{ perm.code }}</span>
+              </div>
+            </label>
+            <div v-if="!filteredPermissions.length" class="perm-empty">
+              No permissions match "{{ permSearch }}"
             </div>
           </div>
+        </div>
 
-          <div class="flex justify-end gap-2 pt-2">
-            <AppButton variant="ghost" label="Cancel" @click="showCreateModal = false" />
-            <AppButton type="submit" variant="primary" label="Save Role" :loading="saving" />
-          </div>
-        </form>
-      </AppCard>
+        <div class="modal-actions">
+          <AppButton variant="ghost" type="button" label="Cancel" @click="showCreateModal = false" />
+          <AppButton type="submit" variant="primary" label="Save Role" :loading="saving" />
+        </div>
+      </form>
     </AppModal>
   </div>
 </template>
 
 <script setup lang="ts">
 definePageMeta({ middleware: ['auth'] })
+useHead({ title: 'Roles & Permissions — Clothing Store' })
 
 const userApi = useUserApi()
-const toast = useAppToast()
+const { addToast } = useAppToast()
 
 const loading = ref(false)
 const saving = ref(false)
 const roles = ref<any[]>([])
 const permissions = ref<any[]>([])
+const permSearch = ref('')
 
 const columns = [
-  { key: 'name', label: 'Role' },
+  { key: 'name', label: 'Role', sortable: true },
   { key: 'description', label: 'Description' },
   { key: 'permissions', label: 'Permissions' },
   { key: 'actions', label: 'Actions' },
@@ -145,8 +165,17 @@ const createForm = ref({
   permission_ids: [] as string[],
 })
 
+const filteredPermissions = computed(() => {
+  const q = permSearch.value.trim().toLowerCase()
+  if (!q) return permissions.value
+  return permissions.value.filter((p: any) =>
+    (p.name || '').toLowerCase().includes(q) || (p.code || '').toLowerCase().includes(q)
+  )
+})
+
 function openCreateModal() {
   editingRoleId.value = null
+  permSearch.value = ''
   createForm.value = {
     name: '',
     description: '',
@@ -157,6 +186,7 @@ function openCreateModal() {
 
 function openEditModal(role: any) {
   editingRoleId.value = role.id
+  permSearch.value = ''
   createForm.value = {
     name: role.name || '',
     description: role.description || '',
@@ -169,9 +199,9 @@ async function fetchRoles() {
   loading.value = true
   try {
     const data = await userApi.listRoles() as any[]
-    roles.value = data
+    roles.value = Array.isArray(data) ? data : []
   } catch (err: any) {
-    toast.add({ title: 'Error', description: err.message, color: 'red' })
+    addToast({ type: 'error', title: 'Error', message: err.message })
   } finally {
     loading.value = false
   }
@@ -180,7 +210,7 @@ async function fetchRoles() {
 async function fetchPermissions() {
   try {
     const data = await userApi.listPermissions() as any[]
-    permissions.value = data
+    permissions.value = Array.isArray(data) ? data : []
   } catch (e) {
     console.error('Failed to fetch permissions:', e)
   }
@@ -194,15 +224,15 @@ async function handleCreateRole() {
         description: createForm.value.description,
         permission_ids: createForm.value.permission_ids,
       })
-      toast.add({ title: 'Success', description: 'Role permissions updated successfully', color: 'green' })
+      addToast({ type: 'success', title: 'Role permissions updated' })
     } else {
       await userApi.createRole(createForm.value)
-      toast.add({ title: 'Success', description: 'Role created successfully', color: 'green' })
+      addToast({ type: 'success', title: 'Role created' })
     }
     showCreateModal.value = false
     await fetchRoles()
   } catch (err: any) {
-    toast.add({ title: 'Error', description: err.message, color: 'red' })
+    addToast({ type: 'error', title: 'Error', message: err.message })
   } finally {
     saving.value = false
   }
@@ -213,3 +243,119 @@ onMounted(async () => {
   await fetchRoles()
 })
 </script>
+
+<style scoped>
+.role-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.role-name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.role-desc {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.perm-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  max-width: 460px;
+}
+
+.perm-more {
+  font-size: 11.5px;
+  color: var(--text-tertiary);
+  margin-left: 4px;
+}
+
+.perm-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 4px;
+}
+
+.perm-search-input {
+  height: 28px;
+  padding: 0 8px;
+  font-size: 12px;
+  background: var(--surface-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  outline: none;
+  width: 180px;
+}
+
+.perm-checklist {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  max-height: 240px;
+  overflow-y: auto;
+  padding: 10px;
+  background: var(--surface-inset);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+@media (max-width: 640px) {
+  .perm-checklist {
+    grid-template-columns: 1fr;
+  }
+}
+
+.perm-check-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 6px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.perm-check-item:hover {
+  background: var(--surface-hover);
+}
+
+.perm-check-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.perm-check-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.perm-check-code {
+  font-size: 11px;
+  font-family: var(--font-mono, monospace);
+  color: var(--text-tertiary);
+}
+
+.perm-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 16px;
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 8px;
+}
+</style>

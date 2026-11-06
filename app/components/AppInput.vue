@@ -1,98 +1,134 @@
-<!-- AppInput — flat input field, 8px grid -->
 <template>
-  <div class="a-input-wrap" :class="[block && 'a-input-wrap--block']">
-    <div class="a-input-inner" :class="[disabled && 'is-disabled', modelValue && 'has-value']">
-      <slot name="prefix" />
+  <div class="app-input-group">
+    <label v-if="label" :for="id" class="app-input-label">
+      {{ label }}
+      <span v-if="required" class="required">*</span>
+    </label>
+    <div class="app-input-wrap" :class="{ 'has-error': error, 'has-icon-left': !!icon }">
+      <UIcon v-if="icon" :name="icon" class="app-input-icon" />
       <input
-        v-bind="$attrs"
-        class="a-input"
-        :type="type"
+        :id="id"
+        :type="type || 'text'"
         :value="modelValue"
         :placeholder="placeholder"
         :disabled="disabled"
         :required="required"
-        :autocomplete="autocomplete"
-        :autofocus="autofocus"
         :min="min"
         :max="max"
         :step="step"
+        class="app-input"
         @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
-        @keydown.enter="$emit('enter')"
       />
-      <slot name="suffix" />
     </div>
-    <p v-if="error" class="a-input-error">{{ error }}</p>
+    <p v-if="error" class="app-input-error">{{ error }}</p>
+    <p v-else-if="hint" class="app-input-hint">{{ hint }}</p>
   </div>
 </template>
 
 <script setup lang="ts">
-defineOptions({ inheritAttrs: false })
-
-withDefaults(defineProps<{
-  modelValue?: string | number
-  type?:       string
+defineProps<{
+  modelValue?: string | number | null
+  label?: string
   placeholder?: string
-  disabled?:   boolean
-  required?:   boolean
-  autocomplete?: string
-  autofocus?:  boolean
-  block?:      boolean
-  error?:      string
-  min?:        string | number
-  max?:        string | number
-  step?:       string | number
-}>(), {
-  type: 'text',
-})
-
-defineEmits<{
-  'update:modelValue': [value: string]
-  'enter': []
+  type?: string
+  id?: string
+  disabled?: boolean
+  required?: boolean
+  error?: string
+  hint?: string
+  icon?: string
+  min?: string | number
+  max?: string | number
+  step?: string | number
 }>()
+
+defineEmits(['update:modelValue'])
 </script>
 
 <style scoped>
-.a-input-wrap--block { width: 100%; }
+.app-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
 
-.a-input-inner {
+.app-input-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary, #475569);
+}
+
+.required {
+  color: var(--status-red, #b91c1c);
+  margin-left: 2px;
+}
+
+.app-input-wrap {
+  position: relative;
   display: flex;
   align-items: center;
-  height: 36px;
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-md);
-  background: var(--surface-card);
-  overflow: hidden;
-  transition: border-color 0.1s;
 }
 
-.a-input-inner:focus-within {
-  border-color: var(--border-strong);
+.app-input-icon {
+  position: absolute;
+  left: 10px;
+  width: 15px;
+  height: 15px;
+  color: var(--text-tertiary, #64748b);
+  pointer-events: none;
 }
 
-.a-input-inner.is-disabled {
-  background: var(--surface-bg);
-  opacity: 0.5;
-}
-
-.a-input {
-  flex: 1;
-  height: 100%;
-  padding: 0 10px;
+.app-input {
+  width: 100%;
+  min-height: 36px;
+  padding: 7px 11px;
   font-family: var(--font-body);
   font-size: 13px;
-  color: var(--text-primary);
-  background: transparent;
-  border: none;
+  color: var(--text-primary, #0f172a);
+  background: var(--surface-input, #ffffff);
+  border: 1px solid var(--border-subtle, #e5e7eb);
+  border-radius: var(--radius-md, 6px);
   outline: none;
-  min-width: 0;
+  transition: border-color 0.12s, background 0.12s;
 }
 
-.a-input::placeholder { color: var(--text-tertiary); }
+.has-icon-left .app-input {
+  padding-left: 32px;
+}
 
-.a-input-error {
+.app-input::placeholder {
+  color: var(--text-muted, #94a3b8);
+}
+
+.app-input:hover:not(:disabled) {
+  border-color: var(--border-default, #d1d5db);
+}
+
+.app-input:focus {
+  border-color: var(--border-strong, #9ca3af);
+  background: var(--surface-card, #ffffff);
+}
+
+.app-input:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background: var(--surface-inset, #f8fafc);
+}
+
+.has-error .app-input {
+  border-color: var(--border-strong, #9ca3af);
+  background: var(--status-red-bg, #fef2f2);
+}
+
+.app-input-error {
   font-size: 11px;
-  color: var(--status-red);
-  margin-top: 4px;
-  max-width: none;
+  color: var(--status-red, #b91c1c);
+  margin: 0;
+}
+
+.app-input-hint {
+  font-size: 11px;
+  color: var(--text-tertiary, #64748b);
+  margin: 0;
 }
 </style>

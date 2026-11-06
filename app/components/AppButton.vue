@@ -1,130 +1,148 @@
-<!-- AppButton — flat structural button, 8px grid -->
 <template>
-  <component
-    :is="to ? (external ? 'a' : resolveComponent('NuxtLink')) : 'button'"
-    class="a-btn"
-    :class="[
-      `a-btn--${variant}`,
-      `a-btn--${size}`,
-      block && 'a-btn--block',
-      loading && 'a-btn--loading',
-    ]"
-    :href="external ? to : undefined"
-    :to="!external ? to : undefined"
-    :target="external ? '_blank' : undefined"
-    :disabled="disabled || loading"
-    :type="!to ? (type || 'button') : undefined"
-    v-bind="$attrs"
+  <NuxtLink
+    v-if="to"
+    :to="to"
+    :target="target"
+    class="app-btn"
+    :class="[`app-btn--${normalizedVariant}`, `app-btn--${size || 'md'}`]"
   >
-    <UIcon
-      v-if="loading"
-      name="i-heroicons-arrow-path"
-      class="a-btn__spinner w-3.5 h-3.5"
-    />
-    <UIcon
-      v-else-if="icon"
-      :name="icon"
-      class="w-3.5 h-3.5 shrink-0"
-    />
-    <slot v-if="!loading" name="icon-left" />
+    <slot name="icon-left">
+      <UIcon v-if="icon" :name="icon" class="app-btn__icon" />
+    </slot>
     <slot>{{ label }}</slot>
-    <UIcon
-      v-if="trailingIcon"
-      :name="trailingIcon"
-      class="w-3.5 h-3.5 shrink-0"
-    />
-    <slot name="icon-right" />
-  </component>
+  </NuxtLink>
+  <button
+    v-else
+    :type="type || 'button'"
+    :disabled="disabled || loading"
+    class="app-btn"
+    :class="[`app-btn--${normalizedVariant}`, `app-btn--${size || 'md'}`, { 'is-loading': loading }]"
+    @click="$emit('click', $event)"
+  >
+    <span v-if="loading" class="btn-spinner" />
+    <slot v-else name="icon-left">
+      <UIcon v-if="icon" :name="icon" class="app-btn__icon" />
+    </slot>
+    <slot>{{ label }}</slot>
+  </button>
 </template>
 
 <script setup lang="ts">
-import { resolveComponent } from 'vue'
+const props = defineProps<{
+  variant?: 'primary' | 'default' | 'secondary' | 'ghost' | 'danger' | string
+  size?: 'xs' | 'sm' | 'md' | 'lg'
+  type?: 'button' | 'submit' | 'reset'
+  disabled?: boolean
+  loading?: boolean
+  to?: string
+  target?: string
+  label?: string
+  icon?: string
+  color?: string
+}>()
 
-withDefaults(defineProps<{
-  label?:        string
-  icon?:         string
-  trailingIcon?: string
-  to?:           string
-  external?:     boolean
-  variant?:      'default' | 'primary' | 'secondary' | 'danger' | 'ghost'
-  size?:         'sm' | 'md' | 'lg'
-  block?:        boolean
-  loading?:      boolean
-  disabled?:     boolean
-  type?:         'button' | 'submit' | 'reset'
-}>(), {
-  variant: 'default',
-  size:    'md',
+defineEmits(['click'])
+
+const normalizedVariant = computed(() => {
+  if (props.color === 'red' || props.variant === 'danger') return 'danger'
+  if (props.variant === 'primary' || props.color === 'primary') return 'primary'
+  if (props.variant === 'ghost') return 'ghost'
+  return 'default'
 })
 </script>
 
 <style scoped>
-.a-btn {
+.app-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  border-radius: var(--radius-sm);
   font-family: var(--font-body);
   font-weight: 500;
+  border-radius: var(--radius-md, 6px);
+  border: 1px solid transparent;
   cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s, opacity 0.12s;
   white-space: nowrap;
   text-decoration: none;
-  border: 1px solid var(--border-default);
-  transition: background 0.1s, border-color 0.1s, opacity 0.1s;
-  position: relative;
+  line-height: 1.25;
 }
 
-/* Sizes */
-.a-btn--sm  { height: 28px; padding: 0 10px; font-size: 12px; }
-.a-btn--md  { height: 32px; padding: 0 14px; font-size: 13px; }
-.a-btn--lg  { height: 40px; padding: 0 18px; font-size: 14px; }
-
-/* Variants */
-.a-btn--default,
-.a-btn--secondary {
-  background: var(--surface-card);
-  color: var(--text-primary);
-  border-color: var(--border-default);
-}
-.a-btn--default:hover:not(:disabled),
-.a-btn--secondary:hover:not(:disabled) {
-  background: var(--surface-hover);
-  border-color: var(--border-strong);
+.app-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
-.a-btn--primary {
-  background: var(--accent);
-  color: var(--accent-fg);
-  border-color: var(--accent);
-}
-.a-btn--primary:hover:not(:disabled) { opacity: 0.88; }
+.app-btn--xs { padding: 4px 8px;  font-size: 11.5px; min-height: 26px; }
+.app-btn--sm { padding: 5px 10px; font-size: 12px;   min-height: 30px; }
+.app-btn--md { padding: 7px 13px; font-size: 13px;   min-height: 36px; }
+.app-btn--lg { padding: 9px 18px; font-size: 14px;   min-height: 40px; }
 
-.a-btn--danger {
-  background: var(--surface-card);
-  color: var(--status-red);
-  border-color: var(--border-default);
-}
-.a-btn--danger:hover:not(:disabled) {
-  background: var(--status-red-bg);
-  border-color: var(--border-strong);
+.app-btn__icon {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
 }
 
-.a-btn--ghost {
-  background: transparent;
-  color: var(--text-secondary);
+.app-btn--xs .app-btn__icon,
+.app-btn--sm .app-btn__icon {
+  width: 14px;
+  height: 14px;
+}
+
+/* Primary — high-contrast dark slate */
+.app-btn--primary {
+  background: var(--accent-primary, #0f172a);
+  color: #ffffff;
   border-color: transparent;
 }
-.a-btn--ghost:hover:not(:disabled) {
-  background: var(--surface-hover);
-  color: var(--text-primary);
+.app-btn--primary:hover:not(:disabled) {
+  background: var(--accent-hover, #1e293b);
 }
 
-/* Modifiers */
-.a-btn--block { width: 100%; }
-.a-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+/* Default / Secondary — subtle neutral border */
+.app-btn--default {
+  background: var(--surface-card, #ffffff);
+  color: var(--text-primary, #0f172a);
+  border-color: var(--border-subtle, #e5e7eb);
+}
+.app-btn--default:hover:not(:disabled) {
+  background: var(--surface-hover, #f1f5f9);
+  border-color: var(--border-default, #d1d5db);
+}
 
-/* Spinner */
-.a-btn__spinner { animation: spin 0.8s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
+/* Ghost */
+.app-btn--ghost {
+  background: transparent;
+  color: var(--text-secondary, #475569);
+  border-color: transparent;
+}
+.app-btn--ghost:hover:not(:disabled) {
+  background: var(--surface-hover, #f1f5f9);
+  color: var(--text-primary, #0f172a);
+}
+
+/* Danger — neutral subtle border per AGENTS.md */
+.app-btn--danger {
+  background: var(--status-red-bg, #fef2f2);
+  color: var(--status-red, #b91c1c);
+  border-color: var(--border-subtle, #e5e7eb);
+}
+.app-btn--danger:hover:not(:disabled) {
+  background: #fee2e2;
+}
+
+.btn-spinner {
+  width: 13px;
+  height: 13px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
 </style>

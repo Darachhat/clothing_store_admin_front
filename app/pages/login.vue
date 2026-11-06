@@ -1,385 +1,260 @@
 <template>
-  <div class="login-root">
-    <!-- Left panel: branding -->
-    <div class="login-brand">
-      <div class="login-brand__inner">
-        <div class="login-brand__logo">
-          <UIcon name="i-heroicons-shield-check" class="w-6 h-6 text-white" />
+  <div class="login-page">
+    <div class="login-box">
+      <div class="login-brand">
+        <div class="login-mark">
+          <UIcon name="i-heroicons-building-storefront" class="w-4 h-4" />
         </div>
-        <div class="login-brand__name">{{ config.public.appName }}</div>
-        <p class="login-brand__tagline">Admin & Manager portal. Full access to inventory, reports, purchasing, and user management.</p>
-        <div class="login-brand__features">
-          <div v-for="feat in features" :key="feat" class="login-brand__feature">
-            <UIcon name="i-heroicons-check" class="w-3.5 h-3.5 text-white stroke-[2.5]" />
-            {{ feat }}
-          </div>
+        <div>
+          <span class="login-name">Clothing Store</span>
+          <span class="login-sub">Retail Administration Portal</span>
         </div>
       </div>
-    </div>
 
-    <!-- Right panel: form -->
-    <div class="login-form-panel">
-      <div class="login-form-wrap">
-        <div class="login-form-header">
-          <h1 class="login-form-title">Admin Sign In</h1>
-          <p class="login-form-subtitle">Sign in with your username, verified phone, or linked Telegram account.</p>
+      <h1 class="login-heading">Sign in to Admin</h1>
+      <p class="login-desc">Enter your administrator or manager credentials to continue.</p>
+
+      <div v-if="errorMsg" class="login-error" role="alert">
+        <UIcon name="i-heroicons-exclamation-circle" class="w-4 h-4 shrink-0" />
+        <span>{{ errorMsg }}</span>
+      </div>
+
+      <form class="login-form" @submit.prevent="handleLogin">
+        <div class="form-field">
+          <label class="field-label" for="email">Email Address</label>
+          <input
+            id="email"
+            v-model="email"
+            type="email"
+            class="field-input"
+            placeholder="admin@clothingstore.com"
+            autocomplete="email"
+            required
+          />
         </div>
 
-        <form class="login-form" @submit.prevent="handleLogin">
-          <div class="login-field">
-            <label class="login-label" for="username">Username or Verified Phone</label>
-            <input
-              id="username"
-              v-model="form.username"
-              type="text"
-              class="login-input"
-              placeholder="admin or +85569382165"
-              autocomplete="username"
-              autofocus
-              required
-            />
-          </div>
-
-          <div class="login-field">
-            <label class="login-label" for="password">Password</label>
+        <div class="form-field">
+          <label class="field-label" for="password">Password</label>
+          <div class="password-wrap">
             <input
               id="password"
-              v-model="form.password"
+              v-model="password"
               :type="showPassword ? 'text' : 'password'"
-              class="login-input"
-              placeholder="Enter your password"
+              class="field-input password-input"
+              placeholder="••••••••"
               autocomplete="current-password"
               required
             />
             <button
               type="button"
-              class="login-pw-toggle"
+              class="password-toggle"
               :aria-label="showPassword ? 'Hide password' : 'Show password'"
               @click="showPassword = !showPassword"
             >
-              <UIcon v-if="!showPassword" name="i-heroicons-eye" class="w-4 h-4" />
-              <UIcon v-else name="i-heroicons-eye-slash" class="w-4 h-4" />
+              <UIcon :name="showPassword ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'" class="w-4 h-4" />
             </button>
           </div>
-
-          <div v-if="errorMsg" class="login-error">
-            <UIcon name="i-heroicons-exclamation-circle" class="w-4 h-4 flex-shrink-0" />
-            {{ errorMsg }}
-          </div>
-
-          <button type="submit" class="login-btn" :disabled="loading">
-            <UIcon v-if="loading" name="i-heroicons-arrow-path" class="login-btn__spinner w-4 h-4 text-white" />
-            {{ loading ? 'Signing in...' : 'Sign in' }}
-          </button>
-        </form>
-
-        <!-- Telegram Login Section -->
-        <div class="login-divider">
-          <span>or</span>
         </div>
 
-        <div class="telegram-login-section">
-          <div ref="telegramWidgetContainer" class="telegram-widget-box" />
-          <button
-            type="button"
-            class="login-tg-btn"
-            :disabled="loading || appChallengeActive"
-            @click="startTelegramAppLogin"
-          >
-            <UIcon name="i-heroicons-paper-airplane" class="w-4 h-4" />
-            <span>{{ appChallengeActive ? 'Waiting for Telegram App...' : 'Open in Telegram App' }}</span>
-          </button>
-
-          <div v-if="appChallengeActive" class="telegram-payload-card">
-            <div class="flex items-center gap-2 text-xs font-medium text-gray-800">
-              <UIcon name="i-heroicons-arrow-path" class="w-4 h-4 login-btn__spinner" />
-              <span>{{ appChallengeMessage || 'Confirm login in your Telegram App (@clothing_store_kvm_bot)...' }}</span>
-            </div>
-            <div class="flex items-center gap-2 pt-1">
-              <a
-                v-if="appChallengeWebUrl"
-                :href="appChallengeWebUrl"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="login-tg-btn"
-                style="text-decoration: none; height: 34px; font-size: 12px;"
-              >
-                <UIcon name="i-heroicons-arrow-top-right-on-square" class="w-3.5 h-3.5" />
-                <span>Open in Telegram</span>
-              </a>
-              <button
-                type="button"
-                class="login-tg-btn"
-                style="height: 34px; font-size: 12px;"
-                @click="cancelTelegramAppLogin"
-              >
-                <span>Cancel</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <p class="login-footer-note">
-          Secure admin access only. Contact your administrator if you need credentials.
-        </p>
-      </div>
+        <button type="submit" class="login-btn" :disabled="loading">
+          <span v-if="loading" class="spinner" />
+          {{ loading ? 'Signing in…' : 'Sign in' }}
+        </button>
+      </form>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-definePageMeta({ layout: false, middleware: ['guest'] })
-useHead({ title: 'Admin Sign In — Clothing Store' })
+definePageMeta({ layout: false })
+useHead({ title: 'Sign In — Clothing Store Admin' })
 
-const config = useRuntimeConfig()
 const authStore = useAuthStore()
-const router = useRouter()
 
-const form = reactive({ username: '', password: '' })
-const loading = ref(false)
+const email = ref('')
+const password = ref('')
 const showPassword = ref(false)
+const loading = ref(false)
 const errorMsg = ref('')
 
-const telegramBotUsername = ref<string | null>('clothing_store_kvm_bot')
-const telegramBotId = ref<string>('8453886789')
-const telegramWidgetContainer = ref<HTMLElement | null>(null)
-const appChallengeActive = ref(false)
-const appChallengeMessage = ref('')
-const appChallengeWebUrl = ref('')
-let pollTimer: ReturnType<typeof setInterval> | null = null
-
-const features = [
-  'Full dashboard & analytics',
-  'Inventory & stock management',
-  'Purchase orders & suppliers',
-  'User roles & permissions',
-]
-
-async function verifyPortalRolesAndRedirect() {
-  const roles = authStore.user?.roles?.map((r: any) => r.name) ?? []
-  if (!roles.some((r: string) => ['ADMIN', 'MANAGER'].includes(r))) {
-    await authStore.logout()
-    errorMsg.value = 'This portal is for Admin and Manager accounts only.'
-    return
+onMounted(() => {
+  authStore.restoreSession()
+  if (authStore.isAuthenticated) {
+    navigateTo('/dashboard', { replace: true })
   }
-  await router.push('/dashboard')
-}
+})
 
 async function handleLogin() {
   errorMsg.value = ''
-  if (!form.username.trim() || !form.password) {
-    errorMsg.value = 'Please enter both username/phone and password.'
-    return
-  }
   loading.value = true
   try {
-    await authStore.login(form.username.trim(), form.password)
-    await verifyPortalRolesAndRedirect()
-  } catch (err: unknown) {
-    const error = err as { data?: { detail?: string }; message?: string }
-    errorMsg.value = error?.data?.detail || 'Invalid username or password.'
-  } finally {
-    loading.value = false
-  }
-}
-
-async function handleTelegramAuthCallback(userPayload: Record<string, unknown>) {
-  errorMsg.value = ''
-  loading.value = true
-  try {
-    await authStore.loginWithTelegram(userPayload)
-    await verifyPortalRolesAndRedirect()
-  } catch (err: unknown) {
-    const error = err as { data?: { detail?: string }; message?: string }
-    errorMsg.value = error?.data?.detail || 'Telegram authentication failed.'
-  } finally {
-    loading.value = false
-  }
-}
-
-function extractTelegramRedirectPayload(): Record<string, unknown> | null {
-  if (typeof window === 'undefined') return null
-
-  // 1. Check #tgAuthResult=<base64> returned by https://oauth.telegram.org/auth redirect
-  const hash = window.location.hash || ''
-  if (hash.includes('tgAuthResult=')) {
-    try {
-      const encoded = hash.split('tgAuthResult=')[1]?.split('&')[0] || ''
-      const normalizedBase64 = encoded.replace(/-/g, '+').replace(/_/g, '/')
-      const padded = normalizedBase64 + '='.repeat((4 - (normalizedBase64.length % 4)) % 4)
-      const parsed = JSON.parse(atob(padded))
-      if (parsed && parsed.id && parsed.hash) {
-        window.history.replaceState({}, document.title, window.location.pathname)
-        return parsed
-      }
-    } catch {}
-  }
-
-  // 2. Check query string ?id=...&auth_date=...&hash=... returned by data-auth-url redirect
-  const params = new URLSearchParams(window.location.search)
-  if (params.get('id') && params.get('hash') && params.get('auth_date')) {
-    const payload: Record<string, unknown> = {
-      id: Number(params.get('id')) || params.get('id'),
-      auth_date: Number(params.get('auth_date')),
-      hash: params.get('hash'),
-    }
-    if (params.get('first_name')) payload.first_name = params.get('first_name')
-    if (params.get('last_name')) payload.last_name = params.get('last_name')
-    if (params.get('username')) payload.username = params.get('username')
-    if (params.get('photo_url')) payload.photo_url = params.get('photo_url')
-    window.history.replaceState({}, document.title, window.location.pathname)
-    return payload
-  }
-
-  return null
-}
-
-function cancelTelegramAppLogin() {
-  if (pollTimer) {
-    clearInterval(pollTimer)
-    pollTimer = null
-  }
-  appChallengeActive.value = false
-  appChallengeMessage.value = ''
-  appChallengeWebUrl.value = ''
-}
-
-async function startTelegramAppLogin() {
-  if (typeof window === 'undefined') return
-  errorMsg.value = ''
-  cancelTelegramAppLogin()
-
-  try {
-    const ch = await authStore.createTelegramAppChallenge()
-    appChallengeActive.value = true
-    appChallengeMessage.value = "Tap 'Start' in your Telegram App to sign in..."
-    appChallengeWebUrl.value = ch.tg_web_url
-
-    // Launch the installed Telegram Desktop or Mobile App directly via tg:// protocol
-    window.location.href = ch.tg_app_url
-
-    pollTimer = setInterval(async () => {
-      try {
-        const res = await authStore.pollTelegramAppStatus(ch.challenge_token)
-        if (res.message) {
-          appChallengeMessage.value = res.message
-        }
-        if (res.status === 'APPROVED') {
-          cancelTelegramAppLogin()
-          await verifyPortalRolesAndRedirect()
-        } else if (res.status === 'REJECTED' || res.status === 'EXPIRED') {
-          const msg = res.message || 'Telegram login was declined or expired.'
-          cancelTelegramAppLogin()
-          errorMsg.value = msg
-        }
-      } catch (err: any) {
-        if (err?.status === 403 || err?.statusCode === 403) {
-          cancelTelegramAppLogin()
-          errorMsg.value = err?.data?.detail || 'Account is not authorized for this portal.'
-        }
-      }
-    }, 2000)
-  } catch (err: any) {
-    errorMsg.value = err?.data?.detail || 'Could not start Telegram App login. Please ensure backend is updated.'
-  }
-}
-
-onBeforeUnmount(() => {
-  cancelTelegramAppLogin()
-})
-
-onMounted(async () => {
-  if (typeof window !== 'undefined') {
-    ;(window as any).onTelegramAuthAdmin = (user: Record<string, unknown>) => {
-      handleTelegramAuthCallback(user)
-    }
-    const redirectedPayload = extractTelegramRedirectPayload()
-    if (redirectedPayload) {
-      await handleTelegramAuthCallback(redirectedPayload)
+    await authStore.login(email.value.trim(), password.value)
+    const roles = authStore.user?.roles?.map((r: any) => r.name) ?? []
+    if (!roles.some((r: string) => ['ADMIN', 'MANAGER'].includes(r))) {
+      await authStore.logout()
+      errorMsg.value = 'Access denied. Admin or Manager role required.'
       return
     }
+    await navigateTo('/dashboard', { replace: true })
+  } catch (e: any) {
+    errorMsg.value = e?.data?.detail ?? e?.message ?? 'Invalid email or password.'
+  } finally {
+    loading.value = false
   }
-  const tgConfig = await authStore.getTelegramConfig()
-  const cleanBotUsername = (tgConfig.bot_username || 'clothing_store_kvm_bot').replace(/^@/, '')
-  telegramBotUsername.value = cleanBotUsername
-  if (tgConfig.bot_id) {
-    telegramBotId.value = tgConfig.bot_id
-  }
-  if (telegramWidgetContainer.value && cleanBotUsername) {
-    const script = document.createElement('script')
-    script.async = true
-    script.src = 'https://telegram.org/js/telegram-widget.js?22'
-    script.setAttribute('data-telegram-login', cleanBotUsername)
-    script.setAttribute('data-size', 'large')
-    script.setAttribute('data-auth-url', `${window.location.origin}${window.location.pathname}`)
-    script.setAttribute('data-request-access', 'write')
-    telegramWidgetContainer.value.appendChild(script)
-  }
-})
+}
 </script>
 
 <style scoped>
-.login-root {
+.login-page {
+  min-height: 100vh;
+  background: var(--surface-bg, #f8fafc);
   display: flex;
-  min-height: 100dvh;
-  background: var(--surface-bg);
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.login-box {
+  width: 100%;
+  max-width: 380px;
+  background: var(--surface-card, #ffffff);
+  border: 1px solid var(--border-subtle, #e5e7eb);
+  border-radius: var(--radius-xl, 12px);
+  padding: 28px;
+  box-shadow: var(--shadow-sm);
 }
 
 .login-brand {
-  display: none;
-  width: 400px;
-  min-width: 400px;
-  background: var(--brand-900);
-  padding: var(--space-6) var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.login-mark {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-md, 6px);
+  background: var(--accent-primary, #0f172a);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.login-name {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary, #0f172a);
+}
+
+.login-sub {
+  display: block;
+  font-size: 11px;
+  color: var(--text-tertiary, #64748b);
+}
+
+.login-heading {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary, #0f172a);
+  margin: 0 0 4px;
+}
+
+.login-desc {
+  font-size: 12.5px;
+  color: var(--text-secondary, #475569);
+  margin: 0 0 18px;
+}
+
+.login-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: var(--status-red-bg, #fef2f2);
+  border: 1px solid var(--border-subtle, #e5e7eb);
+  border-radius: var(--radius-md, 6px);
+  font-size: 12px;
+  color: var(--status-red, #b91c1c);
+  margin-bottom: 16px;
+}
+
+.login-form {
+  display: flex;
   flex-direction: column;
+  gap: 14px;
+}
+
+.password-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input {
+  padding-right: 36px;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 8px;
+  background: none;
+  border: none;
+  color: var(--text-tertiary, #64748b);
+  cursor: pointer;
+  padding: 4px;
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
 }
 
-@media (min-width: 768px) {
-  .login-brand { display: flex; }
+.password-toggle:hover {
+  color: var(--text-primary, #0f172a);
 }
 
-.login-brand__inner { display: flex; flex-direction: column; gap: var(--space-3); }
-.login-brand__logo { width: 48px; height: 48px; background: rgba(255,255,255,0.1); border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center; }
-.login-brand__name { font-size: 22px; font-weight: 700; color: white; letter-spacing: -0.02em; margin-top: 4px; }
-.login-brand__tagline { font-size: 14px; color: rgba(255,255,255,0.6); line-height: 1.6; max-width: 52ch; }
-.login-brand__features { display: flex; flex-direction: column; gap: 10px; margin-top: var(--space-1); }
-.login-brand__feature { display: flex; align-items: center; gap: 10px; font-size: 13px; color: rgba(255,255,255,0.75); }
+.login-btn {
+  margin-top: 4px;
+  padding: 9px 16px;
+  height: 38px;
+  background: var(--accent-primary, #0f172a);
+  color: #ffffff;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md, 6px);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background 0.12s, opacity 0.12s;
+}
 
-.login-form-panel { flex: 1; display: flex; align-items: center; justify-content: center; padding: var(--space-4) var(--space-2); }
-.login-form-wrap { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: var(--space-3); }
-.login-form-header { display: flex; flex-direction: column; gap: 4px; }
-.login-form-title { font-size: 22px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.02em; }
-.login-form-subtitle { font-size: 13px; color: var(--text-secondary); }
+.login-btn:hover:not(:disabled) {
+  background: var(--accent-hover, #1e293b);
+}
 
-.login-form { display: flex; flex-direction: column; gap: var(--space-2); }
-.login-field { display: flex; flex-direction: column; gap: 6px; position: relative; }
-.login-label { font-size: 12px; font-weight: 600; color: var(--text-primary); letter-spacing: 0.01em; max-width: none; }
-.login-input { height: 40px; width: 100%; border: 1px solid var(--border-subtle, #e5e7eb); border-radius: var(--radius-md); padding: 0 12px; font-family: var(--font-body); font-size: 14px; color: var(--text-primary); background: var(--surface-card); outline: none; }
-.login-input:focus { border-color: var(--border-subtle, #e2e8f0); }
-.login-input::placeholder { color: var(--text-tertiary); }
-.login-pw-toggle { position: absolute; right: 10px; bottom: 10px; color: var(--text-tertiary); background: none; border: none; cursor: pointer; padding: 0; display: flex; }
-.login-pw-toggle:hover { color: var(--text-primary); }
+.login-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
-.login-error { display: flex; align-items: center; gap: 6px; padding: 8px 12px; background: var(--status-red-bg); border-radius: var(--radius-md); font-size: 13px; color: var(--status-red); }
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #ffffff;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
 
-.login-btn { height: 40px; width: 100%; background: var(--accent); color: var(--accent-fg); border: none; border-radius: var(--radius-md); font-family: var(--font-body); font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 4px; }
-.login-btn:hover:not(:disabled) { opacity: 0.88; }
-.login-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.login-btn__spinner { animation: spin 0.8s linear infinite; }
-
-.login-divider { display: flex; align-items: center; gap: 10px; font-size: 11px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; }
-.login-divider::before, .login-divider::after { content: ''; flex: 1; height: 1px; background: var(--border-subtle, #e5e7eb); }
-
-.telegram-login-section { display: flex; flex-direction: column; gap: 8px; }
-.telegram-widget-box { display: flex; justify-content: center; }
-.login-tg-btn { height: 38px; width: 100%; background: var(--surface-card); color: var(--text-primary); border: 1px solid var(--border-subtle, #e5e7eb); border-radius: var(--radius-md); font-family: var(--font-body); font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
-.login-tg-btn:hover:not(:disabled) { background: var(--surface-subtle, #f8fafc); }
-
-.telegram-payload-card { padding: 10px; border: 1px solid var(--border-subtle, #e5e7eb); border-radius: var(--radius-md); background: var(--surface-card); display: flex; flex-direction: column; gap: 8px; }
-.telegram-payload-hint { font-size: 11px; color: var(--text-secondary); line-height: 1.4; }
-.telegram-payload-textarea { width: 100%; border: 1px solid var(--border-subtle, #e5e7eb); border-radius: var(--radius-md); padding: 8px; font-family: var(--font-mono, monospace); font-size: 11px; color: var(--text-primary); background: var(--surface-bg); outline: none; resize: vertical; }
-
-@keyframes spin { to { transform: rotate(360deg); } }
-.login-footer-note { font-size: 12px; color: var(--text-tertiary); text-align: center; max-width: none; }
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
 </style>

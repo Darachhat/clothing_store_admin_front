@@ -1,512 +1,419 @@
 <template>
-  <div class="space-y-4">
-    <!-- Header -->
-    <div class="flex items-center justify-between">
-      <div>
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Purchase Orders</h2>
-        <p class="text-sm text-gray-500 dark:text-gray-400">Manage procurement, orders and goods receipts</p>
-      </div>
-      <AppButton
-        label="New Purchase Order"
-        variant="primary"
-        to="/purchases/new"
+  <div class="page-root">
+    <AppPageHeader
+      title="Purchase Orders"
+      description="Create supplier purchase orders and receive inbound merchandise into warehouse inventory."
+      :breadcrumbs="[
+        { label: 'Purchasing', to: '/purchases' },
+        { label: 'Purchase Orders' },
+      ]"
+      primary-label="Create PO"
+      primary-icon="i-heroicons-plus"
+      @primary-click="openCreateModal"
+    >
+      <template #secondary>
+        <AppButton size="sm" variant="default" icon="i-heroicons-building-office-2" label="Suppliers" to="/suppliers" />
+        <AppButton size="sm" variant="default" icon="i-heroicons-arrow-path" label="Refresh" :loading="loading" @click="fetchPurchases" />
+      </template>
+    </AppPageHeader>
+
+    <AppFilterBar
+      v-model:search="searchQuery"
+      search-placeholder="Search purchase orders by PO number, supplier, or notes..."
+      :chips="activeChips"
+      :shown-count="paginatedPurchases.length"
+      :total-count="filteredPurchases.length"
+      count-label="purchase orders"
+      @remove-chip="removeChip"
+      @clear-all="resetFilters"
+    >
+      <AppSelect
+        v-model="supplierFilter"
+        :options="supplierFilterOptions"
+        style="min-width: 170px;"
       />
-    </div>
+      <AppSelect
+        v-model="statusFilter"
+        :options="[
+          { label: 'All Statuses', value: '' },
+          { label: 'Draft', value: 'DRAFT' },
+          { label: 'Ordered', value: 'ORDERED' },
+          { label: 'Partial', value: 'PARTIAL' },
+          { label: 'Received', value: 'RECEIVED' },
+          { label: 'Cancelled', value: 'CANCELLED' },
+        ]"
+        style="min-width: 150px;"
+        @change="fetchPurchases"
+      />
+    </AppFilterBar>
 
-    <!-- Filters -->
-    <AppCard>
-      <div class="flex gap-3 flex-wrap">
-        <AppSelect
-          v-model="statusFilter"
-          :options="statusOptions"
-          placeholder="All Statuses"
-          class="w-48"
-          @update:model-value="fetchOrders"
-        />
-        <AppButton variant="ghost" @click="fetchOrders">
-          Refresh
-        </AppButton>
-      </div>
-    </AppCard>
-
-    <!-- Orders Table -->
-    <AppCard>
+    <AppCard :no-pad="true">
       <AppTable
         :columns="columns"
-        :rows="orders"
+        :rows="paginatedPurchases"
         :loading="loading"
-        :empty-state="{ icon: 'i-heroicons-document-text', label: 'No purchase orders found' }"
+        :empty-state="{
+          icon: 'i-heroicons-clipboard-document-list',
+          label: 'No purchase orders found',
+          description: 'Create a purchase order to track inbound supplier stock.',
+        }"
       >
         <template #cell-po_number="{ row }">
-          <span class="font-mono font-medium text-primary-600 dark:text-primary-400">
+          <NuxtLink :to="`/purchases/${row.id}`" class="mono font-semibold text-gray-900 hover:underline">
             {{ row.po_number }}
-          </span>
+          </NuxtLink>
+        </template>
+
+        <template #cell-supplier_display="{ row }">
+          <span class="font-medium text-gray-900">{{ row.supplier_display }}</span>
+        </template>
+
+        <template #cell-total_display="{ row }">
+          <span class="mono font-bold">${{ Number(row.total_cost ?? row.total ?? 0).toFixed(2) }}</span>
         </template>
 
         <template #cell-status="{ row }">
-          <AppBadge
-            :color="getStatusColor(row.status)"
-            :label="row.status"
-            size="sm"
-            variant="subtle"
-          />
+          <AppBadge :color="statusColor(row.status_code || row.status)" size="sm">
+            {{ row.status_code || row.status }}
+          </AppBadge>
         </template>
 
-        <template #cell-total="{ row }">
-          <span class="font-semibold text-gray-900 dark:text-white">
-            ${{ Number(row.total).toFixed(2) }}
-          </span>
+        <template #cell-created_at="{ row }">
+          <span class="text-xs text-gray-500">{{ new Date(row.created_at).toLocaleDateString() }}</span>
         </template>
 
         <template #cell-actions="{ row }">
-          <div class="flex items-center gap-1">
+          <div class="flex items-center justify-end gap-1">
+            <AppButton size="xs" variant="ghost" label="View" :to="`/purchases/${row.id}`" />
             <AppButton
-              v-if="row.status === 'DRAFT'"
-              size="sm"
-              color="emerald"
-              variant="default"
-              label="Approve"
-              @click="approveOrder(row)"
-            />
-            <AppButton
-              v-if="row.status === 'ORDERED' || row.status === 'PARTIAL'"
-              size="sm"
+              v-if="['DRAFT', 'ORDERED', 'PARTIAL'].includes(row.status_code || row.status)"
+              size="xs"
               variant="primary"
-              label="Receive Goods"
-              @click="openReceiveModal(row)"
-            />
-            <AppButton
-              size="sm"
-              variant="ghost"
-              label="Details"
+              label="Receive"
               :to="`/purchases/${row.id}`"
             />
           </div>
         </template>
+
+        <template v-if="filteredPurchases.length > pageSize" #footer>
+          <AppPagination
+            v-model:page="currentPage"
+            :page-size="pageSize"
+            :total="filteredPurchases.length"
+          />
+        </template>
       </AppTable>
     </AppCard>
 
-    <!-- Create PO Modal -->
-    <AppModal v-model="showCreateModal" :ui="{ width: 'sm:max-w-2xl' }">
-      <AppCard>
-        <template #header>
-          <div class="flex items-center justify-between">
-            <h3 class="text-base font-semibold">Create Purchase Order</h3>
-            <AppButton variant="ghost" size="sm" icon="i-heroicons-x-mark" @click="showCreateModal = false" />
+    <!-- Create Purchase Order Modal -->
+    <AppModal
+      v-model="showCreateModal"
+      title="New Purchase Order"
+      description="Select a supplier, receiving warehouse, and ordered SKU quantities."
+      size="lg"
+    >
+      <form class="form-grid" @submit.prevent="submitCreate">
+        <div class="form-row">
+          <div class="form-field">
+            <label class="field-label">Supplier <span class="required">*</span></label>
+            <select v-model="form.supplier_id" required class="field-input">
+              <option value="" disabled>Select supplier...</option>
+              <option v-for="s in suppliersList" :key="s.id" :value="s.id">{{ s.name }} ({{ s.code }})</option>
+            </select>
           </div>
-        </template>
+          <div class="form-field">
+            <label class="field-label">Receiving Warehouse <span class="required">*</span></label>
+            <select v-model="form.warehouse_id" required class="field-input">
+              <option value="" disabled>Select warehouse...</option>
+              <option v-for="w in warehousesList" :key="w.id" :value="w.id">
+                {{ w.branchName ? `${w.branchName} — ${w.name}` : w.name }}
+              </option>
+            </select>
+          </div>
+        </div>
 
-        <form class="space-y-4" @submit.prevent="handleCreateOrder">
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Supplier *</label>
-              <select
-                v-model="createForm.supplier_id"
-                required
-                class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
-              >
-                <option value="" disabled>Select supplier</option>
-                <option v-for="s in suppliers" :key="s.id" :value="s.id">{{ s.name }}</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Expected Date</label>
-              <input
-                v-model="createForm.expected_date"
-                type="date"
-                class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
+        <div class="form-row">
+          <div class="form-field">
+            <label class="field-label">Expected Delivery Date</label>
+            <input v-model="form.expected_at" type="date" class="field-input" />
+          </div>
+          <div class="form-field">
+            <label class="field-label">Notes</label>
+            <input v-model="form.notes" type="text" placeholder="Optional PO reference or payment terms..." class="field-input" />
+          </div>
+        </div>
+
+        <!-- Line Items -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between">
+            <label class="field-label">Line Items <span class="required">*</span></label>
+            <AppButton size="xs" variant="default" icon="i-heroicons-plus" label="Add Item" @click="addLine" />
+          </div>
+
+          <div v-for="(line, i) in form.items" :key="i" class="grid grid-cols-12 gap-2 items-center">
+            <select v-model="line.variant_id" required class="col-span-6 field-input" @change="onSelectVariant(line)">
+              <option value="" disabled>Select product variant (SKU)...</option>
+              <option v-for="v in variantsList" :key="v.id" :value="v.id">
+                {{ v.sku }} — {{ v.product_name || 'Product' }} ({{ [v.color, v.size].filter(Boolean).join('/') }})
+              </option>
+            </select>
+            <input
+              v-model.number="line.quantity_ordered"
+              type="number"
+              min="1"
+              placeholder="Qty"
+              required
+              class="col-span-2 field-input text-right mono"
+            />
+            <input
+              v-model.number="line.unit_cost"
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="Cost ($)"
+              required
+              class="col-span-3 field-input text-right mono"
+            />
+            <div class="col-span-1 flex justify-end">
+              <AppButton
+                v-if="form.items.length > 1"
+                size="xs"
+                variant="ghost"
+                icon="i-heroicons-trash"
+                @click="form.items.splice(i, 1)"
               />
             </div>
           </div>
-
-          <div>
-            <div class="flex items-center justify-between mb-2">
-              <label class="text-xs font-medium text-gray-700 dark:text-gray-300">Order Items *</label>
-              <AppButton size="sm" variant="default" label="Add Item" @click="addItemRow" />
-            </div>
-
-            <div class="space-y-2 max-h-48 overflow-y-auto">
-              <div
-                v-for="(item, idx) in createForm.items"
-                :key="idx"
-                class="flex gap-2 items-center bg-gray-50 dark:bg-gray-800/50 p-2 rounded-lg"
-              >
-                <select
-                  v-model="item.variant_id"
-                  required
-                  class="flex-1 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 py-1.5 text-xs"
-                >
-                  <option value="" disabled>Select Variant (SKU)</option>
-                  <option v-for="v in variants" :key="v.id" :value="v.id">
-                    {{ v.sku }} - {{ v.product?.name }} (Cost: ${{ v.cost_price }})
-                  </option>
-                </select>
-                <input
-                  v-model.number="item.quantity_ordered"
-                  type="number"
-                  min="1"
-                  required
-                  placeholder="Qty"
-                  class="w-20 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 py-1.5 text-xs"
-                />
-                <input
-                  v-model.number="item.unit_cost"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  required
-                  placeholder="Unit Cost"
-                  class="w-24 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 py-1.5 text-xs"
-                />
-                <AppButton
-                  variant="danger"
-                  size="sm"
-                  icon="i-heroicons-trash"
-                  @click="removeItemRow(idx)"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Notes</label>
-            <textarea
-              v-model="createForm.notes"
-              rows="2"
-              class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
-              placeholder="Delivery instructions or internal notes"
-            />
-          </div>
-
-          <div class="flex justify-end gap-2 pt-2">
-            <AppButton variant="ghost" label="Cancel" @click="showCreateModal = false" />
-            <AppButton type="submit" variant="primary" label="Create Order" :loading="saving" />
-          </div>
-        </form>
-      </AppCard>
-    </AppModal>
-
-    <!-- Receive Goods Modal -->
-    <AppModal v-model="showReceiveModal" :ui="{ width: 'sm:max-w-2xl' }">
-      <AppCard>
-        <template #header>
-          <div class="flex items-center justify-between">
-            <h3 class="text-base font-semibold">Receive Goods: {{ selectedOrder?.po_number }}</h3>
-            <AppButton variant="ghost" size="sm" icon="i-heroicons-x-mark" @click="showReceiveModal = false" />
-          </div>
-        </template>
-
-        <form class="space-y-4" @submit.prevent="handleReceiveGoods">
-          <p class="text-xs text-gray-500">
-            Enter the actual quantities received for each line item. Receiving goods will automatically update warehouse stock levels.
-          </p>
-
-          <div class="space-y-3">
-            <div
-              v-for="item in receiveItems"
-              :key="item.purchase_item_id"
-              class="flex items-center justify-between bg-gray-50 dark:bg-gray-800/50 p-3 rounded-lg"
-            >
-              <div>
-                <p class="font-medium text-sm text-gray-900 dark:text-white">
-                  SKU: {{ getVariantSku(item.variant_id) }}
-                </p>
-                <p class="text-xs text-gray-500">
-                  Ordered: {{ item.quantity_ordered }} | Previously Received: {{ item.quantity_received }}
-                </p>
-              </div>
-              <div class="flex items-center gap-2">
-                <label class="text-xs font-medium text-gray-700 dark:text-gray-300">Receive Now:</label>
-                <input
-                  v-model.number="item.receive_now"
-                  type="number"
-                  min="0"
-                  :max="item.quantity_ordered - item.quantity_received"
-                  class="w-24 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 py-1.5 text-sm"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Receipt Notes</label>
-            <input
-              v-model="receiveNotes"
-              type="text"
-              placeholder="e.g. Received in good condition, batch #1"
-              class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
-            />
-          </div>
-
-          <div class="flex justify-end gap-2 pt-2">
-            <AppButton variant="ghost" label="Cancel" @click="showReceiveModal = false" />
-            <AppButton type="submit" variant="primary" label="Complete Receipt" :loading="saving" />
-          </div>
-        </form>
-      </AppCard>
-    </AppModal>
-
-    <!-- Details Modal -->
-    <AppModal v-model="showDetailsModal" :ui="{ width: 'sm:max-w-2xl' }">
-      <AppCard>
-        <template #header>
-          <div class="flex items-center justify-between">
-            <h3 class="text-base font-semibold">PO Details: {{ selectedOrder?.po_number }}</h3>
-            <AppButton variant="ghost" size="sm" icon="i-heroicons-x-mark" @click="showDetailsModal = false" />
-          </div>
-        </template>
-
-        <div v-if="selectedOrder" class="space-y-4">
-          <div class="grid grid-cols-2 gap-4 text-sm">
-            <div>
-              <span class="text-gray-500">Status:</span>
-              <AppBadge :color="getStatusColor(selectedOrder.status)" :label="selectedOrder.status" size="sm" class="ml-2" />
-            </div>
-            <div>
-              <span class="text-gray-500">Total:</span>
-              <span class="font-bold ml-2">${{ Number(selectedOrder.total).toFixed(2) }}</span>
-            </div>
-          </div>
-
-          <div class="border-t border-gray-200 dark:border-gray-700 pt-3">
-            <h4 class="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">Order Items</h4>
-            <div class="space-y-2">
-              <div
-                v-for="item in selectedOrder.items"
-                :key="item.id"
-                class="flex justify-between items-center bg-gray-50 dark:bg-gray-800/50 p-2 rounded text-xs"
-              >
-                <div>
-                  <span class="font-mono font-medium">{{ getVariantSku(item.variant_id) }}</span>
-                  <span class="text-gray-500 ml-2">Ordered: {{ item.quantity_ordered }} | Received: {{ item.quantity_received }}</span>
-                </div>
-                <div class="font-medium">
-                  ${{ Number(item.subtotal).toFixed(2) }}
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
-      </AppCard>
+
+        <div class="flex items-center justify-between pt-2 border-t border-gray-200">
+          <span class="text-xs text-gray-500">Estimated Order Total:</span>
+          <strong class="mono text-base text-gray-900">${{ formTotal.toFixed(2) }}</strong>
+        </div>
+
+        <div class="modal-actions">
+          <AppButton type="button" variant="ghost" label="Cancel" @click="showCreateModal = false" />
+          <AppButton type="submit" variant="primary" label="Create Purchase Order" :loading="saving" />
+        </div>
+      </form>
     </AppModal>
   </div>
 </template>
 
 <script setup lang="ts">
+import type { FilterChipItem } from '~/components/AppFilterBar.vue'
+
 definePageMeta({ middleware: ['auth'] })
+useHead({ title: 'Purchase Orders — Clothing Store Admin' })
 
 const purchaseApi = usePurchaseApi()
 const supplierApi = useSupplierApi()
+const branchApi = useBranchApi()
 const variantApi = useVariantApi()
-const invApi = useInventoryApi()
 const toast = useAppToast()
 
 const loading = ref(false)
 const saving = ref(false)
-const orders = ref<any[]>([])
-const suppliers = ref<any[]>([])
-const variants = ref<any[]>([])
-const defaultBranchId = ref<string>('')
-const defaultWarehouseId = ref<string>('')
+const purchases = ref<any[]>([])
+const suppliersList = ref<any[]>([])
+const warehousesList = ref<any[]>([])
+const variantsList = ref<any[]>([])
 
+const searchQuery = ref('')
+const supplierFilter = ref('')
 const statusFilter = ref('')
-const statusOptions = [
-  { label: 'All Statuses', value: '' },
-  { label: 'Draft', value: 'DRAFT' },
-  { label: 'Ordered', value: 'ORDERED' },
-  { label: 'Partial', value: 'PARTIAL' },
-  { label: 'Received', value: 'RECEIVED' },
-  { label: 'Cancelled', value: 'CANCELLED' },
-]
-
-const columns = [
-  { key: 'po_number', label: 'PO Number' },
-  { key: 'status', label: 'Status' },
-  { key: 'subtotal', label: 'Subtotal' },
-  { key: 'total', label: 'Total' },
-  { key: 'created_at', label: 'Date', format: (v: string) => new Date(v).toLocaleDateString() },
-  { key: 'actions', label: 'Actions' },
-]
+const currentPage = ref(1)
+const pageSize = 20
 
 const showCreateModal = ref(false)
-const showReceiveModal = ref(false)
-const showDetailsModal = ref(false)
-const selectedOrder = ref<any>(null)
-const receiveItems = ref<any[]>([])
-const receiveNotes = ref('')
 
-const createForm = ref({
+const form = ref({
   supplier_id: '',
-  expected_date: '',
+  warehouse_id: '',
+  expected_at: '',
   notes: '',
-  items: [] as any[],
+  items: [{ variant_id: '', quantity_ordered: 10, unit_cost: 5.0 }],
 })
 
-function getStatusColor(status: string) {
-  switch (status) {
-    case 'DRAFT': return 'gray'
-    case 'ORDERED': return 'blue'
-    case 'PARTIAL': return 'amber'
-    case 'RECEIVED': return 'emerald'
-    case 'CANCELLED': return 'red'
-    default: return 'gray'
+const columns = [
+  { key: 'po_number', label: 'PO #', sortable: true },
+  { key: 'supplier_display', label: 'Supplier', sortable: true },
+  { key: 'total_display', label: 'Total Cost', sortable: true },
+  { key: 'status', label: 'Status', sortable: true },
+  { key: 'expected_at', label: 'Expected Date', sortable: true },
+  { key: 'created_at', label: 'Created', sortable: true },
+  { key: 'actions', label: 'Actions', align: 'right' as const },
+]
+
+const supplierMap = computed<Record<string, string>>(() => {
+  const m: Record<string, string> = {}
+  for (const s of suppliersList.value) {
+    if (s?.id) m[s.id] = s.name
+  }
+  return m
+})
+
+const supplierFilterOptions = computed(() => [
+  { label: 'All Suppliers', value: '' },
+  ...suppliersList.value.map(s => ({ label: s.name, value: s.id })),
+])
+
+const enrichedPurchases = computed(() =>
+  purchases.value.map(p => ({
+    ...p,
+    supplier_display: p.supplier_name || supplierMap.value[p.supplier_id] || 'Supplier',
+    total_display: Number(p.total_cost ?? p.total ?? 0),
+  })),
+)
+
+const filteredPurchases = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase()
+  return enrichedPurchases.value.filter((p) => {
+    if (supplierFilter.value && p.supplier_id !== supplierFilter.value) return false
+    if (statusFilter.value && (p.status_code || p.status) !== statusFilter.value) return false
+    if (q) {
+      const hay = [p.po_number, p.supplier_display, p.notes].filter(Boolean).join(' ').toLowerCase()
+      if (!hay.includes(q)) return false
+    }
+    return true
+  })
+})
+
+const paginatedPurchases = computed(() => {
+  const start = (currentPage.value - 1) * pageSize
+  return filteredPurchases.value.slice(start, start + pageSize)
+})
+
+const activeChips = computed<FilterChipItem[]>(() => {
+  const chips: FilterChipItem[] = []
+  if (supplierFilter.value) {
+    chips.push({ key: 'supplier', label: 'Supplier', value: supplierMap.value[supplierFilter.value] || supplierFilter.value })
+  }
+  if (statusFilter.value) {
+    chips.push({ key: 'status', label: 'Status', value: statusFilter.value })
+  }
+  return chips
+})
+
+function removeChip(key: string) {
+  if (key === 'supplier') supplierFilter.value = ''
+  if (key === 'status') {
+    statusFilter.value = ''
+    fetchPurchases()
+  }
+  currentPage.value = 1
+}
+
+function resetFilters() {
+  searchQuery.value = ''
+  supplierFilter.value = ''
+  statusFilter.value = ''
+  currentPage.value = 1
+  fetchPurchases()
+}
+
+function statusColor(status: string) {
+  const map: Record<string, string> = {
+    DRAFT: 'default',
+    ORDERED: 'blue',
+    PARTIAL: 'yellow',
+    RECEIVED: 'green',
+    CANCELLED: 'red',
+  }
+  return map[status] || 'default'
+}
+
+const formTotal = computed(() =>
+  form.value.items.reduce((sum, item) => sum + (Number(item.quantity_ordered) || 0) * (Number(item.unit_cost) || 0), 0),
+)
+
+function addLine() {
+  form.value.items.push({ variant_id: '', quantity_ordered: 10, unit_cost: 5.0 })
+}
+
+function onSelectVariant(line: { variant_id: string; quantity_ordered: number; unit_cost: number }) {
+  const found = variantsList.value.find((v: any) => v.id === line.variant_id)
+  if (found && (found.cost_price_override || found.cost_price)) {
+    line.unit_cost = Number(found.cost_price_override || found.cost_price)
   }
 }
 
-function getVariantSku(variantId: string) {
-  const v = variants.value.find((item) => item.id === variantId)
-  return v ? v.sku : variantId.substring(0, 8)
-}
-
-function addItemRow() {
-  createForm.value.items.push({
-    variant_id: variants.value[0]?.id || '',
-    quantity_ordered: 10,
-    unit_cost: variants.value[0]?.cost_price || 10,
-  })
-}
-
-function removeItemRow(index: number) {
-  createForm.value.items.splice(index, 1)
-}
-
-function openCreateModal() {
-  createForm.value = {
-    supplier_id: suppliers.value[0]?.id || '',
-    expected_date: '',
+async function openCreateModal() {
+  form.value = {
+    supplier_id: suppliersList.value[0]?.id || '',
+    warehouse_id: warehousesList.value[0]?.id || '',
+    expected_at: '',
     notes: '',
-    items: [
-      {
-        variant_id: variants.value[0]?.id || '',
-        quantity_ordered: 10,
-        unit_cost: variants.value[0]?.cost_price || 10,
-      },
-    ],
+    items: [{ variant_id: '', quantity_ordered: 10, unit_cost: 5.0 }],
   }
   showCreateModal.value = true
 }
 
-async function fetchOrders() {
+async function fetchLookups() {
+  try {
+    const [sList, bList, vList] = await Promise.all([
+      supplierApi.listSuppliers().catch(() => []),
+      branchApi.listBranches().catch(() => []),
+      variantApi.listVariants({ limit: 200 }).catch(() => []),
+    ])
+    suppliersList.value = (sList as any[]) || []
+    variantsList.value = (vList as any[]) || []
+    const allWh: any[] = []
+    for (const b of (bList as any[]) || []) {
+      if (b.warehouses?.length) {
+        for (const w of b.warehouses) allWh.push({ ...w, branchName: b.name })
+      } else {
+        try {
+          const whs = await branchApi.listWarehouses(b.id) as any[]
+          for (const w of whs || []) allWh.push({ ...w, branchName: b.name })
+        } catch {}
+      }
+    }
+    warehousesList.value = allWh
+  } catch {}
+}
+
+async function fetchPurchases() {
   loading.value = true
   try {
-    const params: Record<string, unknown> = {}
+    const params: Record<string, string> = {}
     if (statusFilter.value) params.status = statusFilter.value
-    const data = await purchaseApi.listOrders(params) as any[]
-    orders.value = data
+    const data = await purchaseApi.listPurchases(params) as any[]
+    purchases.value = data || []
   } catch (err: any) {
-    toast.add({ title: 'Error', description: err.message, color: 'red' })
+    toast.add({ title: 'Error', description: err?.data?.detail || err.message, color: 'red' })
   } finally {
     loading.value = false
   }
 }
 
-async function fetchMetadata() {
-  try {
-    const [supps, vars, stocks] = await Promise.all([
-      supplierApi.listSuppliers() as Promise<any[]>,
-      variantApi.listVariants({ limit: 500 }) as Promise<any[]>,
-      invApi.listStocks() as Promise<any[]>,
-    ])
-    suppliers.value = supps
-    variants.value = vars
-    if (stocks.length > 0) {
-      defaultWarehouseId.value = stocks[0].warehouse_id
-    }
-  } catch (e) {
-    console.error('Failed to fetch metadata:', e)
-  }
-}
-
-async function handleCreateOrder() {
-  if (createForm.value.items.length === 0) {
-    toast.add({ title: 'Error', description: 'Add at least one item', color: 'red' })
-    return
-  }
+async function submitCreate() {
   saving.value = true
   try {
-    await purchaseApi.createOrder({
-      supplier_id: createForm.value.supplier_id,
-      branch_id: defaultWarehouseId.value ? undefined : undefined,
-      warehouse_id: defaultWarehouseId.value,
-      expected_date: createForm.value.expected_date || undefined,
-      notes: createForm.value.notes,
-      items: createForm.value.items,
+    await purchaseApi.createPurchase({
+      supplier_id: form.value.supplier_id,
+      warehouse_id: form.value.warehouse_id,
+      expected_at: form.value.expected_at || null,
+      notes: form.value.notes || null,
+      items: form.value.items.map(i => ({
+        variant_id: i.variant_id,
+        quantity_ordered: Number(i.quantity_ordered),
+        quantity: Number(i.quantity_ordered),
+        unit_cost: Number(i.unit_cost),
+      })),
     })
-    toast.add({ title: 'Success', description: 'Purchase order created successfully', color: 'green' })
+    toast.add({ title: 'PO Created', description: 'Purchase order created successfully', color: 'green' })
     showCreateModal.value = false
-    await fetchOrders()
+    await fetchPurchases()
   } catch (err: any) {
-    toast.add({ title: 'Error', description: err.message, color: 'red' })
+    toast.add({ title: 'Error', description: err?.data?.detail || err.message, color: 'red' })
   } finally {
     saving.value = false
   }
-}
-
-async function approveOrder(order: any) {
-  try {
-    await purchaseApi.approveOrder(order.id)
-    toast.add({ title: 'Success', description: `PO ${order.po_number} approved`, color: 'green' })
-    await fetchOrders()
-  } catch (err: any) {
-    toast.add({ title: 'Error', description: err.message, color: 'red' })
-  }
-}
-
-function openReceiveModal(order: any) {
-  selectedOrder.value = order
-  receiveNotes.value = ''
-  receiveItems.value = order.items
-    .filter((item: any) => item.quantity_ordered > item.quantity_received)
-    .map((item: any) => ({
-      purchase_item_id: item.id,
-      variant_id: item.variant_id,
-      quantity_ordered: item.quantity_ordered,
-      quantity_received: item.quantity_received,
-      unit_cost: item.unit_cost,
-      receive_now: item.quantity_ordered - item.quantity_received,
-    }))
-  showReceiveModal.value = true
-}
-
-async function handleReceiveGoods() {
-  const itemsToReceive = receiveItems.value
-    .filter((i) => i.receive_now > 0)
-    .map((i) => ({
-      purchase_item_id: i.purchase_item_id,
-      variant_id: i.variant_id,
-      quantity_received: i.receive_now,
-      unit_cost: i.unit_cost,
-    }))
-
-  if (itemsToReceive.length === 0) {
-    toast.add({ title: 'Warning', description: 'No quantities specified to receive', color: 'amber' })
-    return
-  }
-
-  saving.value = true
-  try {
-    await purchaseApi.createReceipt({
-      purchase_order_id: selectedOrder.value.id,
-      notes: receiveNotes.value,
-      items: itemsToReceive,
-    })
-    toast.add({ title: 'Success', description: 'Goods received and inventory updated!', color: 'green' })
-    showReceiveModal.value = false
-    await fetchOrders()
-  } catch (err: any) {
-    toast.add({ title: 'Error', description: err.message, color: 'red' })
-  } finally {
-    saving.value = false
-  }
-}
-
-function openDetailsModal(order: any) {
-  selectedOrder.value = order
-  showDetailsModal.value = true
 }
 
 onMounted(async () => {
-  await fetchMetadata()
-  await fetchOrders()
+  await fetchLookups()
+  await fetchPurchases()
 })
 </script>

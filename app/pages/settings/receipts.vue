@@ -1,35 +1,36 @@
 <template>
-  <div class="space-y-6">
+  <div class="page-root">
     <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div>
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Thermal Receipt Customizer</h2>
-        <p class="text-sm text-gray-500 dark:text-gray-400">
-          Design 80mm and 58mm thermal receipt layouts, header info, tax breakdowns, and footer return policies
-        </p>
-      </div>
-      <div class="flex items-center gap-2">
+    <AppPageHeader
+      title="Thermal Receipt Customizer"
+      description="Design 80mm and 58mm thermal receipt layouts, header info, tax breakdowns, and footer return policies."
+      :breadcrumbs="[{ label: 'Store' }, { label: 'Receipt Templates' }]"
+    >
+      <template #actions>
         <AppButton
           variant="ghost"
+          size="sm"
           icon="i-heroicons-arrow-path"
           label="Reset Defaults"
-          @click="resetToDefaults"
+          @click="showResetConfirm = true"
         />
         <AppButton
-          variant="ghost"
+          variant="default"
+          size="sm"
           icon="i-heroicons-printer"
           label="Test Print"
           @click="handleTestPrint"
         />
         <AppButton
           variant="primary"
+          size="sm"
           icon="i-heroicons-check"
           label="Save Template"
           :loading="saving"
           @click="saveTemplate"
         />
-      </div>
-    </div>
+      </template>
+    </AppPageHeader>
 
     <!-- Main 2-Column Layout: Controls (Left) + Live Thermal Preview (Right) -->
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -379,16 +380,28 @@
         </div>
       </div>
     </div>
+
+    <AppConfirmDialog
+      v-model="showResetConfirm"
+      title="Reset Receipt Template"
+      description="Are you sure you want to reset all receipt layout fields to the factory defaults?"
+      consequence="Unsaved customizations in the editor will be replaced with the standard 80mm template."
+      confirm-label="Reset Defaults"
+      variant="warning"
+      @confirm="resetToDefaults"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 definePageMeta({ middleware: ['auth'] })
+useHead({ title: 'Receipt Templates — Clothing Store' })
 
 const settingsApi = useSystemSettingsApi()
 const toast = useAppToast()
 
 const saving = ref(false)
+const showResetConfirm = ref(false)
 
 const defaultSettings = {
   paper_width: '80mm',
@@ -453,6 +466,7 @@ async function saveTemplate() {
 
 function resetToDefaults() {
   form.value = { ...defaultSettings }
+  showResetConfirm.value = false
   toast.add({
     title: 'Defaults Restored',
     description: 'Template reset to standard 80mm configuration.',

@@ -1,356 +1,315 @@
 <template>
-  <div class="space-y-4">
-    <!-- Header -->
-    <div class="flex items-center justify-between">
-      <div>
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Business Expenses</h2>
-        <p class="text-sm text-gray-500 dark:text-gray-400">Track and manage operational expenditures</p>
-      </div>
-      <AppButton
-        label="Record Expense"
-        variant="primary"
-        @click="openCreateModal"
+  <div class="page-root">
+    <AppPageHeader
+      title="Expenses"
+      description="Track store operating expenses, rent, utilities, payroll, and approve or reject expense claims."
+      :breadcrumbs="[
+        { label: 'Finance', to: '/expenses' },
+        { label: 'Expenses' },
+      ]"
+      primary-label="Record Expense"
+      primary-icon="i-heroicons-plus"
+      @primary-click="openModal"
+    >
+      <template #secondary>
+        <AppButton size="sm" variant="default" icon="i-heroicons-chart-bar" label="Profit & Loss" to="/reports/profit" />
+        <AppButton size="sm" variant="default" icon="i-heroicons-arrow-path" label="Refresh" :loading="loading" @click="fetchExpenses" />
+      </template>
+    </AppPageHeader>
+
+    <!-- KPI Summary Cards with Semantic Heroicons -->
+    <div class="kpi-grid-3">
+      <AppStatCard
+        label="Total Expenses"
+        :value="`$${totalExpenses.toFixed(2)}`"
+        icon="i-heroicons-banknotes"
+        tone="red"
+        :loading="loading"
+        :sublabel="`Across ${filteredExpenses.length} expense records`"
+      />
+      <AppStatCard
+        label="Pending Approval"
+        :value="pendingCount"
+        icon="i-heroicons-clock"
+        :tone="pendingCount > 0 ? 'amber' : 'neutral'"
+        :loading="loading"
+        sublabel="Awaiting manager or admin review"
+      />
+      <AppStatCard
+        label="Approved Expenses"
+        :value="`$${approvedTotal.toFixed(2)}`"
+        icon="i-heroicons-check-badge"
+        tone="green"
+        :loading="loading"
+        :sublabel="`${approvedCount} approved records`"
       />
     </div>
 
-    <!-- Summary KPI cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      <AppCard>
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-xs text-gray-500">Total Approved</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">
-              ${{ totalApproved.toFixed(2) }}
-            </p>
-          </div>
-          <div class="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center">
-            
-          </div>
-        </div>
-      </AppCard>
-      <AppCard>
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-xs text-gray-500">Pending Review</p>
-            <p class="text-2xl font-bold text-amber-600 dark:text-amber-400">
-              {{ pendingCount }}
-            </p>
-          </div>
-          <div class="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/40 flex items-center justify-center">
-            
-          </div>
-        </div>
-      </AppCard>
-      <AppCard>
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-xs text-gray-500">Total Records</p>
-            <p class="text-2xl font-bold text-gray-900 dark:text-white">
-              {{ expenses.length }}
-            </p>
-          </div>
-          <div class="w-10 h-10 rounded-xl bg-primary-50 dark:bg-primary-950/40 flex items-center justify-center">
-            
-          </div>
-        </div>
-      </AppCard>
-    </div>
+    <AppFilterBar
+      v-model:search="searchQuery"
+      search-placeholder="Search expenses by title, category, or notes..."
+      :chips="activeChips"
+      :shown-count="filteredExpenses.length"
+      :total-count="expenses.length"
+      count-label="expenses"
+      @remove-chip="removeChip"
+      @clear-all="resetFilters"
+    >
+      <AppSelect
+        v-model="categoryFilter"
+        :options="[
+          { label: 'All Categories', value: '' },
+          { label: 'Rent', value: 'RENT' },
+          { label: 'Utilities', value: 'UTILITIES' },
+          { label: 'Salaries / Wages', value: 'SALARIES' },
+          { label: 'Supplies & Packaging', value: 'SUPPLIES' },
+          { label: 'Marketing', value: 'MARKETING' },
+          { label: 'Maintenance', value: 'MAINTENANCE' },
+          { label: 'Other', value: 'OTHER' },
+        ]"
+        style="min-width: 165px;"
+      />
+      <AppSelect
+        v-model="statusFilter"
+        :options="[
+          { label: 'All Statuses', value: '' },
+          { label: 'Pending', value: 'PENDING' },
+          { label: 'Approved', value: 'APPROVED' },
+          { label: 'Rejected', value: 'REJECTED' },
+        ]"
+        style="min-width: 145px;"
+      />
+    </AppFilterBar>
 
-    <!-- Filters -->
-    <AppCard>
-      <div class="flex gap-3 flex-wrap">
-        <AppSelect
-          v-model="statusFilter"
-          :options="statusOptions"
-          placeholder="All Statuses"
-          class="w-48"
-          @update:model-value="fetchExpenses"
-        />
-        <AppButton variant="ghost" @click="fetchExpenses">
-          Refresh
-        </AppButton>
-      </div>
-    </AppCard>
-
-    <!-- Expenses Table -->
-    <AppCard>
+    <AppCard :no-pad="true">
       <AppTable
         :columns="columns"
-        :rows="expenses"
+        :rows="filteredExpenses"
         :loading="loading"
-        :empty-state="{ icon: 'i-heroicons-banknotes', label: 'No expenses recorded yet' }"
+        :empty-state="{
+          icon: 'i-heroicons-banknotes',
+          label: 'No expenses recorded yet',
+          description: 'Record operating expenses to track net store profitability.',
+        }"
       >
-        <template #cell-expense_number="{ row }">
-          <span class="font-mono font-medium text-primary-600 dark:text-primary-400">
-            {{ row.expense_number }}
-          </span>
-        </template>
-
         <template #cell-category="{ row }">
-          <span class="text-sm font-medium text-gray-900 dark:text-white">
-            {{ row.category?.name || 'General' }}
-          </span>
+          <AppBadge color="blue" size="sm">{{ row.category }}</AppBadge>
         </template>
 
         <template #cell-amount="{ row }">
-          <span class="font-semibold text-gray-900 dark:text-white">
-            ${{ Number(row.amount).toFixed(2) }}
-          </span>
+          <span class="mono font-bold text-red-700">${{ Number(row.amount).toFixed(2) }}</span>
         </template>
 
         <template #cell-status="{ row }">
           <AppBadge
-            :color="getStatusColor(row.status)"
-            :label="row.status"
+            :color="row.status === 'APPROVED' ? 'green' : row.status === 'REJECTED' ? 'red' : 'yellow'"
             size="sm"
-            variant="subtle"
-          />
+          >
+            {{ row.status }}
+          </AppBadge>
         </template>
 
-        <template #cell-receipt="{ row }">
-          <a
-            v-if="row.receipt_url"
-            :href="row.receipt_url"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="inline-flex items-center gap-1 text-xs text-primary-600 hover:underline font-mono"
-          >
-            <UIcon name="i-heroicons-arrow-top-right-on-square" class="w-3.5 h-3.5" />
-            Receipt
-          </a>
-          <span v-else class="text-xs text-gray-400">—</span>
+        <template #cell-expense_date="{ row }">
+          <span class="text-xs text-gray-500">{{ new Date(row.expense_date || row.created_at).toLocaleDateString() }}</span>
         </template>
 
         <template #cell-actions="{ row }">
-          <div class="flex items-center gap-1">
-            <AppButton
-              v-if="row.status === 'PENDING'"
-              size="sm"
-              color="emerald"
-              variant="default"
-              label="Approve"
-              @click="approveExpense(row)"
-            />
-            <AppButton
-              v-if="row.status === 'PENDING'"
-              size="sm"
-              variant="danger"
-              label="Reject"
-              @click="rejectExpense(row)"
-            />
+          <div v-if="row.status === 'PENDING'" class="flex items-center justify-end gap-1">
+            <AppButton size="xs" variant="primary" label="Approve" @click="approveExpense(row)" />
+            <AppButton size="xs" variant="danger" label="Reject" @click="promptReject(row)" />
           </div>
+          <span v-else class="text-xs text-gray-400">Processed</span>
         </template>
       </AppTable>
     </AppCard>
 
     <!-- Record Expense Modal -->
-    <AppModal v-model="showCreateModal">
-      <AppCard>
-        <template #header>
-          <div class="flex items-center justify-between">
-            <h3 class="text-base font-semibold">Record New Expense</h3>
-            <AppButton variant="ghost" size="sm" icon="i-heroicons-x-mark" @click="showCreateModal = false" />
-          </div>
-        </template>
+    <AppModal
+      v-model="showModal"
+      title="Record Expense"
+      size="sm"
+    >
+      <form class="form-grid" @submit.prevent="submitExpense">
+        <div class="form-field">
+          <label class="field-label">Description / Title <span class="required">*</span></label>
+          <input v-model="form.title" type="text" required placeholder="e.g. Monthly electricity bill" class="field-input" />
+        </div>
 
-        <form class="space-y-4" @submit.prevent="handleCreateExpense">
-          <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Expense Category *</label>
-            <select
-              v-model="createForm.category_id"
-              required
-              class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
-            >
-              <option value="" disabled>Select category</option>
-              <option v-for="c in categories" :key="c.id" :value="c.id">{{ c.name }}</option>
+        <div class="form-row">
+          <div class="form-field">
+            <label class="field-label">Category <span class="required">*</span></label>
+            <select v-model="form.category" required class="field-input">
+              <option value="RENT">Rent</option>
+              <option value="UTILITIES">Utilities</option>
+              <option value="SALARIES">Salaries / Wages</option>
+              <option value="SUPPLIES">Supplies &amp; Packaging</option>
+              <option value="MARKETING">Marketing</option>
+              <option value="MAINTENANCE">Maintenance</option>
+              <option value="OTHER">Other</option>
             </select>
           </div>
-
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Amount ($) *</label>
-              <input
-                v-model.number="createForm.amount"
-                type="number"
-                step="0.01"
-                min="0.01"
-                required
-                class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
-              />
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Payment Method *</label>
-              <select
-                v-model="createForm.payment_method"
-                required
-                class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
-              >
-                <option value="CASH">Cash</option>
-                <option value="KHQR">KHQR</option>
-                <option value="BANK_TRANSFER">Bank Transfer</option>
-                <option value="CARD">Card</option>
-                <option value="OTHER">Other</option>
-              </select>
-            </div>
+          <div class="form-field">
+            <label class="field-label">Amount ($) <span class="required">*</span></label>
+            <input v-model.number="form.amount" type="number" step="0.01" min="0.01" required class="field-input mono" />
           </div>
+        </div>
 
-          <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Expense Date *</label>
-            <input
-              v-model="createForm.expense_date"
-              type="date"
-              required
-              class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
-            />
-          </div>
+        <div class="form-field">
+          <label class="field-label">Expense Date <span class="required">*</span></label>
+          <input v-model="form.expense_date" type="date" required class="field-input" />
+        </div>
 
-          <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
-            <input
-              v-model="createForm.description"
-              type="text"
-              placeholder="e.g. Electricity bill for September"
-              class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
-            />
-          </div>
+        <div class="form-field">
+          <label class="field-label">Notes</label>
+          <textarea v-model="form.notes" rows="2" placeholder="Optional receipt reference or vendor..." class="field-input field-textarea" />
+        </div>
 
-          <AppFileUpload
-            v-model="createForm.receipt_url"
-            folder="expenses"
-            label="Receipt Attachment"
-            hint="Upload receipt slip, photo, or invoice PDF"
-          />
-
-          <div class="flex justify-end gap-2 pt-2">
-            <AppButton variant="ghost" label="Cancel" @click="showCreateModal = false" />
-            <AppButton type="submit" variant="primary" label="Save Expense" :loading="saving" />
-          </div>
-        </form>
-      </AppCard>
+        <div class="modal-actions">
+          <AppButton type="button" variant="ghost" label="Cancel" @click="showModal = false" />
+          <AppButton type="submit" variant="primary" label="Save Expense" :loading="saving" />
+        </div>
+      </form>
     </AppModal>
+
+    <AppConfirmDialog
+      v-model="showRejectConfirm"
+      title="Reject Expense Claim"
+      variant="danger"
+      confirm-label="Reject Expense"
+      :loading="rejecting"
+      :message="`Are you sure you want to reject expense &quot;${rejectTarget?.title}&quot; ($${Number(rejectTarget?.amount || 0).toFixed(2)})?`"
+      consequence="Rejected expenses are excluded from approved P&L expense totals."
+      @confirm="executeRejectExpense"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
+import type { FilterChipItem } from '~/components/AppFilterBar.vue'
+
 definePageMeta({ middleware: ['auth'] })
+useHead({ title: 'Expenses — Clothing Store Admin' })
 
 const expenseApi = useExpenseApi()
-const invApi = useInventoryApi()
+const branchApi = useBranchApi()
 const toast = useAppToast()
 
 const loading = ref(false)
 const saving = ref(false)
+const rejecting = ref(false)
+const showModal = ref(false)
 const expenses = ref<any[]>([])
-const categories = ref<any[]>([])
-const defaultBranchId = ref<string>('')
+const defaultBranchId = ref('')
 
+const searchQuery = ref('')
+const categoryFilter = ref('')
 const statusFilter = ref('')
-const statusOptions = [
-  { label: 'All Statuses', value: '' },
-  { label: 'Pending', value: 'PENDING' },
-  { label: 'Approved', value: 'APPROVED' },
-  { label: 'Rejected', value: 'REJECTED' },
-]
 
-const columns = [
-  { key: 'expense_number', label: 'Number' },
-  { key: 'category', label: 'Category' },
-  { key: 'amount', label: 'Amount' },
-  { key: 'payment_method', label: 'Method' },
-  { key: 'expense_date', label: 'Date' },
-  { key: 'receipt', label: 'Receipt' },
-  { key: 'status', label: 'Status' },
-  { key: 'actions', label: 'Actions' },
-]
+const showRejectConfirm = ref(false)
+const rejectTarget = ref<any>(null)
 
-const showCreateModal = ref(false)
-const createForm = ref({
-  category_id: '',
+const form = ref({
+  branch_id: '',
+  title: '',
+  category: 'UTILITIES',
   amount: 0,
-  payment_method: 'CASH',
-  expense_date: new Date().toISOString().split('T')[0],
-  description: '',
-  receipt_url: '',
+  expense_date: new Date().toISOString().slice(0, 10),
+  notes: '',
 })
 
-const totalApproved = computed(() => {
-  return expenses.value
-    .filter((e) => e.status === 'APPROVED')
-    .reduce((sum, e) => sum + Number(e.amount), 0)
+const filteredExpenses = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase()
+  return expenses.value.filter((e) => {
+    if (categoryFilter.value && e.category !== categoryFilter.value) return false
+    if (statusFilter.value && e.status !== statusFilter.value) return false
+    if (q) {
+      const hay = [e.title, e.category, e.notes].filter(Boolean).join(' ').toLowerCase()
+      if (!hay.includes(q)) return false
+    }
+    return true
+  })
 })
 
-const pendingCount = computed(() => {
-  return expenses.value.filter((e) => e.status === 'PENDING').length
+const totalExpenses = computed(() =>
+  filteredExpenses.value.reduce((sum, e) => sum + Number(e.amount || 0), 0),
+)
+const pendingCount = computed(() =>
+  filteredExpenses.value.filter(e => e.status === 'PENDING').length,
+)
+const approvedCount = computed(() =>
+  filteredExpenses.value.filter(e => e.status === 'APPROVED').length,
+)
+const approvedTotal = computed(() =>
+  filteredExpenses.value.filter(e => e.status === 'APPROVED').reduce((sum, e) => sum + Number(e.amount || 0), 0),
+)
+
+const activeChips = computed<FilterChipItem[]>(() => {
+  const chips: FilterChipItem[] = []
+  if (categoryFilter.value) chips.push({ key: 'category', label: 'Category', value: categoryFilter.value })
+  if (statusFilter.value) chips.push({ key: 'status', label: 'Status', value: statusFilter.value })
+  return chips
 })
 
-function getStatusColor(status: string) {
-  switch (status) {
-    case 'APPROVED': return 'emerald'
-    case 'PENDING': return 'amber'
-    case 'REJECTED': return 'red'
-    default: return 'gray'
-  }
+function removeChip(key: string) {
+  if (key === 'category') categoryFilter.value = ''
+  if (key === 'status') statusFilter.value = ''
 }
 
-function openCreateModal() {
-  createForm.value = {
-    category_id: categories.value[0]?.id || '',
-    amount: 50,
-    payment_method: 'CASH',
-    expense_date: new Date().toISOString().split('T')[0],
-    description: '',
-    receipt_url: '',
+function resetFilters() {
+  searchQuery.value = ''
+  categoryFilter.value = ''
+  statusFilter.value = ''
+}
+
+const columns = [
+  { key: 'title', label: 'Description', sortable: true },
+  { key: 'category', label: 'Category', sortable: true },
+  { key: 'amount', label: 'Amount', sortable: true },
+  { key: 'status', label: 'Status', sortable: true },
+  { key: 'expense_date', label: 'Date', sortable: true },
+  { key: 'actions', label: 'Actions', align: 'right' as const },
+]
+
+function openModal() {
+  form.value = {
+    branch_id: defaultBranchId.value,
+    title: '',
+    category: 'UTILITIES',
+    amount: 0,
+    expense_date: new Date().toISOString().slice(0, 10),
+    notes: '',
   }
-  showCreateModal.value = true
+  showModal.value = true
 }
 
 async function fetchExpenses() {
   loading.value = true
   try {
-    const params: Record<string, unknown> = {}
-    if (statusFilter.value) params.status = statusFilter.value
-    const data = await expenseApi.listExpenses(params) as any[]
-    expenses.value = data
+    if (!defaultBranchId.value) {
+      const branches = await branchApi.listBranches().catch(() => []) as any[]
+      if (branches?.[0]?.id) defaultBranchId.value = branches[0].id
+    }
+    const data = await expenseApi.listExpenses() as any[]
+    expenses.value = data || []
   } catch (err: any) {
-    toast.add({ title: 'Error', description: err.message, color: 'red' })
+    toast.add({ title: 'Error', description: err?.data?.detail || err.message, color: 'red' })
   } finally {
     loading.value = false
   }
 }
 
-async function fetchCategories() {
-  try {
-    const [cats, stocks] = await Promise.all([
-      expenseApi.listCategories() as Promise<any[]>,
-      invApi.listStocks() as Promise<any[]>,
-    ])
-    categories.value = cats
-    if (stocks.length > 0 && stocks[0].warehouse) {
-      defaultBranchId.value = stocks[0].warehouse.branch_id
-    }
-  } catch (e) {
-    console.error('Failed to fetch categories:', e)
-  }
-}
-
-async function handleCreateExpense() {
+async function submitExpense() {
   saving.value = true
   try {
     await expenseApi.createExpense({
-      category_id: createForm.value.category_id,
-      branch_id: defaultBranchId.value || '00000000-0000-0000-0000-000000000000',
-      amount: createForm.value.amount,
-      payment_method: createForm.value.payment_method,
-      expense_date: createForm.value.expense_date,
-      description: createForm.value.description,
-      receipt_url: createForm.value.receipt_url || null,
+      ...form.value,
+      branch_id: form.value.branch_id || defaultBranchId.value || undefined,
     })
-
-    toast.add({ title: 'Success', description: 'Expense recorded successfully', color: 'green' })
-    showCreateModal.value = false
+    toast.add({ title: 'Recorded', description: 'Expense recorded', color: 'green' })
+    showModal.value = false
     await fetchExpenses()
   } catch (err: any) {
-    toast.add({ title: 'Error', description: err.message, color: 'red' })
+    toast.add({ title: 'Error', description: err?.data?.detail || err.message, color: 'red' })
   } finally {
     saving.value = false
   }
@@ -359,25 +318,32 @@ async function handleCreateExpense() {
 async function approveExpense(row: any) {
   try {
     await expenseApi.approveExpense(row.id)
-    toast.add({ title: 'Success', description: `Expense ${row.expense_number} approved`, color: 'green' })
+    toast.add({ title: 'Approved', description: 'Expense approved', color: 'green' })
     await fetchExpenses()
   } catch (err: any) {
-    toast.add({ title: 'Error', description: err.message, color: 'red' })
+    toast.add({ title: 'Error', description: err?.data?.detail || err.message, color: 'red' })
   }
 }
 
-async function rejectExpense(row: any) {
+function promptReject(row: any) {
+  rejectTarget.value = row
+  showRejectConfirm.value = true
+}
+
+async function executeRejectExpense() {
+  if (!rejectTarget.value) return
+  rejecting.value = true
   try {
-    await expenseApi.rejectExpense(row.id)
-    toast.add({ title: 'Notice', description: `Expense ${row.expense_number} rejected`, color: 'amber' })
+    await expenseApi.rejectExpense(rejectTarget.value.id)
+    toast.add({ title: 'Rejected', description: 'Expense rejected', color: 'amber' })
+    showRejectConfirm.value = false
     await fetchExpenses()
   } catch (err: any) {
-    toast.add({ title: 'Error', description: err.message, color: 'red' })
+    toast.add({ title: 'Error', description: err?.data?.detail || err.message, color: 'red' })
+  } finally {
+    rejecting.value = false
   }
 }
 
-onMounted(async () => {
-  await fetchCategories()
-  await fetchExpenses()
-})
+onMounted(fetchExpenses)
 </script>

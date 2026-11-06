@@ -1,37 +1,24 @@
 <template>
-  <div class="space-y-6">
+  <div class="page-root">
     <!-- Header -->
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-      <div>
-        <div class="flex items-center gap-2 mb-1">
-          <NuxtLink
-            to="/settings"
-            class="text-xs font-medium text-gray-500 hover:text-gray-900 dark:hover:text-white inline-flex items-center gap-1 transition-colors"
-          >
-            <UIcon name="i-heroicons-arrow-left" class="w-3.5 h-3.5" />
-            <span>Settings</span>
-          </NuxtLink>
-          <span class="text-xs text-gray-400">/</span>
-          <span class="text-xs font-semibold text-gray-900 dark:text-white">Translations CMS</span>
-        </div>
-        <h2 class="text-xl font-bold text-gray-900 dark:text-white">
-          Content &amp; Language CMS
-        </h2>
-        <p class="text-sm text-gray-500 dark:text-gray-400">
-          Manage system-wide UI translations across 5 languages backed by PostgreSQL and Redis sub-millisecond cache.
-        </p>
-      </div>
-
-      <div class="flex items-center flex-wrap gap-2">
+    <AppPageHeader
+      title="Content &amp; Language CMS"
+      description="Manage system-wide UI translations across 5 languages backed by PostgreSQL and Redis sub-millisecond cache."
+      :breadcrumbs="[{ label: 'System Settings', to: '/settings' }, { label: 'Translations CMS' }]"
+      back-to="/settings"
+    >
+      <template #actions>
         <AppButton
-          variant="ghost"
+          variant="default"
+          size="sm"
           icon="i-heroicons-arrow-path"
           label="Purge &amp; Sync Cache"
           :loading="isPurging"
           @click="handlePurgeCache"
         />
         <AppButton
-          variant="ghost"
+          variant="default"
+          size="sm"
           icon="i-heroicons-sparkles"
           label="Re-seed Standard Keys"
           :loading="isReseeding"
@@ -39,62 +26,45 @@
         />
         <AppButton
           variant="primary"
+          size="sm"
           icon="i-heroicons-plus"
           label="Add Content Key"
           @click="openCreateModal"
         />
-      </div>
-    </div>
+      </template>
+    </AppPageHeader>
 
     <!-- Quick Stats -->
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-      <AppCard>
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-700 dark:text-gray-300">
-            <UIcon name="i-heroicons-language" class="w-5 h-5" />
-          </div>
-          <div>
-            <div class="text-xs font-medium text-gray-500 dark:text-gray-400">Total Translation Keys</div>
-            <div class="text-lg font-bold text-gray-900 dark:text-white">{{ totalItems }}</div>
-          </div>
-        </div>
-      </AppCard>
-
-      <AppCard>
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-700 dark:text-gray-300">
-            <UIcon name="i-heroicons-globe-alt" class="w-5 h-5" />
-          </div>
-          <div>
-            <div class="text-xs font-medium text-gray-500 dark:text-gray-400">Supported Locales</div>
-            <div class="text-lg font-bold text-gray-900 dark:text-white">5 Languages</div>
-          </div>
-        </div>
-      </AppCard>
-
-      <AppCard>
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-700 dark:text-gray-300">
-            <UIcon name="i-heroicons-squares-2x2" class="w-5 h-5" />
-          </div>
-          <div>
-            <div class="text-xs font-medium text-gray-500 dark:text-gray-400">Active Schema</div>
-            <div class="text-lg font-bold text-gray-900 dark:text-white">{{ schemaFilter || 'All Schemas' }}</div>
-          </div>
-        </div>
-      </AppCard>
-
-      <AppCard>
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 rounded-lg bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-700 dark:text-gray-300">
-            <UIcon name="i-heroicons-bolt" class="w-5 h-5" />
-          </div>
-          <div>
-            <div class="text-xs font-medium text-gray-500 dark:text-gray-400">Redis Cache</div>
-            <div class="text-lg font-bold text-emerald-600 dark:text-emerald-400">Synchronized</div>
-          </div>
-        </div>
-      </AppCard>
+    <div class="kpi-grid">
+      <AppStatCard
+        label="Total Translation Keys"
+        :value="totalItems"
+        sublabel="Database dictionary entries"
+        icon="i-heroicons-language"
+        tone="primary"
+        :loading="loading"
+      />
+      <AppStatCard
+        label="Supported Locales"
+        value="5 Languages"
+        sublabel="EN, KM, CN, JP, KR"
+        icon="i-heroicons-globe-alt"
+        tone="info"
+      />
+      <AppStatCard
+        label="Active Schema"
+        :value="schemaFilter || 'All Schemas'"
+        sublabel="Current filter scope"
+        icon="i-heroicons-squares-2x2"
+        tone="neutral"
+      />
+      <AppStatCard
+        label="Redis Cache"
+        value="Synchronized"
+        sublabel="Sub-millisecond lookup"
+        icon="i-heroicons-bolt"
+        tone="success"
+      />
     </div>
 
     <!-- Filters & Search Toolbar -->
@@ -151,32 +121,32 @@
               <th scope="col" class="px-4 py-3 min-w-[200px]">Content Key</th>
               <th scope="col" class="px-3 py-3 min-w-[160px]">
                 <div class="flex items-center gap-1.5">
-                  <span>🇬🇧</span>
-                  <span>English (EN)</span>
+                  <span class="px-1.5 py-0.5 rounded font-mono text-[10px] font-bold bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">EN</span>
+                  <span>English</span>
                 </div>
               </th>
               <th scope="col" class="px-3 py-3 min-w-[160px]">
                 <div class="flex items-center gap-1.5">
-                  <span>🇰🇭</span>
-                  <span>Khmer (KM)</span>
+                  <span class="px-1.5 py-0.5 rounded font-mono text-[10px] font-bold bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">KM</span>
+                  <span>Khmer</span>
                 </div>
               </th>
               <th scope="col" class="px-3 py-3 min-w-[140px]">
                 <div class="flex items-center gap-1.5">
-                  <span>🇨🇳</span>
-                  <span>Chinese (CN)</span>
+                  <span class="px-1.5 py-0.5 rounded font-mono text-[10px] font-bold bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">CN</span>
+                  <span>Chinese</span>
                 </div>
               </th>
               <th scope="col" class="px-3 py-3 min-w-[140px]">
                 <div class="flex items-center gap-1.5">
-                  <span>🇯🇵</span>
-                  <span>Japanese (JP)</span>
+                  <span class="px-1.5 py-0.5 rounded font-mono text-[10px] font-bold bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">JP</span>
+                  <span>Japanese</span>
                 </div>
               </th>
               <th scope="col" class="px-3 py-3 min-w-[140px]">
                 <div class="flex items-center gap-1.5">
-                  <span>🇰🇷</span>
-                  <span>Korean (KR)</span>
+                  <span class="px-1.5 py-0.5 rounded font-mono text-[10px] font-bold bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">KR</span>
+                  <span>Korean</span>
                 </div>
               </th>
               <th scope="col" class="px-3 py-3 min-w-[90px]">Status</th>
@@ -393,7 +363,7 @@
 
           <div>
             <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1.5">
-              <span>🇬🇧</span>
+              <span class="px-1.5 py-0.5 rounded font-mono text-[10px] font-bold bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">EN</span>
               <span>English (en) <span class="text-red-500">*</span></span>
             </label>
             <input
@@ -407,7 +377,7 @@
 
           <div>
             <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1.5">
-              <span>🇰🇭</span>
+              <span class="px-1.5 py-0.5 rounded font-mono text-[10px] font-bold bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">KM</span>
               <span>Khmer / ភាសាខ្មែរ (km) <span class="text-red-500">*</span></span>
             </label>
             <input
@@ -422,7 +392,7 @@
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1.5">
-                <span>🇨🇳</span>
+                <span class="px-1.5 py-0.5 rounded font-mono text-[10px] font-bold bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">CN</span>
                 <span>Chinese / 中文 (cn)</span>
               </label>
               <input
@@ -435,7 +405,7 @@
 
             <div>
               <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1.5">
-                <span>🇯🇵</span>
+                <span class="px-1.5 py-0.5 rounded font-mono text-[10px] font-bold bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">JP</span>
                 <span>Japanese / 日本語 (jp)</span>
               </label>
               <input
@@ -448,7 +418,7 @@
 
             <div>
               <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1.5">
-                <span>🇰🇷</span>
+                <span class="px-1.5 py-0.5 rounded font-mono text-[10px] font-bold bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">KR</span>
                 <span>Korean / 한국어 (kr)</span>
               </label>
               <input

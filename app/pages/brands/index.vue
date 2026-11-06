@@ -1,227 +1,85 @@
 <template>
-  <div class="space-y-6">
-    <!-- Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-      <div>
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Brands &amp; Labels</h2>
-        <p class="text-sm text-gray-500 dark:text-gray-400">Manage apparel brands, designer labels, and manufacturer profiles</p>
-      </div>
-      <div class="flex items-center gap-2">
-        <AppButton
-          variant="ghost"
-          icon="i-heroicons-arrow-path"
-          label="Refresh"
-          :loading="loading"
-          @click="fetchBrands"
-        />
-        <AppButton
-          variant="primary"
-          icon="i-heroicons-plus"
-          label="Add Brand"
-          @click="openCreateModal"
-        />
-      </div>
-    </div>
+  <div class="page-root">
+    <AppPageHeader
+      title="Brands"
+      description="Manage clothing brands, manufacturer codes, and brand logos."
+      :breadcrumbs="[
+        { label: 'Catalog', to: '/products' },
+        { label: 'Brands' },
+      ]"
+      primary-label="Add Brand"
+      primary-icon="i-heroicons-plus"
+      @primary-click="openCreate"
+    />
 
-    <!-- Filter & Search Bar -->
-    <div class="flex flex-col sm:flex-row items-center gap-3">
-      <div class="relative flex-1 w-full">
-        <UIcon name="i-heroicons-magnifying-glass" class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="Search brands by name, slug, or description..."
-          class="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-gray-400"
-        />
-      </div>
-      <AppSelect
-        v-model="statusFilter"
-        :options="[
-          { label: 'All Statuses', value: '' },
-          { label: 'Active', value: 'ACTIVE' },
-          { label: 'Inactive', value: 'INACTIVE' },
-        ]"
-        class="w-full sm:w-44"
-      />
-    </div>
+    <AppFilterBar
+      v-model:search="searchQuery"
+      search-placeholder="Search brands by name or code..."
+      :shown-count="filteredBrands.length"
+      :total-count="brands.length"
+      count-label="brands"
+      @clear-all="searchQuery = ''"
+    />
 
-    <!-- Brands Table -->
     <AppCard :no-pad="true">
-      <AppTable
-        :columns="columns"
-        :rows="filteredBrands"
-        :loading="loading"
-        empty-text="No clothing brands found."
-      >
+      <AppTable :columns="columns" :rows="filteredBrands" :loading="loading" empty-text="No brands found.">
         <template #cell-name="{ row }">
           <div class="flex items-center gap-2.5">
-            <div class="w-9 h-9 rounded-lg bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-700 dark:text-gray-300 font-bold text-xs border border-gray-200 dark:border-gray-700 flex-shrink-0 overflow-hidden">
-              <img
-                v-if="row.logo_url"
-                :src="row.logo_url"
-                :alt="row.name"
-                class="w-full h-full object-cover"
-              />
-              <UIcon v-else name="i-heroicons-sparkles" class="w-4 h-4 text-gray-500" />
-            </div>
-            <div>
-              <p class="font-semibold text-gray-900 dark:text-white text-sm">{{ row.name }}</p>
-              <p class="text-xs text-gray-500 font-mono">{{ row.slug || '—' }}</p>
-            </div>
+            <img
+              v-if="row.logo_url"
+              :src="row.logo_url"
+              :alt="row.name"
+              class="w-7 h-7 rounded object-contain border border-gray-200 bg-gray-50"
+            />
+            <span class="font-semibold text-gray-900">{{ row.name }}</span>
           </div>
         </template>
-
-        <template #cell-description="{ row }">
-          <span class="text-sm text-gray-600 dark:text-gray-300 line-clamp-1">
-            {{ row.description || '—' }}
-          </span>
+        <template #cell-code="{ value }">
+          <code class="mono font-semibold">{{ value }}</code>
         </template>
-
-        <template #cell-status="{ value }">
-          <AppBadge :color="value === 'ACTIVE' ? 'green' : 'default'">
-            {{ value || 'ACTIVE' }}
-          </AppBadge>
-        </template>
-
         <template #actions="{ row }">
-          <div class="flex items-center justify-end gap-1.5">
-            <AppButton
-              variant="ghost"
-              size="sm"
-              icon="i-heroicons-pencil-square"
-              label="Edit"
-              @click="openEditModal(row)"
-            />
-            <AppButton
-              variant="ghost"
-              size="sm"
-              icon="i-heroicons-trash"
-              label="Delete"
-              class="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20"
-              @click="confirmDeleteBrand(row)"
-            />
-          </div>
+          <AppButton size="xs" variant="ghost" label="Edit" @click="openEdit(row)" />
+          <AppButton size="xs" variant="danger" label="Delete" @click="confirmDelete(row)" />
         </template>
       </AppTable>
     </AppCard>
 
-    <!-- Create / Edit Modal -->
-    <AppModal
-      v-model="showModal"
-      :title="isEditing ? 'Edit Brand' : 'Register New Brand'"
-      size="md"
-    >
-      <form class="space-y-4" @submit.prevent="handleSubmit">
-        <div>
-          <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-            Brand Name <span class="text-red-500">*</span>
-          </label>
-          <AppInput
-            v-model="form.name"
-            placeholder="e.g. Zara, Uniqlo, Levi's, H&M"
-            required
-          />
+    <AppModal v-model="showModal" :title="editTarget ? 'Edit Brand' : 'New Brand'" size="sm">
+      <form class="form-grid" @submit.prevent="save">
+        <div class="form-field">
+          <label class="field-label">Name <span class="required">*</span></label>
+          <input v-model="form.name" class="field-input" placeholder="e.g. Nike" required />
         </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-            Brand Slug / Identifier
-          </label>
-          <AppInput
-            v-model="form.slug"
-            placeholder="e.g. zara, uniqlo (auto-generated if blank)"
-          />
+        <div class="form-field">
+          <label class="field-label">Code <span class="required">*</span></label>
+          <input v-model="form.code" class="field-input mono uppercase" placeholder="e.g. NIKE" required />
         </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-            Brand Logo
-          </label>
-          <AppFileUpload
-            v-model="form.logo_url"
-            folder="brands"
-            hint="Upload brand insignia or logo image"
-          />
+        <div class="form-field">
+          <label class="field-label">Logo URL</label>
+          <input v-model="form.logo_url" class="field-input" placeholder="https://…" />
         </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-            Description
-          </label>
-          <textarea
-            v-model="form.description"
-            rows="3"
-            placeholder="Brand origin, target demographic, manufacturing quality notes..."
-            class="w-full text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white p-2.5 focus:outline-none focus:ring-1 focus:ring-gray-400"
-          />
-        </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-            Status
-          </label>
-          <AppSelect
-            v-model="form.status_code"
-            :options="[
-              { label: 'Active', value: 'ACTIVE' },
-              { label: 'Inactive', value: 'INACTIVE' },
-            ]"
-          />
-        </div>
-
-        <div class="flex justify-end gap-2.5 pt-4 border-t border-gray-100 dark:border-gray-800">
-          <AppButton
-            type="button"
-            variant="ghost"
-            label="Cancel"
-            @click="showModal = false"
-          />
-          <AppButton
-            type="submit"
-            variant="primary"
-            :loading="isSubmitting"
-            :label="isEditing ? 'Save Changes' : 'Register Brand'"
-          />
+        <div class="modal-actions">
+          <AppButton type="button" variant="ghost" label="Cancel" @click="showModal = false" />
+          <AppButton type="submit" variant="primary" label="Save Brand" :loading="saving" />
         </div>
       </form>
     </AppModal>
 
-    <!-- Delete Confirmation Modal -->
-    <AppModal
-      v-model="showDeleteModal"
+    <AppConfirmDialog
+      v-model="showDelete"
       title="Delete Brand"
-      size="sm"
-    >
-      <div class="space-y-4">
-        <p class="text-sm text-gray-600 dark:text-gray-300">
-          Are you sure you want to delete brand
-          <strong class="text-gray-900 dark:text-white">{{ selectedBrand?.name }}</strong>?
-          Products linked to this brand will remain in catalog without a brand association.
-        </p>
-        <div class="flex justify-end gap-2.5 pt-2 border-t border-gray-100 dark:border-gray-800">
-          <AppButton
-            variant="ghost"
-            label="Cancel"
-            @click="showDeleteModal = false"
-          />
-          <AppButton
-            variant="primary"
-            label="Delete Brand"
-            class="bg-red-600 hover:bg-red-700 text-white"
-            :loading="isDeleting"
-            @click="handleDeleteBrand"
-          />
-        </div>
-      </div>
-    </AppModal>
+      variant="danger"
+      confirm-label="Delete Brand"
+      :loading="deleting"
+      :message="`Are you sure you want to delete brand &quot;${deleteTarget?.name}&quot;?`"
+      consequence="Products associated with this brand will have their brand cleared."
+      @confirm="doDelete"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
-import { useCatalogApi } from '~/composables/useApi'
-import { useAppToast } from '~/composables/useAppToast'
-import type { Brand } from '~/types/api.generated'
+import type { Brand } from '~/types'
 
 definePageMeta({ middleware: ['auth'] })
 useHead({ title: 'Brands — Clothing Store Admin' })
@@ -230,140 +88,89 @@ const { listBrands, createBrand, updateBrand, deleteBrand } = useCatalogApi()
 const { addToast } = useAppToast()
 
 const brands = ref<Brand[]>([])
-const loading = ref(false)
-const isSubmitting = ref(false)
-const isDeleting = ref(false)
+const loading = ref(true)
+const saving = ref(false)
+const deleting = ref(false)
 const searchQuery = ref('')
-const statusFilter = ref('')
 
 const showModal = ref(false)
-const showDeleteModal = ref(false)
-const isEditing = ref(false)
-const selectedBrand = ref<Brand | null>(null)
+const editTarget = ref<Brand | null>(null)
+const showDelete = ref(false)
+const deleteTarget = ref<Brand | null>(null)
+
+const form = reactive({ name: '', code: '', logo_url: '' })
 
 const columns = [
-  { key: 'name', label: 'Brand Name' },
-  { key: 'description', label: 'Description' },
-  { key: 'status', label: 'Status' },
+  { key: 'name', label: 'Brand Name', sortable: true },
+  { key: 'code', label: 'Code', width: '140px', sortable: true },
+  { key: 'logo_url', label: 'Logo URL' },
 ]
 
-const form = reactive({
-  name: '',
-  slug: '',
-  logo_url: '',
-  description: '',
-  status_code: 'ACTIVE',
-})
-
 const filteredBrands = computed(() => {
-  return brands.value.filter((b) => {
-    const matchesSearch = !searchQuery.value.trim() ||
-      b.name?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
-      (b.slug && b.slug.toLowerCase().includes(searchQuery.value.toLowerCase())) ||
-      (b.description && b.description.toLowerCase().includes(searchQuery.value.toLowerCase()))
-    const matchesStatus = !statusFilter.value || (b.status_code || 'ACTIVE') === statusFilter.value
-    return matchesSearch && matchesStatus
-  })
+  const q = searchQuery.value.trim().toLowerCase()
+  if (!q) return brands.value
+  return brands.value.filter(b =>
+    [b.name, b.code].filter(Boolean).join(' ').toLowerCase().includes(q),
+  )
 })
 
-async function fetchBrands() {
-  loading.value = true
+function openCreate() {
+  editTarget.value = null
+  Object.assign(form, { name: '', code: '', logo_url: '' })
+  showModal.value = true
+}
+
+function openEdit(b: Brand) {
+  editTarget.value = b
+  Object.assign(form, { name: b.name, code: b.code, logo_url: b.logo_url ?? '' })
+  showModal.value = true
+}
+
+async function save() {
+  saving.value = true
   try {
-    const res: any = await listBrands()
-    brands.value = Array.isArray(res) ? res : (res?.items || [])
-  } catch (err: any) {
-    addToast({
-      title: 'Failed to load brands',
-      description: err?.data?.detail || err?.message || 'Could not fetch brands',
-      color: 'red',
-    })
+    const body = { name: form.name.trim(), code: form.code.trim().toUpperCase(), logo_url: form.logo_url || null }
+    if (editTarget.value) {
+      await updateBrand(editTarget.value.id, body)
+      addToast({ type: 'success', title: 'Brand updated' })
+    } else {
+      await createBrand(body)
+      addToast({ type: 'success', title: 'Brand created' })
+    }
+    showModal.value = false
+    brands.value = (await listBrands()) ?? []
+  } catch (e: any) {
+    addToast({ type: 'error', title: 'Error', message: e?.data?.detail ?? String(e) })
+  } finally {
+    saving.value = false
+  }
+}
+
+function confirmDelete(b: Brand) {
+  deleteTarget.value = b
+  showDelete.value = true
+}
+
+async function doDelete() {
+  if (!deleteTarget.value) return
+  deleting.value = true
+  try {
+    await deleteBrand(deleteTarget.value.id)
+    addToast({ type: 'success', title: 'Brand deleted' })
+    showDelete.value = false
+    brands.value = (await listBrands()) ?? []
+  } catch (e: any) {
+    addToast({ type: 'error', title: 'Error', message: e?.data?.detail ?? String(e) })
+  } finally {
+    deleting.value = false
+  }
+}
+
+onMounted(async () => {
+  try {
+    brands.value = (await listBrands()) ?? []
   } finally {
     loading.value = false
   }
-}
-
-function openCreateModal() {
-  isEditing.value = false
-  selectedBrand.value = null
-  form.name = ''
-  form.slug = ''
-  form.logo_url = ''
-  form.description = ''
-  form.status_code = 'ACTIVE'
-  showModal.value = true
-}
-
-function openEditModal(brand: Brand) {
-  isEditing.value = true
-  selectedBrand.value = brand
-  form.name = brand.name || ''
-  form.slug = brand.slug || ''
-  form.logo_url = brand.logo_url || ''
-  form.description = brand.description || ''
-  form.status_code = brand.status_code || 'ACTIVE'
-  showModal.value = true
-}
-
-function confirmDeleteBrand(brand: Brand) {
-  selectedBrand.value = brand
-  showDeleteModal.value = true
-}
-
-async function handleSubmit() {
-  if (!form.name.trim()) return
-  isSubmitting.value = true
-  try {
-    const slug = form.slug.trim() || form.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-')
-    const payload = {
-      name: form.name.trim(),
-      slug,
-      logo_url: form.logo_url?.trim() || null,
-      description: form.description?.trim() || null,
-      status_code: form.status_code,
-    }
-
-    if (isEditing.value && selectedBrand.value) {
-      await updateBrand(selectedBrand.value.id, payload)
-      addToast({ title: 'Brand Updated', description: `Successfully updated ${form.name}`, color: 'green' })
-    } else {
-      await createBrand(payload)
-      addToast({ title: 'Brand Created', description: `Successfully registered ${form.name}`, color: 'green' })
-    }
-
-    showModal.value = false
-    await fetchBrands()
-  } catch (err: any) {
-    addToast({
-      title: 'Action Failed',
-      description: err?.data?.detail || err?.message || 'Could not save brand',
-      color: 'red',
-    })
-  } finally {
-    isSubmitting.value = false
-  }
-}
-
-async function handleDeleteBrand() {
-  if (!selectedBrand.value) return
-  isDeleting.value = true
-  try {
-    await deleteBrand(selectedBrand.value.id)
-    addToast({ title: 'Brand Deleted', description: `${selectedBrand.value.name} was removed`, color: 'green' })
-    showDeleteModal.value = false
-    await fetchBrands()
-  } catch (err: any) {
-    addToast({
-      title: 'Delete Failed',
-      description: err?.data?.detail || err?.message || 'Could not delete brand',
-      color: 'red',
-    })
-  } finally {
-    isDeleting.value = false
-  }
-}
-
-onMounted(() => {
-  fetchBrands()
 })
 </script>
-

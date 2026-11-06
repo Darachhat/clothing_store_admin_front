@@ -1,301 +1,299 @@
 <template>
-  <div class="space-y-4">
-    <!-- Header -->
-    <div class="flex items-center justify-between">
-      <div>
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Promotions & Coupons</h2>
-        <p class="text-sm text-gray-500 dark:text-gray-400">Create discount campaigns and manage coupon codes</p>
-      </div>
-      <AppButton
-        label="New Promotion"
-        variant="primary"
-        @click="openCreateModal"
-      />
-    </div>
+  <div class="page-root">
+    <AppPageHeader
+      title="Promotions"
+      description="Create and manage promotional discount codes, percentage/fixed offers, and validity dates."
+      :breadcrumbs="[
+        { label: 'Customers', to: '/customers' },
+        { label: 'Promotions' },
+      ]"
+      primary-label="Create Promotion"
+      primary-icon="i-heroicons-plus"
+      @primary-click="openCreateModal"
+    />
 
-    <!-- Promotions Table -->
-    <AppCard>
+    <AppFilterBar
+      v-model:search="searchQuery"
+      search-placeholder="Search promotions by name or promo code..."
+      :chips="statusFilter ? [{ key: 'status', label: 'Status', value: statusFilter }] : []"
+      :shown-count="filteredPromotions.length"
+      :total-count="promotions.length"
+      count-label="promotions"
+      @remove-chip="statusFilter = ''"
+      @clear-all="searchQuery = ''; statusFilter = ''"
+    >
+      <AppSelect
+        v-model="statusFilter"
+        :options="[
+          { label: 'All Statuses', value: '' },
+          { label: 'Active', value: 'ACTIVE' },
+          { label: 'Inactive', value: 'INACTIVE' },
+        ]"
+        style="min-width: 145px;"
+      />
+    </AppFilterBar>
+
+    <AppCard :no-pad="true">
       <AppTable
         :columns="columns"
-        :rows="promotions"
+        :rows="filteredPromotions"
         :loading="loading"
-        :empty-state="{ icon: 'i-heroicons-gift', label: 'No promotions active' }"
+        :empty-state="{
+          icon: 'i-heroicons-receipt-percent',
+          label: 'No promotions created yet',
+          description: 'Create percentage or fixed-amount promotions for POS checkout.',
+        }"
       >
-        <template #cell-name="{ row }">
-          <div>
-            <p class="font-medium text-gray-900 dark:text-white">{{ row.name }}</p>
-            <p v-if="row.code" class="text-xs font-mono text-primary-600 dark:text-primary-400">
-              Code: {{ row.code }}
-            </p>
-          </div>
+        <template #cell-code="{ row }">
+          <code class="mono font-semibold text-gray-900">{{ row.code || '—' }}</code>
         </template>
 
-        <template #cell-type="{ row }">
-          <AppBadge variant="default" :label="row.type" size="sm" />
+        <template #cell-discount_type="{ row }">
+          <AppBadge :color="row.discount_type === 'PERCENTAGE' ? 'blue' : 'green'" size="sm">
+            {{ row.discount_type }}
+          </AppBadge>
         </template>
 
-        <template #cell-discount="{ row }">
-          <span class="font-bold text-gray-900 dark:text-white">
-            {{ row.type === 'PERCENTAGE' ? `${row.value}% OFF` : `$${row.value} OFF` }}
-          </span>
-        </template>
-
-        <template #cell-validity="{ row }">
-          <div class="text-xs text-gray-500">
-            {{ new Date(row.start_datetime).toLocaleDateString() }} - {{ new Date(row.end_datetime).toLocaleDateString() }}
-          </div>
-        </template>
-
-        <template #cell-usage="{ row }">
-          <span class="text-xs">
-            {{ row.usage_count }} / {{ row.usage_limit || '∞' }}
+        <template #cell-discount_value="{ row }">
+          <span class="mono font-bold text-gray-900">
+            {{ row.discount_type === 'PERCENTAGE' ? `${row.discount_value}%` : `$${Number(row.discount_value).toFixed(2)}` }}
           </span>
         </template>
 
         <template #cell-status="{ row }">
-          <AppBadge
-            :color="row.status === 'ACTIVE' ? 'emerald' : 'gray'"
-            :label="row.status"
-            size="sm"
-            variant="subtle"
-          />
+          <AppBadge :color="(row.status_code || row.status) === 'ACTIVE' ? 'green' : 'default'" size="sm">
+            {{ row.status_code || row.status || 'ACTIVE' }}
+          </AppBadge>
         </template>
 
         <template #cell-actions="{ row }">
-          <div class="flex items-center gap-1">
+          <div class="flex items-center justify-end gap-1">
+            <AppButton size="xs" variant="ghost" label="Edit" @click="openEditModal(row)" />
             <AppButton
-              variant="ghost"
-              size="sm"
-              icon="i-heroicons-pencil-square"
-              label="Edit"
-              @click="openEditModal(row)"
-            />
-            <AppButton
+              v-if="(row.status_code || row.status) === 'ACTIVE'"
+              size="xs"
               variant="danger"
-              size="sm"
-              icon="i-heroicons-trash"
-              label="Delete"
-              @click="deletePromotion(row)"
+              label="Deactivate"
+              @click="promptDeactivate(row)"
             />
           </div>
         </template>
       </AppTable>
     </AppCard>
 
-    <!-- Create / Edit Promotion Modal -->
-    <AppModal v-model="showCreateModal">
-      <AppCard>
-        <template #header>
-          <div class="flex items-center justify-between">
-            <h3 class="text-base font-semibold">{{ editingPromotionId ? 'Edit Promotion' : 'Create Promotion' }}</h3>
-            <AppButton variant="ghost" size="sm" icon="i-heroicons-x-mark" @click="showCreateModal = false" />
+    <!-- Create / Edit Modal -->
+    <AppModal
+      v-model="showModal"
+      :title="editingPromo ? 'Edit Promotion' : 'New Promotion'"
+      size="md"
+    >
+      <form class="form-grid" @submit.prevent="handleSubmit">
+        <div class="form-row">
+          <div class="form-field">
+            <label class="field-label">Promotion Name <span class="required">*</span></label>
+            <input v-model="form.name" type="text" required placeholder="Summer Sale 20%" class="field-input" />
           </div>
-        </template>
+          <div class="form-field">
+            <label class="field-label">Promo Code</label>
+            <input v-model="form.code" type="text" placeholder="SUMMER20" class="field-input mono uppercase" />
+          </div>
+        </div>
 
-        <form class="space-y-4" @submit.prevent="handleCreatePromotion">
-          <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Campaign Name *</label>
-            <input
-              v-model="createForm.name"
-              type="text"
-              required
-              placeholder="e.g. Summer Special 15%"
-              class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
-            />
+        <div class="form-row">
+          <div class="form-field">
+            <label class="field-label">Discount Type <span class="required">*</span></label>
+            <select v-model="form.discount_type" required class="field-input">
+              <option value="PERCENTAGE">Percentage (%)</option>
+              <option value="FIXED">Fixed Amount ($)</option>
+            </select>
           </div>
+          <div class="form-field">
+            <label class="field-label">Discount Value <span class="required">*</span></label>
+            <input v-model.number="form.discount_value" type="number" step="0.01" min="0" required class="field-input mono" />
+          </div>
+        </div>
 
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Discount Type *</label>
-              <select
-                v-model="createForm.type"
-                required
-                class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
-              >
-                <option value="PERCENTAGE">Percentage (%)</option>
-                <option value="FIXED">Fixed Amount ($)</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Discount Value *</label>
-              <input
-                v-model.number="createForm.value"
-                type="number"
-                step="0.01"
-                min="0.01"
-                required
-                placeholder="e.g. 10"
-                class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
-              />
-            </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label class="field-label">Min Order Amount ($)</label>
+            <input v-model.number="form.min_order_amount" type="number" step="0.01" min="0" class="field-input mono" />
           </div>
+          <div class="form-field">
+            <label class="field-label">Usage Limit</label>
+            <input v-model.number="form.usage_limit" type="number" min="1" placeholder="Unlimited" class="field-input mono" />
+          </div>
+        </div>
 
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Coupon Code (optional)</label>
-              <input
-                v-model="createForm.code"
-                type="text"
-                placeholder="e.g. SUMMER10"
-                class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm uppercase font-mono"
-              />
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Min. Order Total ($)</label>
-              <input
-                v-model.number="createForm.min_purchase_amount"
-                type="number"
-                step="0.01"
-                min="0"
-                class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
-              />
-            </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label class="field-label">Valid From <span class="required">*</span></label>
+            <input v-model="form.valid_from" type="date" required class="field-input" />
           </div>
+          <div class="form-field">
+            <label class="field-label">Valid Until</label>
+            <input v-model="form.valid_until" type="date" class="field-input" />
+          </div>
+        </div>
 
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Start Date *</label>
-              <input
-                v-model="createForm.start_datetime"
-                type="date"
-                required
-                class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
-              />
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">End Date *</label>
-              <input
-                v-model="createForm.end_datetime"
-                type="date"
-                required
-                class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
-              />
-            </div>
-          </div>
-
-          <div class="flex justify-end gap-2 pt-2">
-            <AppButton variant="ghost" label="Cancel" @click="showCreateModal = false" />
-            <AppButton type="submit" variant="primary" label="Save Campaign" :loading="saving" />
-          </div>
-        </form>
-      </AppCard>
+        <div class="modal-actions">
+          <AppButton type="button" variant="ghost" label="Cancel" @click="showModal = false" />
+          <AppButton type="submit" variant="primary" :label="editingPromo ? 'Save Changes' : 'Create Promotion'" :loading="saving" />
+        </div>
+      </form>
     </AppModal>
+
+    <AppConfirmDialog
+      v-model="showDeactivateConfirm"
+      title="Deactivate Promotion"
+      variant="danger"
+      confirm-label="Deactivate Promotion"
+      :loading="deactivating"
+      :message="`Are you sure you want to deactivate promotion &quot;${deactivateTarget?.name}&quot;?`"
+      consequence="Cashiers will no longer be able to apply this promotion code at checkout."
+      @confirm="executeDeactivatePromo"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 definePageMeta({ middleware: ['auth'] })
+useHead({ title: 'Promotions — Clothing Store Admin' })
 
-const promotionApi = usePromotionApi()
+const promoApi = usePromotionApi()
 const toast = useAppToast()
 
 const loading = ref(false)
 const saving = ref(false)
+const deactivating = ref(false)
 const promotions = ref<any[]>([])
+const searchQuery = ref('')
+const statusFilter = ref('')
+
+const showModal = ref(false)
+const editingPromo = ref<any>(null)
+const showDeactivateConfirm = ref(false)
+const deactivateTarget = ref<any>(null)
+
+const form = ref({
+  name: '',
+  code: '',
+  discount_type: 'PERCENTAGE',
+  discount_value: 10,
+  min_order_amount: 0,
+  usage_limit: null as number | null,
+  valid_from: new Date().toISOString().slice(0, 10),
+  valid_until: '',
+})
 
 const columns = [
-  { key: 'name', label: 'Promotion' },
-  { key: 'type', label: 'Type' },
-  { key: 'discount', label: 'Discount' },
-  { key: 'validity', label: 'Validity Period' },
-  { key: 'usage', label: 'Usage' },
-  { key: 'status', label: 'Status' },
-  { key: 'actions', label: 'Actions' },
+  { key: 'name', label: 'Name', sortable: true },
+  { key: 'code', label: 'Code', sortable: true },
+  { key: 'discount_type', label: 'Type', sortable: true },
+  { key: 'discount_value', label: 'Value', sortable: true },
+  { key: 'valid_from', label: 'Valid From', sortable: true },
+  { key: 'valid_until', label: 'Valid Until', sortable: true },
+  { key: 'status', label: 'Status', sortable: true },
+  { key: 'actions', label: 'Actions', align: 'right' as const },
 ]
 
-const showCreateModal = ref(false)
-const editingPromotionId = ref<string | null>(null)
-const createForm = ref({
-  name: '',
-  type: 'PERCENTAGE',
-  value: 10,
-  code: '',
-  min_purchase_amount: 0,
-  start_datetime: new Date().toISOString().split('T')[0] ?? '',
-  end_datetime: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0] ?? '',
+const filteredPromotions = computed(() => {
+  const q = searchQuery.value.trim().toLowerCase()
+  return promotions.value.filter((p) => {
+    const st = p.status_code || p.status || 'ACTIVE'
+    if (statusFilter.value && st !== statusFilter.value) return false
+    if (q) {
+      const hay = [p.name, p.code, p.discount_type].filter(Boolean).join(' ').toLowerCase()
+      if (!hay.includes(q)) return false
+    }
+    return true
+  })
 })
 
 function openCreateModal() {
-  editingPromotionId.value = null
-  createForm.value = {
+  editingPromo.value = null
+  form.value = {
     name: '',
-    type: 'PERCENTAGE',
-    value: 10,
     code: '',
-    min_purchase_amount: 0,
-    start_datetime: new Date().toISOString().split('T')[0] ?? '',
-    end_datetime: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0] ?? '',
+    discount_type: 'PERCENTAGE',
+    discount_value: 10,
+    min_order_amount: 0,
+    usage_limit: null,
+    valid_from: new Date().toISOString().slice(0, 10),
+    valid_until: '',
   }
-  showCreateModal.value = true
+  showModal.value = true
 }
 
 function openEditModal(promo: any) {
-  editingPromotionId.value = promo.id
-  createForm.value = {
-    name: promo.name || '',
-    type: promo.type || 'PERCENTAGE',
-    value: Number(promo.value || 10),
+  editingPromo.value = promo
+  form.value = {
+    name: promo.name,
     code: promo.code || '',
-    min_purchase_amount: Number(promo.min_purchase_amount || 0),
-    start_datetime: promo.start_datetime ? new Date(promo.start_datetime).toISOString().split('T')[0] ?? '' : '',
-    end_datetime: promo.end_datetime ? new Date(promo.end_datetime).toISOString().split('T')[0] ?? '' : '',
+    discount_type: promo.discount_type,
+    discount_value: Number(promo.discount_value),
+    min_order_amount: Number(promo.min_order_amount || 0),
+    usage_limit: promo.usage_limit || null,
+    valid_from: promo.valid_from?.slice(0, 10) || '',
+    valid_until: promo.valid_until?.slice(0, 10) || '',
   }
-  showCreateModal.value = true
+  showModal.value = true
 }
 
 async function fetchPromotions() {
   loading.value = true
   try {
-    const data = await promotionApi.listPromotions() as any[]
-    promotions.value = data
+    const data = await promoApi.listPromotions() as any[]
+    promotions.value = data || []
   } catch (err: any) {
-    toast.add({ title: 'Error', description: err.message, color: 'red' })
+    toast.add({ title: 'Error', description: err?.data?.detail || err.message, color: 'red' })
   } finally {
     loading.value = false
   }
 }
 
-async function handleCreatePromotion() {
+async function handleSubmit() {
   saving.value = true
   try {
     const payload = {
-      name: createForm.value.name,
-      type: createForm.value.type,
-      value: createForm.value.value,
-      code: createForm.value.code || null,
-      min_purchase_amount: createForm.value.min_purchase_amount,
-      start_datetime: new Date(createForm.value.start_datetime).toISOString(),
-      end_datetime: new Date(createForm.value.end_datetime).toISOString(),
-      status: 'ACTIVE',
+      ...form.value,
+      code: form.value.code ? form.value.code.toUpperCase() : undefined,
+      valid_until: form.value.valid_until || undefined,
     }
-    if (editingPromotionId.value) {
-      await promotionApi.updatePromotion(editingPromotionId.value, payload)
-      toast.add({ title: 'Success', description: 'Promotion updated successfully', color: 'green' })
+    if (editingPromo.value) {
+      await promoApi.updatePromotion(editingPromo.value.id, payload)
+      toast.add({ title: 'Updated', description: 'Promotion updated', color: 'green' })
     } else {
-      await promotionApi.createPromotion(payload)
-      toast.add({ title: 'Success', description: 'Promotion created successfully', color: 'green' })
+      await promoApi.createPromotion(payload)
+      toast.add({ title: 'Created', description: 'Promotion created', color: 'green' })
     }
-    showCreateModal.value = false
+    showModal.value = false
     await fetchPromotions()
   } catch (err: any) {
-    toast.add({ title: 'Error', description: err.message, color: 'red' })
+    toast.add({ title: 'Error', description: err?.data?.detail || err.message, color: 'red' })
   } finally {
     saving.value = false
   }
 }
 
-async function deletePromotion(row: any) {
-  if (!confirm(`Delete promotion "${row.name}"?`)) return
+function promptDeactivate(promo: any) {
+  deactivateTarget.value = promo
+  showDeactivateConfirm.value = true
+}
+
+async function executeDeactivatePromo() {
+  if (!deactivateTarget.value) return
+  deactivating.value = true
   try {
-    await promotionApi.deletePromotion(row.id)
-    toast.add({ title: 'Success', description: 'Promotion deleted', color: 'green' })
+    await promoApi.deletePromotion(deactivateTarget.value.id)
+    toast.add({ title: 'Deactivated', description: `${deactivateTarget.value.name} deactivated`, color: 'amber' })
+    showDeactivateConfirm.value = false
     await fetchPromotions()
   } catch (err: any) {
-    toast.add({ title: 'Error', description: err.message, color: 'red' })
+    toast.add({ title: 'Error', description: err?.data?.detail || err.message, color: 'red' })
+  } finally {
+    deactivating.value = false
   }
 }
 
-onMounted(async () => {
-  await fetchPromotions()
-})
+onMounted(fetchPromotions)
 </script>

@@ -1,68 +1,122 @@
-<!-- AppSelect — flat native select, custom chevron -->
 <template>
-  <div class="a-select-wrap" :class="[block && 'a-select-wrap--block']">
-    <select
-      v-bind="$attrs"
-      class="a-select"
-      :value="modelValue"
-      :disabled="disabled"
-      @change="$emit('update:modelValue', ($event.target as HTMLSelectElement).value)"
-    >
-      <option v-if="placeholder" value="" disabled :selected="!modelValue">{{ placeholder }}</option>
-      <option
-        v-for="opt in options"
-        :key="String(typeof opt === 'object' ? opt.value : opt)"
-        :value="typeof opt === 'object' ? opt.value : opt"
+  <div class="app-select-group">
+    <label v-if="label" :for="id" class="app-select-label">
+      {{ label }}
+      <span v-if="required" class="required">*</span>
+    </label>
+    <div class="app-select-wrap">
+      <select
+        :id="id"
+        :value="modelValue"
+        :disabled="disabled"
+        :required="required"
+        class="app-select"
+        @change="onChange"
       >
-        {{ typeof opt === 'object' ? opt.label : opt }}
-      </option>
-    </select>
+        <option v-if="placeholder" value="" disabled>{{ placeholder }}</option>
+        <option v-for="opt in options" :key="opt.value" :value="opt.value">
+          {{ opt.label }}
+        </option>
+      </select>
+      <UIcon name="i-heroicons-chevron-down" class="app-select-chevron" />
+    </div>
+    <p v-if="error" class="app-select-error">{{ error }}</p>
   </div>
 </template>
 
 <script setup lang="ts">
-defineOptions({ inheritAttrs: false })
+export interface SelectOption {
+  label: string
+  value: string | number
+}
 
-withDefaults(defineProps<{
-  modelValue?: string | number | boolean | null
-  options: Array<{ label: string; value: string | number | boolean } | string>
+defineProps<{
+  modelValue?: string | number | null
+  options: SelectOption[]
+  label?: string
   placeholder?: string
+  id?: string
   disabled?: boolean
-  block?: boolean
-}>(), {
-  block: false,
-})
-
-defineEmits<{
-  'update:modelValue': [value: any]
+  required?: boolean
+  error?: string
 }>()
+
+const emit = defineEmits(['update:modelValue', 'change'])
+
+function onChange(e: Event) {
+  const val = (e.target as HTMLSelectElement).value
+  emit('update:modelValue', val)
+  emit('change', val)
+}
 </script>
 
 <style scoped>
-.a-select-wrap--block { width: 100%; }
-
-.a-select {
-  display: block;
-  height: 36px;
-  width: 100%;
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-md);
-  padding: 0 32px 0 10px;
-  font-family: var(--font-body);
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-primary);
-  background: var(--surface-card);
-  cursor: pointer;
-  outline: none;
-  appearance: none;
-  -webkit-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' fill='none' viewBox='0 0 24 24'%3E%3Cpath stroke='%239E9E9E' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-  transition: border-color 0.1s;
+.app-select-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
 }
 
-.a-select:focus { border-color: var(--border-strong); }
-.a-select:disabled { opacity: 0.5; cursor: not-allowed; }
+.app-select-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary, #475569);
+}
+
+.required {
+  color: var(--status-red, #b91c1c);
+  margin-left: 2px;
+}
+
+.app-select-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.app-select {
+  width: 100%;
+  min-height: 36px;
+  padding: 7px 30px 7px 11px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--text-primary, #0f172a);
+  background-color: var(--surface-input, #ffffff);
+  border: 1px solid var(--border-subtle, #e5e7eb);
+  border-radius: var(--radius-md, 6px);
+  outline: none;
+  appearance: none;
+  cursor: pointer;
+  transition: border-color 0.12s, background-color 0.12s;
+}
+
+.app-select:hover:not(:disabled) {
+  border-color: var(--border-default, #d1d5db);
+}
+
+.app-select:focus {
+  border-color: var(--border-strong, #9ca3af);
+  background-color: var(--surface-card, #ffffff);
+}
+
+.app-select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background-color: var(--surface-inset, #f8fafc);
+}
+
+.app-select-chevron {
+  position: absolute;
+  right: 9px;
+  width: 14px;
+  height: 14px;
+  color: var(--text-tertiary, #64748b);
+  pointer-events: none;
+}
+
+.app-select-error {
+  font-size: 11px;
+  color: var(--status-red, #b91c1c);
+  margin: 0;
+}
 </style>

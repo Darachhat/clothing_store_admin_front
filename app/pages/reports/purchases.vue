@@ -1,57 +1,86 @@
 <template>
   <div class="page-root">
-    <div class="page-header">
-      <div>
-        <h2 class="page-title">Purchases Report</h2>
-        <p class="page-subtitle">Procurement cost breakdown by period</p>
-      </div>
-      <AppButton variant="default" @click="exportCsv">Export CSV</AppButton>
-    </div>
+    <AppPageHeader
+      title="Purchases Report"
+      description="Procurement spend, purchase orders, and items received by period."
+      :breadcrumbs="[{ label: 'Reports', to: '/reports' }, { label: 'Purchases Report' }]"
+      back-to="/reports"
+    >
+      <template #actions>
+        <AppButton variant="default" size="sm" icon="i-heroicons-arrow-down-tray" :disabled="!rows.length" @click="exportCsv">
+          Export CSV
+        </AppButton>
+      </template>
+    </AppPageHeader>
 
     <!-- Filters -->
     <AppCard>
-      <div class="filter-bar">
+      <div class="report-filter-row">
         <div class="form-field">
-          <label class="field-label">From</label>
+          <label class="field-label">From Date</label>
           <input v-model="fromDate" type="date" class="field-input" />
         </div>
         <div class="form-field">
-          <label class="field-label">To</label>
+          <label class="field-label">To Date</label>
           <input v-model="toDate" type="date" class="field-input" />
         </div>
-        <div class="form-field">
+        <div class="form-field" style="min-width: 150px;">
           <label class="field-label">Group By</label>
-          <AppSelect v-model="groupBy" :options="groupByOptions" style="width:130px;" />
+          <AppSelect v-model="groupBy" :options="groupByOptions" />
         </div>
-        <AppButton variant="primary" :loading="loading" @click="fetchReport">Run Report</AppButton>
+        <AppButton variant="primary" icon="i-heroicons-play" :loading="loading" @click="fetchReport">
+          Run Report
+        </AppButton>
       </div>
     </AppCard>
 
     <!-- KPIs -->
     <div class="kpi-grid">
-      <AppCard>
-        <p class="kpi-label">Total Cost</p>
-        <p class="kpi-value">${{ summary.totalCost }}</p>
-      </AppCard>
-      <AppCard>
-        <p class="kpi-label">Orders</p>
-        <p class="kpi-value">{{ summary.orders }}</p>
-      </AppCard>
-      <AppCard>
-        <p class="kpi-label">Items Purchased</p>
-        <p class="kpi-value">{{ summary.items }}</p>
-      </AppCard>
-      <AppCard>
-        <p class="kpi-label">Avg. Order Cost</p>
-        <p class="kpi-value">${{ summary.avgCost }}</p>
-      </AppCard>
+      <AppStatCard
+        label="Total Cost"
+        :value="`$${summary.totalCost}`"
+        sublabel="Procurement spend"
+        icon="i-heroicons-banknotes"
+        tone="primary"
+        :loading="loading"
+      />
+      <AppStatCard
+        label="Purchase Orders"
+        :value="summary.orders"
+        sublabel="Orders in period"
+        icon="i-heroicons-clipboard-document-check"
+        tone="info"
+        :loading="loading"
+      />
+      <AppStatCard
+        label="Items Purchased"
+        :value="summary.items"
+        sublabel="Total units received"
+        icon="i-heroicons-cube"
+        tone="success"
+        :loading="loading"
+      />
+      <AppStatCard
+        label="Avg. Order Cost"
+        :value="`$${summary.avgCost}`"
+        sublabel="Spend per purchase order"
+        icon="i-heroicons-calculator"
+        tone="neutral"
+        :loading="loading"
+      />
     </div>
 
     <!-- Data Table -->
     <AppCard :no-pad="true">
-      <AppTable :columns="columns" :rows="rows" :loading="loading" empty-text="Run a report to see data.">
+      <AppTable
+        :columns="columns"
+        :rows="rows"
+        :loading="loading"
+        empty-text="No purchase records found for the selected period."
+        empty-icon="i-heroicons-truck"
+      >
         <template #cell-total_cost="{ value }">
-          <span class="cost-value">${{ Number(value).toFixed(2) }}</span>
+          <span class="cost-value">${{ Number(value || 0).toFixed(2) }}</span>
         </template>
       </AppTable>
     </AppCard>
@@ -91,10 +120,10 @@ const summary = computed(() => {
 })
 
 const columns = [
-  { key: 'period', label: 'Period' },
-  { key: 'order_count', label: 'Orders' },
-  { key: 'items_received', label: 'Items Received' },
-  { key: 'total_cost', label: 'Total Cost' },
+  { key: 'period', label: 'Period', sortable: true },
+  { key: 'order_count', label: 'Orders', sortable: true },
+  { key: 'items_received', label: 'Items Received', sortable: true },
+  { key: 'total_cost', label: 'Total Cost', sortable: true },
 ]
 
 async function fetchReport() {
@@ -125,23 +154,16 @@ onMounted(fetchReport)
 </script>
 
 <style scoped>
-.page-root { display: flex; flex-direction: column; gap: 16px; }
-.page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
-.page-title { font-size: 16px; font-weight: 600; color: var(--text-primary); letter-spacing: -0.01em; }
-.page-subtitle { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
+.report-filter-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
 
-.filter-bar { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
-.form-field { display: flex; flex-direction: column; gap: 5px; }
-.field-label { font-size: 12px; font-weight: 500; color: var(--text-secondary); }
-.field-input { padding: 8px 10px; font-size: 13px; background: var(--surface-inset); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); color: var(--text-primary); outline: none; transition: border-color .15s; }
-.field-input:focus { border-color: var(--color-primary); }
-
-.kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-@media (max-width: 768px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
-@media (max-width: 480px) { .kpi-grid { grid-template-columns: 1fr; } }
-
-.kpi-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-tertiary); margin-bottom: 4px; }
-.kpi-value { font-size: 24px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.02em; }
-
-.cost-value { font-weight: 600; color: var(--color-primary, #6366f1); }
+.cost-value {
+  font-weight: 600;
+  color: var(--color-primary, #6366f1);
+  font-variant-numeric: tabular-nums;
+}
 </style>

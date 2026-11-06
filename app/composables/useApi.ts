@@ -104,6 +104,8 @@ export function useInventoryApi() {
   return {
     listStocks: (params?: Record<string, unknown>) =>
       apiFetch(API_ENDPOINTS.inventory.stocks, { params, query: params }),
+    listStock: (params?: Record<string, unknown>) =>
+      apiFetch(API_ENDPOINTS.inventory.stocks, { params, query: params }),
     listMovements: (params?: Record<string, unknown>) =>
       apiFetch(API_ENDPOINTS.inventory.movements, { params, query: params }),
     createAdjustment: (body: unknown) =>
@@ -116,8 +118,8 @@ export function useInventoryApi() {
       apiFetch(API_ENDPOINTS.inventory.approveTransfer(id), { method: 'POST' }),
     dispatchTransfer: (id: string) =>
       apiFetch(API_ENDPOINTS.inventory.dispatchTransfer(id), { method: 'POST' }),
-    receiveTransfer: (id: string) =>
-      apiFetch(API_ENDPOINTS.inventory.receiveTransfer(id), { method: 'POST' }),
+    receiveTransfer: (id: string, body?: unknown) =>
+      apiFetch(API_ENDPOINTS.inventory.receiveTransfer(id), { method: 'POST', ...(body ? { body: body as any } : {}) }),
     cancelTransfer: (id: string) =>
       apiFetch(API_ENDPOINTS.inventory.cancelTransfer(id), { method: 'POST' }),
   }
@@ -131,8 +133,8 @@ export function useReportApi() {
       apiFetch<DashboardData>(API_ENDPOINTS.reports.dashboard, { params: { period }, query: { period } }),
     getSalesReport: (params: Record<string, unknown>) =>
       apiFetch(API_ENDPOINTS.reports.sales, { params, query: params }),
-    getInventoryReport: (params: Record<string, unknown>) =>
-      apiFetch(API_ENDPOINTS.reports.inventory, { params, query: params }),
+    getInventoryReport: (params?: Record<string, unknown>) =>
+      apiFetch(API_ENDPOINTS.reports.inventory, params ? { params, query: params } : undefined),
     getPurchasesReport: (params: Record<string, unknown>) =>
       apiFetch(API_ENDPOINTS.reports.purchases, { params, query: params }),
     getProfitReport: (params: Record<string, unknown>) =>
@@ -243,9 +245,15 @@ export function usePurchaseApi() {
   return {
     listOrders: (params?: Record<string, unknown>) =>
       apiFetch<PurchaseOrder[]>(API_ENDPOINTS.purchases.base, { params, query: params }),
+    listPurchases: (params?: Record<string, unknown>) =>
+      apiFetch<PurchaseOrder[]>(API_ENDPOINTS.purchases.base, { params, query: params }),
     getOrder: (id: string) =>
       apiFetch<PurchaseOrder>(API_ENDPOINTS.purchases.detail(id)),
+    getPurchase: (id: string) =>
+      apiFetch<PurchaseOrder>(API_ENDPOINTS.purchases.detail(id)),
     createOrder: (body: unknown) =>
+      apiFetch<PurchaseOrder>(API_ENDPOINTS.purchases.base, { method: 'POST', body: body as any }),
+    createPurchase: (body: unknown) =>
       apiFetch<PurchaseOrder>(API_ENDPOINTS.purchases.base, { method: 'POST', body: body as any }),
     updateOrder: (id: string, body: unknown) =>
       apiFetch<PurchaseOrder>(API_ENDPOINTS.purchases.detail(id), { method: 'PATCH', body: body as any }),
@@ -253,10 +261,17 @@ export function usePurchaseApi() {
       apiFetch(API_ENDPOINTS.purchases.approve(id), { method: 'POST' }),
     cancelOrder: (id: string) =>
       apiFetch(API_ENDPOINTS.purchases.cancel(id), { method: 'POST' }),
+    cancelPurchase: (id: string) =>
+      apiFetch(API_ENDPOINTS.purchases.cancel(id), { method: 'POST' }),
     listReceipts: (orderId: string) =>
       apiFetch(API_ENDPOINTS.purchases.receipts(orderId)),
     createReceipt: (body: unknown) =>
       apiFetch('/api/admin/v1/purchases/receipts', { method: 'POST', body: body as any }),
+    receivePurchase: (orderId: string, body: any) =>
+      apiFetch('/api/admin/v1/purchases/receipts', {
+        method: 'POST',
+        body: { purchase_order_id: orderId, ...(body || {}) },
+      }),
   }
 }
 

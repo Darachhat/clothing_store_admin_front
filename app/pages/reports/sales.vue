@@ -1,69 +1,89 @@
 <template>
-  <div class="space-y-4">
-    <div class="flex items-center justify-between">
-      <div>
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Sales Report</h2>
-        <p class="text-sm text-gray-500 dark:text-gray-400">Detailed sales breakdown by period</p>
-      </div>
-      <AppButton variant="default" label="Export CSV" @click="exportCsv" />
-    </div>
+  <div class="page-root">
+    <AppPageHeader
+      title="Sales Report"
+      description="Detailed sales revenue, transactions, and discount breakdown by period."
+      :breadcrumbs="[{ label: 'Reports', to: '/reports' }, { label: 'Sales Report' }]"
+      back-to="/reports"
+    >
+      <template #actions>
+        <AppButton variant="default" size="sm" icon="i-heroicons-arrow-down-tray" :disabled="!rows.length" @click="exportCsv">
+          Export CSV
+        </AppButton>
+      </template>
+    </AppPageHeader>
 
     <!-- Date Range Filter -->
     <AppCard>
-      <div class="flex gap-3 flex-wrap items-end">
-        <div>
-          <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">From</label>
-          <input v-model="fromDate" type="date" class="rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm" />
+      <div class="report-filter-row">
+        <div class="form-field">
+          <label class="field-label">From Date</label>
+          <input v-model="fromDate" type="date" class="field-input" />
         </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">To</label>
-          <input v-model="toDate" type="date" class="rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm" />
+        <div class="form-field">
+          <label class="field-label">To Date</label>
+          <input v-model="toDate" type="date" class="field-input" />
         </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Group By</label>
-          <select v-model="groupBy" class="rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm">
-            <option value="day">Day</option>
-            <option value="week">Week</option>
-            <option value="month">Month</option>
-          </select>
+        <div class="form-field" style="min-width: 150px;">
+          <label class="field-label">Group By</label>
+          <AppSelect v-model="groupBy" :options="groupByOptions" />
         </div>
-        <AppButton variant="primary" label="Run Report" :loading="loading" @click="fetchReport" />
+        <AppButton variant="primary" icon="i-heroicons-play" :loading="loading" @click="fetchReport">
+          Run Report
+        </AppButton>
       </div>
     </AppCard>
 
     <!-- Summary KPIs -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      <AppCard>
-        <p class="text-xs font-semibold text-gray-500 uppercase mb-1">Total Revenue</p>
-        <p class="text-2xl font-bold text-gray-900 dark:text-white">${{ summary.revenue }}</p>
-      </AppCard>
-      <AppCard>
-        <p class="text-xs font-semibold text-gray-500 uppercase mb-1">Total Transactions</p>
-        <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ summary.transactions }}</p>
-      </AppCard>
-      <AppCard>
-        <p class="text-xs font-semibold text-gray-500 uppercase mb-1">Items Sold</p>
-        <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ summary.itemsSold }}</p>
-      </AppCard>
-      <AppCard>
-        <p class="text-xs font-semibold text-gray-500 uppercase mb-1">Avg. Order Value</p>
-        <p class="text-2xl font-bold text-gray-900 dark:text-white">${{ summary.avgOrder }}</p>
-      </AppCard>
+    <div class="kpi-grid">
+      <AppStatCard
+        label="Total Revenue"
+        :value="`$${summary.revenue}`"
+        sublabel="Gross period revenue"
+        icon="i-heroicons-banknotes"
+        tone="success"
+        :loading="loading"
+      />
+      <AppStatCard
+        label="Total Transactions"
+        :value="summary.transactions"
+        sublabel="Completed orders"
+        icon="i-heroicons-receipt-percent"
+        tone="primary"
+        :loading="loading"
+      />
+      <AppStatCard
+        label="Items Sold"
+        :value="summary.itemsSold"
+        sublabel="Total units sold"
+        icon="i-heroicons-shopping-bag"
+        tone="info"
+        :loading="loading"
+      />
+      <AppStatCard
+        label="Avg. Order Value"
+        :value="`$${summary.avgOrder}`"
+        sublabel="Revenue per transaction"
+        icon="i-heroicons-calculator"
+        tone="neutral"
+        :loading="loading"
+      />
     </div>
 
     <!-- Data Table -->
-    <AppCard>
+    <AppCard :no-pad="true">
       <AppTable
         :columns="columns"
         :rows="rows"
         :loading="loading"
-        :empty-state="{ icon: 'i-heroicons-chart-pie', label: 'Run a report to see data' }"
+        empty-text="No sales records found for the selected period."
+        empty-icon="i-heroicons-chart-pie"
       >
         <template #cell-revenue="{ row }">
-          <span class="font-semibold text-emerald-600 dark:text-emerald-400">${{ Number(row.revenue).toFixed(2) }}</span>
+          <span class="val-positive">${{ Number(row.revenue || 0).toFixed(2) }}</span>
         </template>
         <template #cell-discount_total="{ row }">
-          <span class="text-red-500">-${{ Number(row.discount_total || 0).toFixed(2) }}</span>
+          <span class="val-negative">-${{ Number(row.discount_total || 0).toFixed(2) }}</span>
         </template>
       </AppTable>
     </AppCard>
@@ -72,15 +92,22 @@
 
 <script setup lang="ts">
 definePageMeta({ middleware: ['auth'] })
+useHead({ title: 'Sales Report — Clothing Store' })
 
 const reportApi = useReportApi()
-const toast = useAppToast()
+const { addToast } = useAppToast()
 
 const loading = ref(false)
 const rows = ref<any[]>([])
 const fromDate = ref(new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10))
 const toDate = ref(new Date().toISOString().slice(0, 10))
 const groupBy = ref('day')
+
+const groupByOptions = [
+  { label: 'Day', value: 'day' },
+  { label: 'Week', value: 'week' },
+  { label: 'Month', value: 'month' },
+]
 
 const summary = computed(() => {
   if (!rows.value.length) return { revenue: '0.00', transactions: 0, itemsSold: 0, avgOrder: '0.00' }
@@ -96,11 +123,11 @@ const summary = computed(() => {
 })
 
 const columns = [
-  { key: 'period', label: 'Period' },
-  { key: 'transaction_count', label: 'Transactions' },
-  { key: 'items_sold', label: 'Items Sold' },
-  { key: 'revenue', label: 'Revenue' },
-  { key: 'discount_total', label: 'Discounts' },
+  { key: 'period', label: 'Period', sortable: true },
+  { key: 'transaction_count', label: 'Transactions', sortable: true },
+  { key: 'items_sold', label: 'Items Sold', sortable: true },
+  { key: 'revenue', label: 'Revenue', sortable: true },
+  { key: 'discount_total', label: 'Discounts', sortable: true },
 ]
 
 async function fetchReport() {
@@ -113,7 +140,7 @@ async function fetchReport() {
     }) as any
     rows.value = Array.isArray(data) ? data : (data?.rows || [])
   } catch (err: any) {
-    toast.add({ title: 'Error', description: err?.data?.detail || err.message, color: 'red' })
+    addToast({ type: 'error', title: 'Report Error', message: err?.data?.detail || err.message })
   } finally {
     loading.value = false
   }
@@ -133,3 +160,24 @@ function exportCsv() {
 
 onMounted(fetchReport)
 </script>
+
+<style scoped>
+.report-filter-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.val-positive {
+  font-weight: 600;
+  color: var(--status-success-text);
+  font-variant-numeric: tabular-nums;
+}
+
+.val-negative {
+  font-weight: 500;
+  color: var(--status-danger-text);
+  font-variant-numeric: tabular-nums;
+}
+</style>

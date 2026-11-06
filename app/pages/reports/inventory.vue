@@ -1,58 +1,93 @@
 <template>
-  <div class="space-y-4">
-    <div class="flex items-center justify-between">
-      <div>
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Inventory Report</h2>
-        <p class="text-sm text-gray-500 dark:text-gray-400">Stock value, coverage, and reorder alerts</p>
-      </div>
-      <AppButton variant="default" label="Export CSV" @click="exportCsv" />
-    </div>
+  <div class="page-root">
+    <AppPageHeader
+      title="Inventory Report"
+      description="Stock valuation, SKU coverage, and reorder threshold alerts across warehouses."
+      :breadcrumbs="[{ label: 'Reports', to: '/reports' }, { label: 'Inventory Report' }]"
+      back-to="/reports"
+    >
+      <template #actions>
+        <AppButton variant="default" size="sm" icon="i-heroicons-arrow-path" :loading="loading" @click="fetchStocks">
+          Refresh
+        </AppButton>
+        <AppButton variant="default" size="sm" icon="i-heroicons-arrow-down-tray" :disabled="!filteredRows.length" @click="exportCsv">
+          Export CSV
+        </AppButton>
+      </template>
+    </AppPageHeader>
 
     <!-- Summary KPIs -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      <AppCard>
-        <p class="text-xs font-semibold text-gray-500 uppercase mb-1">Total SKUs</p>
-        <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ summary.totalSkus }}</p>
-      </AppCard>
-      <AppCard>
-        <p class="text-xs font-semibold text-gray-500 uppercase mb-1">Total Stock Units</p>
-        <p class="text-2xl font-bold text-gray-900 dark:text-white">{{ summary.totalUnits }}</p>
-      </AppCard>
-      <AppCard>
-        <p class="text-xs font-semibold text-gray-500 uppercase mb-1">Out of Stock</p>
-        <p class="text-2xl font-bold text-red-600">{{ summary.outOfStock }}</p>
-      </AppCard>
-      <AppCard>
-        <p class="text-xs font-semibold text-gray-500 uppercase mb-1">Low Stock Alerts</p>
-        <p class="text-2xl font-bold text-amber-500">{{ summary.lowStock }}</p>
-      </AppCard>
+    <div class="kpi-grid">
+      <AppStatCard
+        label="Total SKUs"
+        :value="summary.totalSkus"
+        sublabel="Tracked product variants"
+        icon="i-heroicons-tag"
+        tone="primary"
+        :loading="loading"
+      />
+      <AppStatCard
+        label="Total Stock Units"
+        :value="summary.totalUnits"
+        sublabel="Combined units on hand"
+        icon="i-heroicons-archive-box"
+        tone="info"
+        :loading="loading"
+      />
+      <AppStatCard
+        label="Out of Stock"
+        :value="summary.outOfStock"
+        sublabel="SKUs with 0 units"
+        icon="i-heroicons-x-circle"
+        :tone="summary.outOfStock > 0 ? 'danger' : 'neutral'"
+        :loading="loading"
+      />
+      <AppStatCard
+        label="Low Stock Alerts"
+        :value="summary.lowStock"
+        sublabel="SKUs below reorder level"
+        icon="i-heroicons-exclamation-triangle"
+        :tone="summary.lowStock > 0 ? 'warning' : 'neutral'"
+        :loading="loading"
+      />
     </div>
 
     <!-- Filters -->
-    <AppCard>
-      <div class="flex gap-3 flex-wrap">
-        <AppInput v-model="search" placeholder="Search SKU..." class="w-56" />
+    <AppFilterBar
+      v-model:search="search"
+      search-placeholder="Search SKU or product name..."
+      :total-count="filteredRows.length"
+      result-label="SKUs"
+      :active-chips="activeChips"
+      @remove-chip="statusFilter = ''"
+      @clear-all="clearFilters"
+    >
+      <template #filters>
         <AppSelect
           v-model="statusFilter"
           :options="statusOptions"
-          placeholder="All statuses"
-          class="w-44"
+          style="min-width: 170px;"
         />
-      </div>
-    </AppCard>
+      </template>
+    </AppFilterBar>
 
     <!-- Inventory Table -->
-    <AppCard>
+    <AppCard :no-pad="true">
       <AppTable
         :columns="columns"
         :rows="filteredRows"
         :loading="loading"
-        :empty-state="{ icon: 'i-heroicons-clipboard-document-list', label: 'No inventory data found' }"
+        empty-text="No inventory records match the current filters."
+        empty-icon="i-heroicons-clipboard-document-list"
       >
+        <template #cell-sku="{ row }">
+          <span class="sku-code">{{ row.sku || '—' }}</span>
+        </template>
+
         <template #cell-quantity="{ row }">
           <span
-            class="font-bold"
-            :class="row.quantity <= 0 ? 'text-red-500' : row.quantity <= (row.reorder_level || 5) ? 'text-amber-500' : 'text-emerald-600'"
+            class="qty-val"
+            :class="row.quantity <= 0 ? 'qty-val--out' : row.quantity <= (row.reorder_level || 5) ? 'qty-val--low' : 'qty-val--ok'"
           >
             {{ row.quantity }}
           </span>
@@ -60,11 +95,12 @@
 
         <template #cell-status="{ row }">
           <AppBadge
-            :color="row.quantity <= 0 ? 'red' : row.quantity <= (row.reorder_level || 5) ? 'amber' : 'emerald'"
-            :label="row.quantity <= 0 ? 'Out of Stock' : row.quantity <= (row.reorder_level || 5) ? 'Low Stock' : 'In Stock'"
+            :color="row.quantity <= 0 ? 'red' : row.quantity <= (row.reorder_level || 5) ? 'amber' : 'green'"
+            dot
             size="sm"
-            variant="subtle"
-          />
+          >
+            {{ row.quantity <= 0 ? 'Out of Stock' : row.quantity <= (row.reorder_level || 5) ? 'Low Stock' : 'In Stock' }}
+          </AppBadge>
         </template>
       </AppTable>
     </AppCard>
@@ -73,9 +109,10 @@
 
 <script setup lang="ts">
 definePageMeta({ middleware: ['auth'] })
+useHead({ title: 'Inventory Report — Clothing Store' })
 
 const invApi = useInventoryApi()
-const toast = useAppToast()
+const { addToast } = useAppToast()
 
 const loading = ref(false)
 const stocks = ref<any[]>([])
@@ -83,19 +120,33 @@ const search = ref('')
 const statusFilter = ref('')
 
 const statusOptions = [
-  { label: 'All', value: '' },
+  { label: 'All Stock States', value: '' },
   { label: 'In Stock', value: 'in' },
   { label: 'Low Stock', value: 'low' },
   { label: 'Out of Stock', value: 'out' },
 ]
 
+const activeChips = computed(() => {
+  const chips: { key: string; label: string; value: string }[] = []
+  if (statusFilter.value) {
+    const found = statusOptions.find(o => o.value === statusFilter.value)
+    if (found) chips.push({ key: 'status', label: 'Status', value: found.label })
+  }
+  return chips
+})
+
+function clearFilters() {
+  search.value = ''
+  statusFilter.value = ''
+}
+
 const columns = [
-  { key: 'sku', label: 'SKU' },
-  { key: 'product_name', label: 'Product' },
-  { key: 'color', label: 'Color' },
-  { key: 'size', label: 'Size' },
-  { key: 'quantity', label: 'Qty' },
-  { key: 'reorder_level', label: 'Reorder At' },
+  { key: 'sku', label: 'SKU', sortable: true },
+  { key: 'product_name', label: 'Product', sortable: true },
+  { key: 'color', label: 'Color', sortable: true },
+  { key: 'size', label: 'Size', sortable: true },
+  { key: 'quantity', label: 'On Hand Qty', sortable: true },
+  { key: 'reorder_level', label: 'Reorder At', sortable: true },
   { key: 'status', label: 'Status' },
 ]
 
@@ -113,7 +164,7 @@ const filteredRows = computed(() => {
 
 const summary = computed(() => ({
   totalSkus: stocks.value.length,
-  totalUnits: stocks.value.reduce((a, s) => a + s.quantity, 0),
+  totalUnits: stocks.value.reduce((a, s) => a + Number(s.quantity || 0), 0),
   outOfStock: stocks.value.filter(s => s.quantity <= 0).length,
   lowStock: stocks.value.filter(s => s.quantity > 0 && s.quantity <= (s.reorder_level || 5)).length,
 }))
@@ -122,9 +173,9 @@ async function fetchStocks() {
   loading.value = true
   try {
     const data = await invApi.listStocks({ limit: 500 }) as any[]
-    stocks.value = data
+    stocks.value = Array.isArray(data) ? data : []
   } catch (err: any) {
-    toast.add({ title: 'Error', description: err?.data?.detail || err.message, color: 'red' })
+    addToast({ type: 'error', title: 'Error loading inventory report', message: err?.data?.detail || err.message })
   } finally {
     loading.value = false
   }
@@ -144,3 +195,29 @@ function exportCsv() {
 
 onMounted(fetchStocks)
 </script>
+
+<style scoped>
+.sku-code {
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.qty-val {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.qty-val--out {
+  color: var(--status-danger-text);
+}
+
+.qty-val--low {
+  color: var(--status-warning-text);
+}
+
+.qty-val--ok {
+  color: var(--status-success-text);
+}
+</style>

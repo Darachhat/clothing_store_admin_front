@@ -1,28 +1,28 @@
 <template>
-  <div class="space-y-4">
+  <div class="page-root">
     <!-- Header -->
-    <div class="flex flex-wrap items-center justify-between gap-3">
-      <div>
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Staff &amp; User Accounts</h2>
-        <p class="text-sm text-gray-500 dark:text-gray-400">
-          Manage account identities, verified phone numbers, Telegram linking, and multi-role assignments
-        </p>
-      </div>
-      <div class="flex items-center gap-2">
+    <AppPageHeader
+      title="Staff &amp; User Accounts"
+      description="Manage account identities, verified phone numbers, Telegram linking, and multi-role assignments."
+      :breadcrumbs="[{ label: 'Administration' }, { label: 'Users' }]"
+    >
+      <template #actions>
         <AppButton
           label="My Identity & Security"
-          variant="secondary"
+          variant="default"
+          size="sm"
           icon="i-heroicons-finger-print"
           @click="openSelfSecurityModal"
         />
         <AppButton
           label="Add User"
           variant="primary"
+          size="sm"
           icon="i-heroicons-plus"
           @click="openCreateModal"
         />
-      </div>
-    </div>
+      </template>
+    </AppPageHeader>
 
     <!-- Search & Filter Bar -->
     <AppCard>
@@ -631,6 +631,18 @@
         </div>
       </AppCard>
     </AppModal>
+
+    <!-- Deactivate User Confirm Dialog -->
+    <AppConfirmDialog
+      v-model="showDeactivateConfirm"
+      title="Deactivate User Account"
+      :description="`Are you sure you want to deactivate @${userToDeactivate?.username || ''}?`"
+      consequence="Active sessions for this account will be revoked immediately and the user will not be able to sign in until reactivated."
+      confirm-label="Deactivate User"
+      variant="danger"
+      :loading="deactivating"
+      @confirm="confirmDeactivateUser"
+    />
   </div>
 </template>
 
@@ -666,6 +678,9 @@ const showCreateModal = ref(false)
 const showEditModal = ref(false)
 const showHistoryModal = ref(false)
 const showSelfSecurityModal = ref(false)
+const showDeactivateConfirm = ref(false)
+const userToDeactivate = ref<any>(null)
+const deactivating = ref(false)
 
 const selectedUser = ref<any>(null)
 const historyUser = ref<any>(null)
@@ -901,14 +916,24 @@ async function handleUpdateUser() {
   }
 }
 
-async function deactivateUser(user: any) {
-  if (!confirm(`Deactivate user "${user.username}"? Active sessions will be revoked immediately.`)) return
+function deactivateUser(user: any) {
+  userToDeactivate.value = user
+  showDeactivateConfirm.value = true
+}
+
+async function confirmDeactivateUser() {
+  if (!userToDeactivate.value) return
+  deactivating.value = true
   try {
-    await userApi.deleteUser(user.id)
-    toast.add({ title: 'Success', description: `User ${user.username} deactivated`, color: 'green' })
+    await userApi.deleteUser(userToDeactivate.value.id)
+    toast.add({ title: 'Success', description: `User ${userToDeactivate.value.username} deactivated`, color: 'green' })
+    showDeactivateConfirm.value = false
+    userToDeactivate.value = null
     await fetchUsers()
   } catch (err: any) {
     toast.add({ title: 'Error', description: err.message, color: 'red' })
+  } finally {
+    deactivating.value = false
   }
 }
 

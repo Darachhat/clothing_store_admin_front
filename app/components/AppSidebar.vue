@@ -1,625 +1,179 @@
 <template>
-  <aside
-    class="app-sidebar no-print"
-    :class="[
-      isRail ? 'app-sidebar--rail' : 'app-sidebar--full',
-      customClass,
-    ]"
-    :aria-label="ariaLabel || 'Main navigation'"
-  >
-    <!-- ─── Header: Brand Logo & Title ─────────────────────────────── -->
-    <div class="app-sidebar__header">
-      <NuxtLink to="/dashboard" class="app-sidebar__brand" :title="config.public.appName">
-        <div class="app-sidebar__logo-mark">
-          <UIcon name="i-heroicons-building-storefront" class="w-4 h-4 text-white" />
-        </div>
-        <div v-if="!isRail" class="app-sidebar__brand-meta">
-          <span class="app-sidebar__brand-name">{{ config.public.appName }}</span>
-          <span v-if="branchName" class="app-sidebar__brand-branch">{{ branchName }}</span>
-        </div>
-      </NuxtLink>
+  <div>
+    <!-- Mobile Backdrop -->
+    <Transition name="fade">
+      <div
+        v-if="isMobileOpen"
+        class="sidebar-mobile-backdrop"
+        @click="closeMobileSidebar"
+      />
+    </Transition>
 
-      <!-- Collapse / Expand Toggle Button (in header for full mode) -->
-      <button
-        v-if="collapsible && !isRail"
-        type="button"
-        class="app-sidebar__toggle-btn"
-        title="Collapse sidebar"
-        @click="toggleCollapse"
-      >
-        <UIcon name="i-heroicons-chevron-left" class="w-4 h-4" />
-      </button>
-    </div>
-
-    <!-- ─── Rail Mode Navigation (Icon Only) ───────────────────────── -->
-    <nav v-if="isRail" class="app-sidebar__rail-nav" aria-label="Quick navigation">
-      <NuxtLink
-        v-for="item in railItems"
-        :key="item.to"
-        :to="item.to"
-        class="app-sidebar__rail-link"
-        :class="{ 'is-active': isActive(item.to) }"
-        :title="item.label + (item.shortcut ? ` [${item.shortcut}]` : '')"
-      >
-        <UIcon :name="item.icon" class="w-5 h-5" />
-        <span v-if="item.badge" class="app-sidebar__rail-badge">{{ item.badge }}</span>
-      </NuxtLink>
-    </nav>
-
-    <!-- ─── Full Mode Navigation (Categorized Sections) ────────────── -->
-    <nav v-else class="app-sidebar__full-nav" aria-label="Categorized navigation">
-      <div v-for="section in filteredNavSections" :key="section.title" class="app-sidebar__section">
-        <span class="app-sidebar__section-title">{{ section.title }}</span>
-        <NuxtLink
-          v-for="item in section.items"
-          :key="item.to"
-          :to="item.to"
-          class="app-sidebar__nav-link"
-          :class="{ 'is-active': isActive(item.to) }"
-        >
-          <span class="app-sidebar__icon-box">
-            <UIcon :name="item.icon" class="w-4 h-4" />
-          </span>
-          <span class="app-sidebar__nav-label">{{ item.label }}</span>
-          <span v-if="item.badge" class="app-sidebar__nav-badge">{{ item.badge }}</span>
-          <span v-else-if="item.shortcut" class="app-sidebar__nav-shortcut">{{ item.shortcut }}</span>
+    <aside class="admin-sidebar" :class="{ 'is-collapsed': isCollapsed, 'is-mobile-open': isMobileOpen }">
+      <!-- Brand Header -->
+      <div class="sidebar-brand">
+        <NuxtLink to="/dashboard" class="flex items-center gap-2.5 min-w-0 no-underline" @click="closeMobileSidebar">
+          <div class="sidebar-brand-mark" title="Clothing Store Admin">
+            <UIcon name="i-heroicons-building-storefront" class="w-4 h-4" />
+          </div>
+          <span v-show="!isCollapsed" class="sidebar-brand-name">Clothing Store</span>
         </NuxtLink>
+        <button
+          type="button"
+          class="sidebar-collapse-btn"
+          :title="isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+          @click="toggleSidebar"
+        >
+          <UIcon
+            :name="isCollapsed ? 'i-heroicons-chevron-double-right' : 'i-heroicons-chevron-double-left'"
+            class="w-3.5 h-3.5"
+          />
+        </button>
       </div>
-    </nav>
 
-    <!-- ─── Bottom Footer Actions ──────────────────────────────────── -->
-    <div class="app-sidebar__footer" :class="{ 'is-rail': isRail }">
-      <!-- Rail-specific bottom icons -->
-      <template v-if="isRail">
-        <!-- Expand button for rail mode -->
-        <button
-          v-if="collapsible"
-          type="button"
-          class="app-sidebar__rail-link app-sidebar__rail-link--toggle"
-          title="Expand sidebar"
-          @click="toggleCollapse"
-        >
-          <UIcon name="i-heroicons-chevron-right" class="w-5 h-5" />
-        </button>
-
-        <button
-          v-if="showShortcuts"
-          type="button"
-          class="app-sidebar__rail-link"
-          title="Keyboard Shortcuts [?]"
-          @click="$emit('shortcuts')"
-        >
-          <UIcon name="i-heroicons-question-mark-circle" class="w-5 h-5" />
-        </button>
-
-        <NuxtLink
-          to="/settings"
-          class="app-sidebar__rail-link"
-          :class="{ 'is-active': isActive('/settings') }"
-          title="System Settings"
-        >
-          <UIcon name="i-heroicons-cog-6-tooth" class="w-5 h-5" />
-        </NuxtLink>
-
-        <button
-          type="button"
-          class="app-sidebar__rail-link app-sidebar__rail-link--danger"
-          title="Sign Out"
-          @click="onLogout"
-        >
-          <UIcon name="i-heroicons-arrow-right-on-rectangle" class="w-5 h-5" />
-        </button>
-      </template>
-
-      <!-- Full mode user card -->
-      <template v-else>
-        <div class="app-sidebar__user">
-          <div class="app-sidebar__user-avatar">
-            {{ userInitials }}
+      <!-- Navigation Groups -->
+      <nav class="sidebar-nav" aria-label="Main Navigation">
+        <template v-for="(group, idx) in navGroups" :key="group.key">
+          <div v-if="!isCollapsed" class="sidebar-section-label">
+            {{ group.label }}
           </div>
-          <div class="app-sidebar__user-info">
-            <div class="app-sidebar__user-name" :title="userName">{{ userName }}</div>
-            <div class="app-sidebar__user-role">{{ userRole }}</div>
-          </div>
-          <button
-            type="button"
-            class="app-sidebar__logout-btn"
-            title="Sign Out"
-            @click="onLogout"
+          <div v-else-if="idx > 0" class="sidebar-section-divider" />
+
+          <NuxtLink
+            v-for="item in group.items"
+            :key="item.to"
+            :to="item.to"
+            class="nav-item"
+            :class="{ active: isActive(item.to, item.exact) }"
+            :title="isCollapsed ? `${group.label}: ${item.label}` : undefined"
+            @click="closeMobileSidebar"
           >
-            <UIcon name="i-heroicons-arrow-right-on-rectangle" class="w-4 h-4" />
-          </button>
+            <UIcon :name="item.icon" class="nav-icon" />
+            <span v-show="!isCollapsed" class="truncate">{{ item.label }}</span>
+          </NuxtLink>
+        </template>
+      </nav>
+
+      <!-- User Profile Footer -->
+      <div class="sidebar-footer">
+        <div
+          class="sidebar-user-card"
+          :class="{ 'is-collapsed': isCollapsed }"
+          :title="isCollapsed ? `${userName} (${userRole})` : undefined"
+        >
+          <div class="sidebar-user-avatar">
+            {{ userInitial }}
+          </div>
+          <div v-show="!isCollapsed" class="min-w-0 flex-1">
+            <div class="sidebar-user-name truncate">
+              {{ userName }}
+            </div>
+            <div class="sidebar-user-role truncate">
+              {{ userRole }}
+            </div>
+          </div>
         </div>
-      </template>
-    </div>
-  </aside>
+
+        <button
+          type="button"
+          class="nav-item sidebar-signout-btn"
+          :title="isCollapsed ? t('common.sign_out', 'Sign out') : undefined"
+          @click="handleLogout"
+        >
+          <UIcon name="i-heroicons-arrow-right-on-rectangle" class="nav-icon" />
+          <span v-show="!isCollapsed">{{ t('common.sign_out', 'Sign out') }}</span>
+        </button>
+      </div>
+    </aside>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, unref, watch } from 'vue'
-import { useRoute, useRouter, useRuntimeConfig } from '#app'
-import { useAuthStore } from '~/stores/auth'
-import { useSidebar, type NavItem } from '~/composables/useSidebar'
-
-const props = withDefaults(
-  defineProps<{
-    modelValue?: boolean
-    mode?: 'full' | 'rail' | 'auto'
-    defaultCollapsed?: boolean
-    collapsible?: boolean
-    customClass?: string
-    showShortcuts?: boolean
-    ariaLabel?: string
-  }>(),
-  {
-    modelValue: undefined,
-    mode: 'auto',
-    defaultCollapsed: undefined,
-    collapsible: true,
-    customClass: '',
-    showShortcuts: true,
-    ariaLabel: 'Main navigation',
-  }
-)
-
-const emit = defineEmits<{
-  (e: 'update:modelValue', value: boolean): void
-  (e: 'shortcuts'): void
-  (e: 'logout'): void
-}>()
-
-const config = useRuntimeConfig()
 const authStore = useAuthStore()
-const route = useRoute()
-const router = useRouter()
-const { isCollapsed: globalCollapsed, navSections, toggle: globalToggle } = useSidebar()
+const { t } = useAppTranslation()
+const { isCollapsed, isMobileOpen, navGroups, initSidebar, toggleSidebar, closeMobileSidebar, isActive } = useSidebar()
 
-// Internal reactive state if defaultCollapsed is provided, otherwise use global state
-const internalCollapsed = ref(
-  props.defaultCollapsed !== undefined ? props.defaultCollapsed : globalCollapsed.value
-)
+const userName = computed(() => authStore.user?.full_name || 'Admin')
+const userInitial = computed(() => userName.value.charAt(0).toUpperCase())
+const userRole = computed(() => authStore.user?.roles?.[0]?.name || 'Administrator')
 
-watch(
-  () => props.modelValue,
-  (val) => {
-    if (val !== undefined) internalCollapsed.value = val
-  }
-)
-
-const isRail = computed(() => {
-  if (props.mode === 'rail') return true
-  if (props.mode === 'full') return false
-  if (props.modelValue !== undefined) return props.modelValue
-  if (props.defaultCollapsed !== undefined) return internalCollapsed.value
-  return globalCollapsed.value
-})
-
-function toggleCollapse() {
-  const nextVal = !isRail.value
-  internalCollapsed.value = nextVal
-  emit('update:modelValue', nextVal)
-  if (props.defaultCollapsed === undefined && props.modelValue === undefined) {
-    globalToggle()
-  }
+async function handleLogout() {
+  closeMobileSidebar()
+  await authStore.logout()
+  await navigateTo('/login')
 }
 
-// Filter sections and items by current user's permissions
-const filteredNavSections = computed(() => {
-  const sections = unref(navSections) || []
-  return sections
-    .map((sec) => ({
-      ...sec,
-      items: sec.items.filter((item) => !item.permission || authStore.hasPermission(item.permission)),
-    }))
-    .filter((sec) => sec.items.length > 0)
+onMounted(() => {
+  initSidebar()
 })
-
-// Flat list of primary items for rail mode
-const railItems = computed<NavItem[]>(() => {
-  const primaries: NavItem[] = []
-  for (const sec of filteredNavSections.value) {
-    for (const it of sec.items) {
-      if (it.railPrimary) {
-        primaries.push(it)
-      }
-    }
-  }
-  return primaries
-})
-
-const branchName = computed(() => {
-  return authStore.currentUser?.branch?.name || ''
-})
-
-const userName = computed(() => {
-  return authStore.currentUser?.full_name || authStore.currentUser?.username || 'User'
-})
-
-const userRole = computed(() => {
-  const roles = authStore.currentUser?.roles?.map((r: any) => r.name) ?? []
-  return roles.length > 0 ? roles.join(', ') : 'Staff'
-})
-
-const userInitials = computed(() => {
-  const name = userName.value
-  return name
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w: string) => w[0])
-    .join('')
-    .toUpperCase() || 'U'
-})
-
-const allNavPaths = computed(() => {
-  const sections = unref(navSections) || []
-  return sections.flatMap((s: any) => s.items.map((i: any) => i.to))
-})
-
-function isActive(to: string): boolean {
-  const path = route.path
-  if (to === '/dashboard') return path === '/dashboard' || path === '/'
-  if (path === to) return true
-  if (path.startsWith(to + '/')) {
-    const hasMoreSpecificMatch = allNavPaths.value.some(
-      (other: string) => other !== to && other.length > to.length && (path === other || path.startsWith(other + '/'))
-    )
-    return !hasMoreSpecificMatch
-  }
-  return false
-}
-
-async function onLogout() {
-  emit('logout')
-  try {
-    await authStore.logout()
-  } catch (err) {
-    console.error('Logout error:', err)
-  }
-  await router.push('/login')
-}
 </script>
 
 <style scoped>
-.app-sidebar {
-  background: var(--surface-card, #ffffff);
-  border-right: 1px solid var(--border-subtle, #e5e7eb);
-  display: flex;
-  flex-direction: column;
-  transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  user-select: none;
-  z-index: 20;
-  height: 100%;
+.sidebar-mobile-backdrop {
+  display: none;
 }
 
-.app-sidebar--full {
-  width: 220px;
-  min-width: 220px;
+@media (max-width: 768px) {
+  .sidebar-mobile-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(1px);
+    z-index: 35;
+  }
 }
 
-.app-sidebar--rail {
-  width: 56px;
-  min-width: 56px;
-  align-items: center;
-}
-
-/* Header */
-.app-sidebar__header {
-  height: 56px;
+.sidebar-user-card {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 12px;
-  border-bottom: 1px solid var(--border-subtle, #e5e7eb);
-  flex-shrink: 0;
-  width: 100%;
+  gap: 9px;
+  padding: 6px 8px;
+  margin-bottom: 4px;
+  border-radius: var(--radius-md, 6px);
 }
 
-.app-sidebar--rail .app-sidebar__header {
-  padding: 0;
+.sidebar-user-card.is-collapsed {
   justify-content: center;
+  padding: 6px 0;
 }
 
-.app-sidebar__brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  text-decoration: none;
-  min-width: 0;
-  flex: 1;
-}
-
-.app-sidebar--rail .app-sidebar__brand {
-  flex: none;
-}
-
-.app-sidebar__logo-mark {
-  width: 32px;
-  height: 32px;
-  background: var(--brand-900, #111827);
-  border-radius: var(--radius-md, 8px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.app-sidebar__brand-meta {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.app-sidebar__brand-name {
-  font-size: var(--text-sm, 13px);
-  font-weight: 600;
-  color: var(--text-primary, #111827);
-  letter-spacing: -0.01em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.app-sidebar__brand-branch {
-  font-size: 10px;
-  color: var(--text-tertiary, #6b7280);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.app-sidebar__toggle-btn {
-  width: 24px;
-  height: 24px;
-  border-radius: var(--radius-sm, 4px);
-  background: transparent;
-  border: 1px solid transparent;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: var(--text-tertiary, #6b7280);
-  transition: all 0.15s;
-  flex-shrink: 0;
-}
-
-.app-sidebar__toggle-btn:hover {
-  background: var(--surface-hover, #f3f4f6);
-  color: var(--text-primary, #111827);
-}
-
-/* Full Nav */
-.app-sidebar__full-nav {
-  flex: 1;
-  overflow-y: auto;
-  padding: 8px 6px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.app-sidebar__full-nav::-webkit-scrollbar {
-  width: 4px;
-}
-.app-sidebar__full-nav::-webkit-scrollbar-thumb {
-  background: var(--border-subtle, #e5e7eb);
-  border-radius: 4px;
-}
-
-.app-sidebar__section {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.app-sidebar__section-title {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--text-tertiary, #9ca3af);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  padding: 6px 8px 2px;
-}
-
-.app-sidebar__nav-link {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  height: 32px;
-  padding: 0 8px;
-  border-radius: var(--radius-sm, 6px);
-  font-size: var(--text-sm, 13px);
-  font-weight: 500;
-  color: var(--text-secondary, #4b5563);
-  text-decoration: none;
-  transition: background 0.12s, color 0.12s;
-  position: relative;
-}
-
-.app-sidebar__nav-link:hover {
-  background: var(--surface-hover, #f3f4f6);
-  color: var(--text-primary, #111827);
-}
-
-.app-sidebar__nav-link.is-active {
-  background: var(--surface-active, #f3f4f6);
-  color: var(--text-primary, #111827);
-  font-weight: 600;
-}
-
-.app-sidebar__icon-box {
-  flex-shrink: 0;
-  width: 18px;
-  height: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: currentColor;
-}
-
-.app-sidebar__nav-label {
-  flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.app-sidebar__nav-shortcut {
-  font-size: 10px;
-  font-family: monospace;
-  background: var(--surface-hover, #e5e7eb);
-  color: var(--text-tertiary, #6b7280);
-  padding: 1px 4px;
-  border-radius: 3px;
-}
-
-.app-sidebar__nav-badge {
-  font-size: 10px;
-  font-weight: 600;
-  background: var(--brand-900, #111827);
-  color: #fff;
-  padding: 1px 6px;
-  border-radius: 999px;
-}
-
-/* Rail Nav */
-.app-sidebar__rail-nav {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  width: 100%;
-  padding: 10px 0;
-  overflow-y: auto;
-}
-
-.app-sidebar__rail-nav::-webkit-scrollbar {
-  width: 0;
-}
-
-.app-sidebar__rail-link {
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-md, 8px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-tertiary, #6b7280);
-  text-decoration: none;
-  position: relative;
-  transition: all 0.15s;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-}
-
-.app-sidebar__rail-link:hover {
-  background: var(--surface-hover, #f3f4f6);
-  color: var(--text-primary, #111827);
-}
-
-.app-sidebar__rail-link.is-active {
-  background: var(--surface-active, #e5e7eb);
-  color: var(--text-primary, #111827);
-}
-
-.app-sidebar__rail-link--toggle {
-  color: var(--text-secondary, #4b5563);
-}
-
-.app-sidebar__rail-link--toggle:hover {
-  background: var(--brand-900, #111827);
-  color: #ffffff;
-}
-
-.app-sidebar__rail-link--danger:hover {
-  color: #ef4444;
-  background: #fef2f2;
-}
-
-.app-sidebar__rail-badge {
-  position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #ef4444;
-}
-
-/* Footer */
-.app-sidebar__footer {
-  border-top: 1px solid var(--border-subtle, #e5e7eb);
-  flex-shrink: 0;
-  width: 100%;
-}
-
-.app-sidebar__footer.is-rail {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 8px 0;
-}
-
-.app-sidebar__user {
-  padding: 10px 12px;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.app-sidebar__user-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--brand-900, #111827);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: 600;
-  flex-shrink: 0;
-}
-
-.app-sidebar__user-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.app-sidebar__user-name {
-  font-size: var(--text-sm, 13px);
-  font-weight: 600;
-  color: var(--text-primary, #111827);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.app-sidebar__user-role {
-  font-size: 11px;
-  color: var(--text-tertiary, #6b7280);
-}
-
-.app-sidebar__logout-btn {
+.sidebar-user-avatar {
   width: 28px;
   height: 28px;
-  border-radius: var(--radius-sm, 4px);
+  border-radius: 50%;
+  background: var(--accent-primary, #0f172a);
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  color: var(--text-tertiary, #6b7280);
-  background: none;
-  border: none;
-  transition: all 0.15s;
+  font-size: 11px;
+  font-weight: 700;
   flex-shrink: 0;
 }
 
-.app-sidebar__logout-btn:hover {
-  background: var(--surface-hover, #f3f4f6);
-  color: #ef4444;
+.sidebar-user-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary, #0f172a);
+}
+
+.sidebar-user-role {
+  font-size: 10.5px;
+  color: var(--text-tertiary, #64748b);
+}
+
+.sidebar-signout-btn {
+  color: var(--status-red, #b91c1c) !important;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.15s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

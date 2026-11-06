@@ -1,9 +1,10 @@
 <template>
-  <div class="space-y-6">
-    <div>
-      <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Settings</h2>
-      <p class="text-sm text-gray-500 dark:text-gray-400">Manage store configuration, tax rates, and general preferences</p>
-    </div>
+  <div class="page-root">
+    <AppPageHeader
+      title="System Settings"
+      description="Manage store configuration, branches & warehouses, tax rates, POS defaults, and security preferences."
+      :breadcrumbs="[{ label: 'Administration' }, { label: 'System Settings' }]"
+    />
 
     <!-- Language & Regional Preferences -->
     <AppCard>
@@ -37,7 +38,7 @@
               : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'"
             @click="setLocale(loc.code)"
           >
-            <span class="text-xl mb-1">{{ loc.flag }}</span>
+            <span class="font-mono text-[11px] font-bold px-2 py-0.5 rounded border border-gray-200 dark:border-gray-700 mb-1.5">{{ loc.flag }}</span>
             <span class="font-semibold">{{ loc.native }}</span>
             <span class="text-[10px] opacity-75">({{ loc.name }})</span>
             <span v-if="currentLocale === loc.code" class="mt-1.5 inline-flex items-center gap-1 text-[10px] font-medium">
@@ -53,7 +54,7 @@
     <AppCard>
       <template #header>
         <div class="flex items-center gap-2">
-          
+          <UIcon name="i-heroicons-building-office-2" class="w-4 h-4 text-gray-500" />
           <h3 class="font-semibold text-gray-900 dark:text-white text-sm">Store Information</h3>
         </div>
       </template>
@@ -204,7 +205,7 @@
     <AppCard>
       <template #header>
         <div class="flex items-center gap-2">
-          
+          <UIcon name="i-heroicons-calculator" class="w-4 h-4 text-gray-500" />
           <h3 class="font-semibold text-gray-900 dark:text-white text-sm">Tax &amp; Pricing</h3>
         </div>
       </template>
@@ -248,7 +249,7 @@
     <AppCard>
       <template #header>
         <div class="flex items-center gap-2">
-          
+          <UIcon name="i-heroicons-computer-desktop" class="w-4 h-4 text-gray-500" />
           <h3 class="font-semibold text-gray-900 dark:text-white text-sm">Point of Sale</h3>
         </div>
       </template>
@@ -467,7 +468,7 @@
     <AppCard>
       <template #header>
         <div class="flex items-center gap-2">
-          
+          <UIcon name="i-heroicons-exclamation-triangle" class="w-4 h-4 text-red-600 dark:text-red-400" />
           <h3 class="font-semibold text-red-600 dark:text-red-400 text-sm">Danger Zone</h3>
         </div>
       </template>
@@ -488,6 +489,16 @@
         </div>
       </div>
     </AppCard>
+
+    <AppConfirmDialog
+      v-model="showDangerConfirm"
+      :title="dangerAction === 'clear_history' ? 'Clear Transaction History' : 'Reset Inventory to Zero'"
+      :description="dangerAction === 'clear_history' ? 'Are you sure you want to permanently delete ALL sales history?' : 'Are you sure you want to set ALL stock levels to zero?'"
+      consequence="This is a destructive system-wide operation and cannot be undone."
+      confirm-label="Confirm Action"
+      variant="danger"
+      @confirm="executeDangerAction"
+    />
   </div>
 </template>
 
@@ -780,13 +791,16 @@ async function savePosSettings() {
   savingPos.value = false
 }
 
+const showDangerConfirm = ref(false)
+const dangerAction = ref('')
+
 function confirmDanger(action: string) {
-  const messages: Record<string, string> = {
-    clear_history: 'Are you absolutely sure? This will permanently delete ALL sales history.',
-    reset_stock: 'Are you absolutely sure? This will set ALL stock levels to zero.',
-  }
-  if (confirm(messages[action] || 'Are you sure?')) {
-    toast.add({ title: 'Action Blocked', description: 'Danger zone actions are disabled in demo mode.', color: 'amber' })
-  }
+  dangerAction.value = action
+  showDangerConfirm.value = true
+}
+
+function executeDangerAction() {
+  showDangerConfirm.value = false
+  toast.add({ title: 'Action Blocked', description: 'Danger zone actions are disabled in demo mode.', color: 'amber' })
 }
 </script>
