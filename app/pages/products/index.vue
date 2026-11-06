@@ -150,7 +150,7 @@
 
 <script setup lang="ts">
 import type { Product } from '~/types'
-import type { FilterChipItem } from '~/components/AppFilterBar.vue'
+import type { FilterChipItem } from '~/types'
 
 definePageMeta({ middleware: ['auth'] })
 useHead({ title: 'Products — Clothing Store Admin' })

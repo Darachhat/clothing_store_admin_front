@@ -10,7 +10,7 @@
     <div v-if="loading" class="stat-card__skeleton" />
     <div v-else class="stat-card__value-row">
       <span class="stat-card__value" :class="valueClass">{{ value }}</span>
-      <AppBadge v-if="badge" :color="badgeColor || 'default'" size="sm">{{ badge }}</AppBadge>
+      <StatusBadge v-if="badge" :color="badgeColor || 'default'" size="sm">{{ badge }}</StatusBadge>
     </div>
 
     <p v-if="sublabel || $slots.sublabel" class="stat-card__sublabel">
@@ -169,3 +169,4 @@ defineProps<{
   100% { background-position: -200% 0; }
 }
 </style>
+

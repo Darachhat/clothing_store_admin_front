@@ -144,12 +144,11 @@
           <label class="field-label">
             Description
           </label>
-          <textarea
-            v-model="form.description"
-            rows="3"
-            placeholder="Category overview, styling notes, or placement notes..."
-            class="field-input field-textarea"
-          />
+          <AppTextarea
+          v-model="form.description"
+          rows="3"
+          placeholder="Category overview, styling notes, or placement notes..."
+        />
         </div>
 
         <div class="form-row">
@@ -215,7 +214,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useCatalogApi } from '~/composables/useApi'
 import { useAppToast } from '~/composables/useAppToast'
 import type { Category } from '~/types'
-import type { FilterChipItem } from '~/components/AppFilterBar.vue'
+import type { FilterChipItem } from '~/types'
 
 definePageMeta({ middleware: ['auth'] })
 useHead({ title: 'Categories — Clothing Store Admin' })

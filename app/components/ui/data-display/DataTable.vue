@@ -60,7 +60,7 @@
     <div v-if="!loading && !error && sortedRows.length > 0 && mobileMode === 'cards'" class="app-table-mobile-cards">
       <div
         v-for="(row, idx) in sortedRows"
-        :key="row.id ?? idx"
+        :key="row[rowKey] ?? idx"
         class="mobile-record-card"
         :class="{ 'is-clickable': rowClickable }"
         @click="rowClickable ? $emit('row-click', row) : undefined"
@@ -97,7 +97,7 @@
 
         <!-- Card Expandable Secondary Fields -->
         <template v-if="extraBodyColumns.length > 0">
-          <div v-if="isCardExpanded(row.id ?? idx)" class="mobile-record-card__grid mobile-record-card__grid--extra">
+          <div v-if="isCardExpanded(row[rowKey] ?? idx)" class="mobile-record-card__grid mobile-record-card__grid--extra">
             <div
               v-for="col in extraBodyColumns"
               :key="col.key"
@@ -115,11 +115,11 @@
           <button
             type="button"
             class="mobile-record-card__expand-btn"
-            @click.stop="toggleCardExpand(row.id ?? idx)"
+            @click.stop="toggleCardExpand(row[rowKey] ?? idx)"
           >
-            <span>{{ isCardExpanded(row.id ?? idx) ? 'Hide details' : `More details (${extraBodyColumns.length})` }}</span>
+            <span>{{ isCardExpanded(row[rowKey] ?? idx) ? 'Hide details' : `More details (${extraBodyColumns.length})` }}</span>
             <UIcon
-              :name="isCardExpanded(row.id ?? idx) ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down'"
+              :name="isCardExpanded(row[rowKey] ?? idx) ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down'"
               class="w-3.5 h-3.5"
             />
           </button>
@@ -138,6 +138,14 @@
       <table class="app-table">
         <thead>
           <tr>
+            <th v-if="selectable" class="app-table__th-select">
+              <input
+                type="checkbox"
+                :checked="allSelected"
+                aria-label="Select all rows"
+                @change="toggleSelectAll"
+              />
+            </th>
             <th
               v-for="col in normalizedColumns"
               :key="col.key"
@@ -170,22 +178,23 @@
         <tbody>
           <template v-if="loading">
             <tr v-for="i in skeletonRows" :key="`sk-${i}`" class="skeleton-row">
+              <td v-if="selectable"><div class="skeleton-cell" style="width: 16px;" /></td>
               <td v-for="col in normalizedColumns" :key="col.key">
                 <div class="skeleton-cell" :style="col.key === 'actions' ? 'width: 60%; margin-left: auto;' : ''" />
               </td>
             </tr>
           </template>
           <tr v-else-if="error">
-            <td :colspan="normalizedColumns.length" class="empty-cell">
+            <td :colspan="normalizedColumns.length + (selectable ? 1 : 0)" class="empty-cell">
               <div class="empty-state">
                 <UIcon name="i-heroicons-exclamation-triangle" class="empty-state__icon text-amber-600" />
                 <span class="empty-state__title">{{ error }}</span>
-                <AppButton v-if="onRetry" size="sm" variant="default" icon="i-heroicons-arrow-path" label="Retry" @click="onRetry" />
+                <BaseButton v-if="onRetry" size="sm" variant="default" icon="i-heroicons-arrow-path" label="Retry" @click="onRetry" />
               </div>
             </td>
           </tr>
           <tr v-else-if="!sortedRows.length">
-            <td :colspan="normalizedColumns.length" class="empty-cell">
+            <td :colspan="normalizedColumns.length + (selectable ? 1 : 0)" class="empty-cell">
               <div class="empty-state">
                 <UIcon :name="emptyIcon || emptyState?.icon || 'i-heroicons-inbox'" class="empty-state__icon" />
                 <span class="empty-state__title">{{ emptyTitle || emptyState?.label || emptyText || 'No records found.' }}</span>
@@ -196,35 +205,44 @@
               </div>
             </td>
           </tr>
-          <tr
-            v-else
-            v-for="(row, idx) in sortedRows"
-            :key="row.id ?? idx"
-            class="table-row"
-            :class="{ 'is-clickable': rowClickable }"
-            @click="rowClickable ? $emit('row-click', row) : undefined"
-          >
-            <td
-              v-for="col in normalizedColumns"
-              :key="col.key"
-              :class="[
-                col.align ? `text-${col.align}` : '',
-                col.key === 'actions' ? 'actions-cell' : '',
-              ]"
+          <template v-else>
+            <tr
+              v-for="(row, idx) in sortedRows"
+              :key="row[rowKey] ?? idx"
+              class="table-row"
+              :class="{ 'is-clickable': rowClickable }"
+              @click="rowClickable ? $emit('row-click', row) : undefined"
             >
-              <template v-if="col.key === 'actions'">
-                <div class="actions-cell__inner">
-                  <slot v-if="$slots['cell-actions']" name="cell-actions" :row="row" :value="row[col.key]" />
-                  <slot v-else-if="$slots.actions" name="actions" :row="row" />
-                </div>
-              </template>
-              <template v-else>
-                <slot :name="`cell-${col.key}`" :row="row" :value="row[col.key]">
-                  {{ row[col.key] ?? '—' }}
-                </slot>
-              </template>
-            </td>
-          </tr>
+              <td v-if="selectable" class="app-table__td-select" @click.stop>
+                <input
+                  type="checkbox"
+                  :checked="isRowSelected(row[rowKey] ?? idx)"
+                  :aria-label="`Select row ${idx + 1}`"
+                  @change="toggleRowSelect(row[rowKey] ?? idx)"
+                />
+              </td>
+              <td
+                v-for="col in normalizedColumns"
+                :key="col.key"
+                :class="[
+                  col.align ? `text-${col.align}` : '',
+                  col.key === 'actions' ? 'actions-cell' : '',
+                ]"
+              >
+                <template v-if="col.key === 'actions'">
+                  <div class="actions-cell__inner">
+                    <slot v-if="$slots['cell-actions']" name="cell-actions" :row="row" :value="row[col.key]" />
+                    <slot v-else-if="$slots.actions" name="actions" :row="row" />
+                  </div>
+                </template>
+                <template v-else>
+                  <slot :name="`cell-${col.key}`" :row="row" :value="row[col.key]">
+                    {{ row[col.key] ?? '—' }}
+                  </slot>
+                </template>
+              </td>
+            </tr>
+          </template>
         </tbody>
       </table>
     </div>
@@ -235,18 +253,14 @@
 </template>
 
 <script setup lang="ts">
-export interface TableColumn {
-  key: string
-  label: string
-  width?: string
-  align?: 'left' | 'center' | 'right'
-  sortable?: boolean
-  mobilePriority?: number
-}
+import type { TableColumn } from '~/types'
+
+export type { TableColumn }
 
 const props = withDefaults(defineProps<{
   columns: TableColumn[]
   rows: any[]
+  rowKey?: string
   loading?: boolean
   skeletonRows?: number
   emptyTitle?: string
@@ -256,20 +270,28 @@ const props = withDefaults(defineProps<{
   error?: string | null
   onRetry?: () => void
   rowClickable?: boolean
+  selectable?: boolean
+  selected?: Array<string | number>
+  defaultMobileMode?: 'cards' | 'table'
 }>(), {
+  rowKey: 'id',
   loading: false,
   skeletonRows: 5,
   rowClickable: false,
+  selectable: false,
+  selected: () => [],
+  defaultMobileMode: 'cards',
 })
 
 const emit = defineEmits<{
   'row-click': [row: any]
   'sort': [payload: { key: string; order: 'asc' | 'desc' }]
+  'update:selected': [selected: Array<string | number>]
 }>()
 
 const slots = useSlots()
 
-const mobileMode = ref<'cards' | 'table'>('cards')
+const mobileMode = ref<'cards' | 'table'>(props.defaultMobileMode)
 const expandedCardKeys = ref<Set<string | number>>(new Set())
 
 function isCardExpanded(key: string | number): boolean {
@@ -281,6 +303,29 @@ function toggleCardExpand(key: string | number) {
   if (next.has(key)) next.delete(key)
   else next.add(key)
   expandedCardKeys.value = next
+}
+
+function isRowSelected(id: string | number): boolean {
+  return (props.selected || []).includes(id)
+}
+
+const allSelected = computed(() => {
+  if (!sortedRows.value.length) return false
+  return sortedRows.value.every((r, idx) => isRowSelected(r[props.rowKey] ?? idx))
+})
+
+function toggleSelectAll() {
+  if (allSelected.value) {
+    emit('update:selected', [])
+  } else {
+    emit('update:selected', sortedRows.value.map((r, idx) => r[props.rowKey] ?? idx))
+  }
+}
+
+function toggleRowSelect(id: string | number) {
+  const curr = props.selected || []
+  const next = curr.includes(id) ? curr.filter(k => k !== id) : [...curr, id]
+  emit('update:selected', next)
 }
 
 const normalizedColumns = computed<TableColumn[]>(() => {
@@ -313,7 +358,7 @@ const bodyColumns = computed<TableColumn[]>(() => {
   const pKey = primaryColumn.value?.key
   const sKey = statusColumn.value?.key
   return dataColumns.value
-    .filter(c => c.key !== pKey && c.key !== sKey)
+    .filter(c => c.key !== pKey && c.key !== sKey && !c.mobileHidden)
     .sort((a, b) => (a.mobilePriority ?? 99) - (b.mobilePriority ?? 99))
 })
 
@@ -607,6 +652,13 @@ const sortedRows = computed<any[]>(() => {
   user-select: none;
 }
 
+.app-table__th-select,
+.app-table__td-select {
+  width: 36px;
+  padding-left: 14px !important;
+  padding-right: 4px !important;
+}
+
 .app-table__th-sortable {
   cursor: pointer;
   transition: color 0.12s, background 0.12s;
@@ -728,3 +780,4 @@ const sortedRows = computed<any[]>(() => {
   100% { background-position: -200% 0; }
 }
 </style>
+

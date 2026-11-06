@@ -49,11 +49,11 @@
       />
       <div class="flex items-center gap-1.5">
         <span class="text-xs text-gray-500">From:</span>
-        <input v-model="fromDate" type="date" class="field-input" style="width: 140px;" @change="fetchSales" />
+        <AppInput v-model="fromDate" type="date" style="width: 140px;" @change="fetchSales" />
       </div>
       <div class="flex items-center gap-1.5">
         <span class="text-xs text-gray-500">To:</span>
-        <input v-model="toDate" type="date" class="field-input" style="width: 140px;" @change="fetchSales" />
+        <AppInput v-model="toDate" type="date" style="width: 140px;" @change="fetchSales" />
       </div>
     </AppFilterBar>
 
@@ -208,7 +208,7 @@
 
 <script setup lang="ts">
 import dayjs from 'dayjs'
-import type { FilterChipItem } from '~/components/AppFilterBar.vue'
+import type { FilterChipItem } from '~/types'
 
 definePageMeta({
   middleware: ['auth'],

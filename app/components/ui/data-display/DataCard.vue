@@ -1,8 +1,14 @@
 <template>
   <div class="app-card">
-    <div v-if="title || $slots.header" class="app-card__header">
+    <div v-if="title || subtitle || $slots.header || $slots['header-right']" class="app-card__header">
       <slot name="header">
-        <span class="app-card__title">{{ title }}</span>
+        <div class="app-card__titles">
+          <div class="app-card__title-row">
+            <UIcon v-if="icon" :name="icon" class="app-card__icon" />
+            <span v-if="title" class="app-card__title">{{ title }}</span>
+          </div>
+          <p v-if="subtitle" class="app-card__subtitle">{{ subtitle }}</p>
+        </div>
       </slot>
       <div v-if="$slots['header-right']" class="app-card__header-right">
         <slot name="header-right" />
@@ -20,6 +26,8 @@
 <script setup lang="ts">
 defineProps<{
   title?: string
+  subtitle?: string
+  icon?: string
   noPad?: boolean
 }>()
 </script>
@@ -40,12 +48,26 @@ defineProps<{
   gap: 12px;
   padding: 13px 18px;
   border-bottom: 1px solid var(--border-subtle, #e5e7eb);
+  flex-wrap: wrap;
 }
 
-.app-card__header-right {
+.app-card__titles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.app-card__title-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 7px;
+}
+
+.app-card__icon {
+  width: 16px;
+  height: 16px;
+  color: var(--text-tertiary, #64748b);
   flex-shrink: 0;
 }
 
@@ -56,6 +78,19 @@ defineProps<{
   letter-spacing: -0.01em;
 }
 
+.app-card__subtitle {
+  font-size: 11.5px;
+  color: var(--text-tertiary, #64748b);
+  margin: 0;
+}
+
+.app-card__header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
 .app-card__body {
   padding: 18px;
 }
@@ -64,7 +99,7 @@ defineProps<{
   padding: 0;
 }
 
-/* Automatic flush table handling when AppTable is the sole child of AppCard */
+/* Automatic flush table handling when DataTable is the sole child of DataCard */
 .app-card__body > :deep(.app-table-wrap:only-child) {
   margin: -18px;
 }
@@ -78,4 +113,20 @@ defineProps<{
   border-top: 1px solid var(--border-subtle, #e5e7eb);
   background: var(--surface-inset, #f8fafc);
 }
+
+@media (max-width: 639px) {
+  .app-card__header {
+    padding: 11px 14px;
+  }
+  .app-card__body {
+    padding: 14px;
+  }
+  .app-card__body > :deep(.app-table-wrap:only-child) {
+    margin: -14px;
+  }
+  .app-card__footer {
+    padding: 10px 14px;
+  }
+}
 </style>
+

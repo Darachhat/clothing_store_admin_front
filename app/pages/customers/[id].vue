@@ -104,25 +104,25 @@
       <form class="form-grid" @submit.prevent="save">
         <div class="form-field">
           <label class="field-label">Name <span class="required">*</span></label>
-          <input v-model="form.name" class="field-input" required />
+          <AppInput v-model="form.name" required />
         </div>
         <div class="form-row">
           <div class="form-field">
             <label class="field-label">Phone</label>
-            <input v-model="form.phone" class="field-input" />
+            <AppInput v-model="form.phone" />
           </div>
           <div class="form-field">
             <label class="field-label">Email</label>
-            <input v-model="form.email" type="email" class="field-input" />
+            <AppInput v-model="form.email" type="email" />
           </div>
         </div>
         <div class="form-field">
           <label class="field-label">Address</label>
-          <textarea v-model="form.address" class="field-input field-textarea" rows="2" />
+          <AppTextarea v-model="form.address" rows="2" />
         </div>
         <div class="form-field">
           <label class="field-label">Notes</label>
-          <textarea v-model="form.notes" class="field-input field-textarea" rows="2" />
+          <AppTextarea v-model="form.notes" rows="2" />
         </div>
         <div class="form-field">
           <label class="field-label">Status</label>

@@ -16,14 +16,7 @@
     <!-- Date Picker -->
     <AppCard>
       <div class="report-filter-row">
-        <div class="form-field">
-          <label class="field-label">From Date</label>
-          <input v-model="fromDate" type="date" class="field-input" />
-        </div>
-        <div class="form-field">
-          <label class="field-label">To Date</label>
-          <input v-model="toDate" type="date" class="field-input" />
-        </div>
+        <DateRangePicker v-model:from="fromDate" v-model:to="toDate" inline from-label="From Date" to-label="To Date" />
         <AppButton variant="primary" icon="i-heroicons-play" :loading="loading" @click="fetchReport">
           Run Report
         </AppButton>

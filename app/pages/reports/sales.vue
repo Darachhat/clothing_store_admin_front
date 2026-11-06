@@ -16,14 +16,7 @@
     <!-- Date Range Filter -->
     <AppCard>
       <div class="report-filter-row">
-        <div class="form-field">
-          <label class="field-label">From Date</label>
-          <input v-model="fromDate" type="date" class="field-input" />
-        </div>
-        <div class="form-field">
-          <label class="field-label">To Date</label>
-          <input v-model="toDate" type="date" class="field-input" />
-        </div>
+        <DateRangePicker v-model:from="fromDate" v-model:to="toDate" inline from-label="From Date" to-label="To Date" />
         <div class="form-field" style="min-width: 150px;">
           <label class="field-label">Group By</label>
           <AppSelect v-model="groupBy" :options="groupByOptions" />

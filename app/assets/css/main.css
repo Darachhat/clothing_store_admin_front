@@ -1628,19 +1628,57 @@ input[type="radio"] {
   --color-primary:     #0f172a;
 
   /* Semantic Status Colors (Background + Text only; Borders remain neutral) */
-  --status-green:      #15803d;
-  --status-green-bg:   #f0fdf4;
-  --status-amber:      #b45309;
-  --status-amber-bg:   #fffbeb;
-  --status-red:        #b91c1c;
-  --status-red-bg:     #fef2f2;
-  --status-blue:       #1d4ed8;
-  --status-blue-bg:    #eff6ff;
+  --status-green:        #15803d;
+  --status-green-bg:     #f0fdf4;
+  --status-amber:        #b45309;
+  --status-amber-bg:     #fffbeb;
+  --status-red:          #b91c1c;
+  --status-red-bg:       #fef2f2;
+  --status-blue:         #1d4ed8;
+  --status-blue-bg:      #eff6ff;
+  --status-success-text: var(--status-green);
+  --status-success-bg:   var(--status-green-bg);
+  --status-warning-text: var(--status-amber);
+  --status-warning-bg:   var(--status-amber-bg);
+  --status-danger-text:  var(--status-red);
+  --status-danger-bg:    var(--status-red-bg);
+  --status-info-text:    var(--status-blue);
+  --status-info-bg:      var(--status-blue-bg);
+  --status-neutral-text: var(--text-secondary);
+  --status-neutral-bg:   var(--surface-hover);
 
-  /* Typography Families */
+  /* Typography Families & Scale */
   --font-display: 'Plus Jakarta Sans', 'Inter', 'Kantumruy Pro', 'Battambang Local', sans-serif;
   --font-body:    'Inter', 'Plus Jakarta Sans', 'Kantumruy Pro', 'Battambang Local', sans-serif;
   --font-mono:    'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font-size-2xs: 10.5px;
+  --font-size-xs:  11.5px;
+  --font-size-sm:  12.5px;
+  --font-size-md:  13px;
+  --font-size-lg:  15px;
+  --font-size-xl:  18px;
+  --font-size-2xl: 22px;
+
+  /* Spacing Scale (4px / 8px rhythm) */
+  --space-0-5: 4px;
+  --space-1:   8px;
+  --space-1-5: 12px;
+  --space-2:   16px;
+  --space-2-5: 20px;
+  --space-3:   24px;
+  --space-4:   32px;
+  --space-5:   40px;
+  --space-6:   48px;
+
+  /* Component Dimensions (Buttons & Inputs) */
+  --btn-height-xs:   26px;
+  --btn-height-sm:   30px;
+  --btn-height-md:   36px;
+  --btn-height-lg:   40px;
+  --input-height-sm: 30px;
+  --input-height-md: 36px;
+  --input-height-lg: 40px;
+  --input-padding-x: 11px;
 
   /* Border Radii */
   --radius-sm:   4px;
@@ -1650,11 +1688,26 @@ input[type="radio"] {
   --radius-2xl:  16px;
   --radius-full: 9999px;
 
-  /* Layout Dimensions */
+  /* Layout Dimensions & Breakpoints */
   --sidebar-width:           232px;
   --sidebar-width-collapsed: 60px;
   --topbar-height:           52px;
   --page-max-width:          1440px;
+  --bp-xs:                   320px;
+  --bp-sm:                   640px;
+  --bp-md:                   768px;
+  --bp-lg:                   1024px;
+  --bp-xl:                   1280px;
+  --bp-2xl:                  1440px;
+
+  /* Z-Index Layers */
+  --z-topbar:        30;
+  --z-sidebar:       40;
+  --z-mobile-drawer: 50;
+  --z-dropdown:      100;
+  --z-drawer:        180;
+  --z-modal:         200;
+  --z-toast:         300;
 
   /* Elevations */
   --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);

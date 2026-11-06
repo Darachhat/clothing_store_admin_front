@@ -2,7 +2,7 @@
   <span class="app-badge" :class="[`app-badge--${normalizedColor}`, `app-badge--${size || 'md'}`]">
     <UIcon v-if="resolvedIcon" :name="resolvedIcon" class="app-badge__icon" />
     <span v-else-if="showDot" class="app-badge__dot" />
-    <slot>{{ label }}</slot>
+    <slot>{{ label || status }}</slot>
   </span>
 </template>
 
@@ -10,6 +10,7 @@
 const props = defineProps<{
   color?: string
   variant?: string
+  status?: string
   label?: string
   size?: 'sm' | 'md'
   dot?: boolean
@@ -38,6 +39,53 @@ const COLOR_ALIAS_MAP: Record<string, string> = {
   default: 'default',
 }
 
+/**
+ * Centralized semantic status-to-color mapping so individual pages
+ * do not need to duplicate statusColor() switch statements.
+ */
+const STATUS_SEMANTIC_MAP: Record<string, string> = {
+  ACTIVE: 'green',
+  PAID: 'green',
+  COMPLETED: 'green',
+  APPROVED: 'green',
+  RECEIVED: 'green',
+  ONLINE: 'green',
+  OPEN: 'green',
+  IN_STOCK: 'green',
+  SYNCHRONIZED: 'green',
+  SUCCESS: 'green',
+
+  PENDING: 'yellow',
+  IN_TRANSIT: 'yellow',
+  DISPATCHED: 'yellow',
+  PARTIAL: 'yellow',
+  PARTIALLY_RECEIVED: 'yellow',
+  MAINTENANCE: 'yellow',
+  LOW_STOCK: 'yellow',
+  HELD: 'yellow',
+  WARNING: 'yellow',
+
+  ORDERED: 'blue',
+  PROCESSING: 'blue',
+  PERCENTAGE: 'blue',
+  INFO: 'blue',
+
+  CANCELLED: 'red',
+  FAILED: 'red',
+  REJECTED: 'red',
+  VOID: 'red',
+  OUT_OF_STOCK: 'red',
+  UNPAID: 'red',
+  FULL: 'red',
+  DELETE: 'red',
+  ERROR: 'red',
+
+  INACTIVE: 'default',
+  DRAFT: 'default',
+  CLOSED: 'default',
+  OFFLINE: 'default',
+}
+
 const normalizedColor = computed(() => {
   if (props.color && COLOR_ALIAS_MAP[props.color]) {
     return COLOR_ALIAS_MAP[props.color]
@@ -45,13 +93,14 @@ const normalizedColor = computed(() => {
   if (props.variant && COLOR_ALIAS_MAP[props.variant]) {
     return COLOR_ALIAS_MAP[props.variant]
   }
+  const rawStatus = String(props.status || props.label || '').trim().toUpperCase()
+  if (rawStatus && STATUS_SEMANTIC_MAP[rawStatus]) {
+    return STATUS_SEMANTIC_MAP[rawStatus]
+  }
   return 'default'
 })
 
-const resolvedIcon = computed(() => {
-  if (props.icon) return props.icon
-  return ''
-})
+const resolvedIcon = computed(() => props.icon || '')
 
 const showDot = computed(() => {
   if (props.dot !== undefined) return props.dot
@@ -118,3 +167,4 @@ const showDot = computed(() => {
   color: var(--status-blue, #1d4ed8);
 }
 </style>
+

@@ -176,16 +176,16 @@ function getDisplayFilename(url: string) {
 }
 
 .app-file-upload__label {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary, #475569);
   display: flex;
   align-items: center;
   gap: 4px;
 }
 
 .app-file-upload__required {
-  color: #ef4444;
+  color: var(--status-red, #b91c1c);
 }
 
 .app-file-upload__dropzone {
@@ -194,9 +194,9 @@ function getDisplayFilename(url: string) {
   align-items: center;
   justify-content: center;
   padding: 16px 20px;
-  background: var(--surface);
-  border: 1px dashed var(--border);
-  border-radius: 6px;
+  background: var(--surface-card, #ffffff);
+  border: 1px dashed var(--border-default, #d1d5db);
+  border-radius: var(--radius-md, 6px);
   cursor: pointer;
   transition: border-color 0.15s, background-color 0.15s;
   min-height: 90px;
@@ -204,17 +204,17 @@ function getDisplayFilename(url: string) {
 }
 
 .app-file-upload__dropzone:hover {
-  border-color: var(--text-secondary);
-  background: var(--surface-hover);
+  border-color: var(--border-strong, #9ca3af);
+  background: var(--surface-hover, #f1f5f9);
 }
 
 .app-file-upload__dropzone.is-dragging {
-  border-color: var(--border-strong);
-  background: var(--surface-hover);
+  border-color: var(--border-strong, #9ca3af);
+  background: var(--surface-hover, #f1f5f9);
 }
 
 .app-file-upload__dropzone.is-error {
-  border-color: var(--border-strong);
+  border-color: var(--border-strong, #9ca3af);
 }
 
 .app-file-upload__input {
@@ -230,9 +230,10 @@ function getDisplayFilename(url: string) {
 .app-file-upload__icon-box {
   width: 36px;
   height: 36px;
-  border-radius: 6px;
-  background: var(--surface-active);
-  color: var(--text-secondary);
+  border-radius: var(--radius-md, 6px);
+  background: var(--surface-inset, #f8fafc);
+  border: 1px solid var(--border-subtle, #e5e7eb);
+  color: var(--text-secondary, #475569);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -247,12 +248,12 @@ function getDisplayFilename(url: string) {
 
 .app-file-upload__main-text {
   font-size: 13px;
-  color: var(--text-secondary);
+  color: var(--text-secondary, #475569);
 }
 
 .app-file-upload__sub-text {
   font-size: 11px;
-  color: var(--text-tertiary);
+  color: var(--text-tertiary, #64748b);
 }
 
 .app-file-upload__progress-wrap {
@@ -267,8 +268,8 @@ function getDisplayFilename(url: string) {
 .app-file-upload__spinner {
   width: 20px;
   height: 20px;
-  border: 2px solid var(--border);
-  border-top-color: #2563eb;
+  border: 2px solid var(--border-subtle, #e5e7eb);
+  border-top-color: var(--accent-primary, #0f172a);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -279,41 +280,41 @@ function getDisplayFilename(url: string) {
 
 .app-file-upload__progress-text {
   font-size: 12px;
-  color: var(--text-secondary);
+  color: var(--text-secondary, #475569);
   font-family: var(--font-mono);
 }
 
 .app-file-upload__bar {
   width: 100%;
   height: 4px;
-  background: var(--surface-active);
+  background: var(--surface-active, #e2e8f0);
   border-radius: 2px;
   overflow: hidden;
 }
 
 .app-file-upload__bar-fill {
   height: 100%;
-  background: #2563eb;
+  background: var(--accent-primary, #0f172a);
   transition: width 0.2s ease;
 }
 
-/* Preview state */
 .app-file-upload__preview {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 10px 12px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 6px;
+  background: var(--surface-card, #ffffff);
+  border: 1px solid var(--border-subtle, #e5e7eb);
+  border-radius: var(--radius-md, 6px);
 }
 
 .app-file-upload__thumb-wrap {
   width: 44px;
   height: 44px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm, 4px);
   overflow: hidden;
-  background: var(--surface-active);
+  background: var(--surface-inset, #f8fafc);
+  border: 1px solid var(--border-subtle, #e5e7eb);
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -327,7 +328,7 @@ function getDisplayFilename(url: string) {
 }
 
 .app-file-upload__doc-icon {
-  color: var(--text-secondary);
+  color: var(--text-secondary, #475569);
 }
 
 .app-file-upload__meta {
@@ -341,7 +342,7 @@ function getDisplayFilename(url: string) {
 .app-file-upload__filename {
   font-size: 13px;
   font-weight: 500;
-  color: var(--text-primary);
+  color: var(--text-primary, #0f172a);
   text-decoration: none;
   white-space: nowrap;
   overflow: hidden;
@@ -355,16 +356,16 @@ function getDisplayFilename(url: string) {
 .app-file-upload__tag {
   font-size: 11px;
   font-family: var(--font-mono);
-  color: var(--text-tertiary);
+  color: var(--text-tertiary, #64748b);
 }
 
 .app-file-upload__remove-btn {
   width: 28px;
   height: 28px;
-  border-radius: 4px;
-  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 4px);
+  border: 1px solid var(--border-subtle, #e5e7eb);
   background: transparent;
-  color: var(--text-secondary);
+  color: var(--text-secondary, #475569);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -373,13 +374,13 @@ function getDisplayFilename(url: string) {
 }
 
 .app-file-upload__remove-btn:hover {
-  background: rgba(239, 68, 68, 0.08);
-  border-color: var(--border-strong);
-  color: #ef4444;
+  background: var(--status-red-bg, #fef2f2);
+  color: var(--status-red, #b91c1c);
 }
 
 .app-file-upload__error {
   font-size: 12px;
-  color: #ef4444;
+  color: var(--status-red, #b91c1c);
 }
 </style>
+

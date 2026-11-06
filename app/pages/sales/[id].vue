@@ -1,18 +1,17 @@
 <template>
   <div class="page-root">
     <!-- Header -->
-    <div class="page-header no-print">
-      <div class="page-header__left">
-        <NuxtLink to="/sales" class="back-link">
-          <UIcon name="i-heroicons-arrow-left" class="w-3.5 h-3.5" />
-          Sales
-        </NuxtLink>
-        <h2 class="page-title">{{ sale?.invoice_number ?? '…' }}</h2>
-        <p class="page-subtitle kh-text">វិក្កយបត្រលក់ និងបង្កាន់ដៃ &bull; Sale Invoice Detail &amp; Khmer Receipt Printing</p>
-      </div>
-      <div v-if="sale" class="page-header__actions">
+    <PageHeader
+      class="no-print"
+      :title="sale?.invoice_number ?? '…'"
+      description="វិក្កយបត្រលក់ និងបង្កាន់ដៃ &bull; Sale Invoice Detail &amp; Khmer Receipt Printing"
+      back-to="/sales"
+      back-label="Sales"
+    >
+      <template v-if="sale" #badge>
         <AppBadge :color="saleStatusColor(sale.sale_status)">{{ sale.sale_status }}</AppBadge>
-
+      </template>
+      <template v-if="sale" #actions>
         <AppButton variant="default" size="sm" @click="openPreviewModal('A4')">
           <template #icon-left>
             <UIcon name="i-heroicons-document-text" class="w-3.5 h-3.5" />
@@ -42,10 +41,10 @@
         >
           Cancel Sale
         </AppButton>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
-    <div v-if="loading" class="state-card no-print">Loading…</div>
+    <LoadingSkeleton v-if="loading" variant="lines" class="no-print" />
 
     <template v-else-if="sale">
       <div class="detail-grid no-print">
@@ -143,24 +142,7 @@
       <AppModal v-model="showPreviewModal" title="មើលវិក្កយបត្រ & បង្កាន់ដៃ (Preview Khmer Invoice / Receipt)" size="lg">
         <div class="preview-modal-body no-print">
           <div class="preview-toolbar">
-            <div class="mode-tabs">
-              <button
-                type="button"
-                class="mode-tab kh-text"
-                :class="{ active: printMode === 'A4' }"
-                @click="printMode = 'A4'"
-              >
-                វិក្កយបត្រ A4 (Sales Invoice)
-              </button>
-              <button
-                type="button"
-                class="mode-tab kh-text"
-                :class="{ active: printMode === 'THERMAL' }"
-                @click="printMode = 'THERMAL'"
-              >
-                បង្កាន់ដៃ 80mm (Thermal Receipt)
-              </button>
-            </div>
+            <BaseTabs v-model="printMode" :tabs="printModeTabs" variant="pills" />
             <div class="preview-actions">
               <AppButton variant="default" size="sm" @click="printSale('THERMAL')">
                 <template #icon-left>
@@ -689,6 +671,10 @@ const { addToast } = useAppToast()
 const sale = ref<Sale | null>(null)
 const loading = ref(true)
 const printMode = ref<'THERMAL' | 'A4'>('A4')
+const printModeTabs = [
+  { key: 'A4', label: 'វិក្កយបត្រ A4 (Sales Invoice)' },
+  { key: 'THERMAL', label: 'បង្កាន់ដៃ 80mm (Thermal Receipt)' },
+]
 const showPreviewModal = ref(false)
 const showCancelConfirm = ref(false)
 const cancelling = ref(false)

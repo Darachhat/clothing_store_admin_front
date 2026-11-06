@@ -1,13 +1,13 @@
 <template>
   <div class="page-root">
-    <AppPageHeader
+    <PageHeader
       title="System Settings"
       description="Manage store configuration, branches & warehouses, tax rates, POS defaults, and security preferences."
       :breadcrumbs="[{ label: 'Administration' }, { label: 'System Settings' }]"
     />
 
     <!-- Language & Regional Preferences -->
-    <AppCard>
+    <DataCard>
       <template #header>
         <div class="flex items-center justify-between w-full">
           <div class="flex items-center gap-2">
@@ -48,10 +48,10 @@
           </button>
         </div>
       </div>
-    </AppCard>
+    </DataCard>
 
     <!-- Store Information -->
-    <AppCard>
+    <DataCard>
       <template #header>
         <div class="flex items-center gap-2">
           <UIcon name="i-heroicons-building-office-2" class="w-4 h-4 text-gray-500" />
@@ -59,56 +59,41 @@
         </div>
       </template>
       <form class="space-y-4" @submit.prevent="saveStoreInfo">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Store Name</label>
-            <input v-model="storeInfo.name" type="text" placeholder="My Clothing Store"
-              class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm" />
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Currency</label>
-            <select v-model="storeInfo.currency" class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm">
-              <option value="USD">USD - US Dollar</option>
-              <option value="KHR">KHR - Cambodian Riel</option>
-              <option value="EUR">EUR - Euro</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Phone</label>
-            <input v-model="storeInfo.phone" type="tel" placeholder="+855 23 ..."
-              class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm" />
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
-            <input v-model="storeInfo.email" type="email" placeholder="store@example.com"
-              class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm" />
-          </div>
-          <div class="md:col-span-2">
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Address</label>
-            <input v-model="storeInfo.address" type="text" placeholder="Store address"
-              class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm" />
-          </div>
-          <div class="md:col-span-2">
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Receipt Footer Message</label>
-            <textarea v-model="storeInfo.receipt_footer" rows="2" placeholder="Thank you for shopping with us!"
-              class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm" />
-          </div>
-        </div>
-        <div class="flex justify-end">
-          <AppButton type="submit" variant="primary" label="Save Store Info" :loading="savingStore" />
-        </div>
+        <FormSection :columns="2">
+          <FormField label="Store Name">
+            <BaseInput v-model="storeInfo.name" placeholder="My Clothing Store" />
+          </FormField>
+          <FormField label="Currency">
+            <BaseSelect v-model="storeInfo.currency" :options="currencyOptions" />
+          </FormField>
+          <FormField label="Phone">
+            <BaseInput v-model="storeInfo.phone" type="tel" placeholder="+855 23 ..." />
+          </FormField>
+          <FormField label="Email">
+            <BaseInput v-model="storeInfo.email" type="email" placeholder="store@example.com" />
+          </FormField>
+        </FormSection>
+        <FormField label="Address">
+          <BaseInput v-model="storeInfo.address" placeholder="Store address" />
+        </FormField>
+        <FormField label="Receipt Footer Message">
+          <BaseTextarea v-model="storeInfo.receipt_footer" :rows="2" placeholder="Thank you for shopping with us!" />
+        </FormField>
+        <FormActions>
+          <BaseButton type="submit" variant="primary" label="Save Store Info" :loading="savingStore" />
+        </FormActions>
       </form>
-    </AppCard>
+    </DataCard>
 
     <!-- Branches & Warehouses Management -->
-    <AppCard>
+    <DataCard>
       <template #header>
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
             <UIcon name="i-heroicons-building-storefront" class="w-4 h-4 text-gray-500" />
             <h3 class="font-semibold text-gray-900 dark:text-white text-sm">Branches &amp; Warehouses</h3>
           </div>
-          <AppButton size="sm" variant="ghost" label="Refresh" icon="i-heroicons-arrow-path" @click="loadBranches" />
+          <BaseButton size="sm" variant="ghost" label="Refresh" icon="i-heroicons-arrow-path" @click="loadBranches" />
         </div>
       </template>
 
@@ -158,51 +143,30 @@
           <form class="space-y-2" @submit.prevent="handleCreateBranch">
             <p class="text-xs font-semibold text-gray-700 dark:text-gray-300">Add New Branch</p>
             <div class="grid grid-cols-3 gap-2">
-              <input
-                v-model="newBranchForm.code"
-                type="text"
-                placeholder="Code (BR-02)"
-                required
-                class="rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-2.5 py-1.5 text-xs font-mono"
-              >
-              <input
-                v-model="newBranchForm.name"
-                type="text"
-                placeholder="Branch Name"
-                required
-                class="col-span-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-2.5 py-1.5 text-xs"
-              >
+              <BaseInput v-model="newBranchForm.code" size="sm" mono placeholder="Code (BR-02)" required />
+              <div class="col-span-2">
+                <BaseInput v-model="newBranchForm.name" size="sm" placeholder="Branch Name" required />
+              </div>
             </div>
-            <AppButton type="submit" size="sm" variant="secondary" label="Create Branch" :loading="creatingBranch" />
+            <BaseButton type="submit" size="sm" variant="secondary" label="Create Branch" :loading="creatingBranch" />
           </form>
 
           <form class="space-y-2" @submit.prevent="handleCreateWarehouse">
             <p class="text-xs font-semibold text-gray-700 dark:text-gray-300">Add New Warehouse</p>
             <div class="grid grid-cols-3 gap-2">
-              <select
-                v-model="newWarehouseForm.branch_id"
-                required
-                class="rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-2 py-1.5 text-xs"
-              >
-                <option value="" disabled>Branch...</option>
-                <option v-for="b in branchesList" :key="b.id" :value="b.id">{{ b.name }}</option>
-              </select>
-              <input
-                v-model="newWarehouseForm.name"
-                type="text"
-                placeholder="Warehouse Name"
-                required
-                class="col-span-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-2.5 py-1.5 text-xs"
-              >
+              <BaseSelect v-model="newWarehouseForm.branch_id" :options="branchSelectOptions" placeholder="Branch..." size="sm" required />
+              <div class="col-span-2">
+                <BaseInput v-model="newWarehouseForm.name" size="sm" placeholder="Warehouse Name" required />
+              </div>
             </div>
-            <AppButton type="submit" size="sm" variant="secondary" label="Create Warehouse" :loading="creatingWarehouse" />
+            <BaseButton type="submit" size="sm" variant="secondary" label="Create Warehouse" :loading="creatingWarehouse" />
           </form>
         </div>
       </div>
-    </AppCard>
+    </DataCard>
 
     <!-- Tax & Pricing -->
-    <AppCard>
+    <DataCard>
       <template #header>
         <div class="flex items-center gap-2">
           <UIcon name="i-heroicons-calculator" class="w-4 h-4 text-gray-500" />
@@ -210,14 +174,11 @@
         </div>
       </template>
       <form class="space-y-4" @submit.prevent="saveTaxSettings">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Default Tax Rate (%)</label>
-            <input v-model.number="taxSettings.default_tax_rate" type="number" step="0.01" min="0" max="100"
-              class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm" />
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Tax Included in Price?</label>
+        <FormSection :columns="3">
+          <FormField label="Default Tax Rate (%)">
+            <BaseInput v-model="taxSettings.default_tax_rate" type="number" :step="0.01" :min="0" :max="100" />
+          </FormField>
+          <FormField label="Tax Included in Price?">
             <div class="flex items-center gap-3 mt-2">
               <label class="flex items-center gap-1.5 cursor-pointer text-sm">
                 <input v-model="taxSettings.tax_inclusive" type="radio" :value="true" />
@@ -228,25 +189,19 @@
                 No (exclusive)
               </label>
             </div>
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Rounding</label>
-            <select v-model="taxSettings.rounding" class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm">
-              <option value="none">No rounding</option>
-              <option value="round">Round to nearest</option>
-              <option value="ceil">Always round up</option>
-              <option value="floor">Always round down</option>
-            </select>
-          </div>
-        </div>
-        <div class="flex justify-end">
-          <AppButton type="submit" variant="primary" label="Save Tax Settings" :loading="savingTax" />
-        </div>
+          </FormField>
+          <FormField label="Rounding">
+            <BaseSelect v-model="taxSettings.rounding" :options="roundingOptions" />
+          </FormField>
+        </FormSection>
+        <FormActions>
+          <BaseButton type="submit" variant="primary" label="Save Tax Settings" :loading="savingTax" />
+        </FormActions>
       </form>
-    </AppCard>
+    </DataCard>
 
     <!-- POS Settings -->
-    <AppCard>
+    <DataCard>
       <template #header>
         <div class="flex items-center gap-2">
           <UIcon name="i-heroicons-computer-desktop" class="w-4 h-4 text-gray-500" />
@@ -254,38 +209,26 @@
         </div>
       </template>
       <form class="space-y-4" @submit.prevent="savePosSettings">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Low Stock Warning Threshold</label>
-            <input v-model.number="posSettings.low_stock_threshold" type="number" min="1"
-              class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm" />
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Default Payment Method</label>
-            <select v-model="posSettings.default_payment_method" class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm">
-              <option value="CASH">Cash</option>
-              <option value="CARD">Card</option>
-              <option value="BAKONG">Bakong</option>
-              <option value="KHQR">KHQR</option>
-            </select>
-          </div>
-          <div class="md:col-span-2 flex items-center gap-2">
-            <input v-model="posSettings.require_customer" type="checkbox" id="req-customer" class="rounded" />
-            <label for="req-customer" class="text-sm text-gray-700 dark:text-gray-300">Require customer selection on POS sales</label>
-          </div>
-          <div class="md:col-span-2 flex items-center gap-2">
-            <input v-model="posSettings.print_receipt_on_complete" type="checkbox" id="auto-receipt" class="rounded" />
-            <label for="auto-receipt" class="text-sm text-gray-700 dark:text-gray-300">Auto-print receipt on sale completion</label>
-          </div>
+        <FormSection :columns="2">
+          <FormField label="Low Stock Warning Threshold">
+            <BaseInput v-model="posSettings.low_stock_threshold" type="number" :min="1" />
+          </FormField>
+          <FormField label="Default Payment Method">
+            <BaseSelect v-model="posSettings.default_payment_method" :options="paymentMethodOptions" />
+          </FormField>
+        </FormSection>
+        <div class="space-y-2">
+          <Checkbox v-model="posSettings.require_customer" label="Require customer selection on POS sales" />
+          <Checkbox v-model="posSettings.print_receipt_on_complete" label="Auto-print receipt on sale completion" />
         </div>
-        <div class="flex justify-end">
-          <AppButton type="submit" variant="primary" label="Save POS Settings" :loading="savingPos" />
-        </div>
+        <FormActions>
+          <BaseButton type="submit" variant="primary" label="Save POS Settings" :loading="savingPos" />
+        </FormActions>
       </form>
-    </AppCard>
+    </DataCard>
 
     <!-- External Integrations & Payment Gateways Hub -->
-    <AppCard>
+    <DataCard>
       <template #header>
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
@@ -295,7 +238,7 @@
               <p class="text-xs text-gray-500">Database-backed credentials for ABA PayWay, Telegram notification bots, and outbound alert channels</p>
             </div>
           </div>
-          <AppButton size="sm" variant="primary" label="Open Integrations Hub" icon="i-heroicons-arrow-top-right-on-square" to="/settings/integrations" />
+          <BaseButton size="sm" variant="primary" label="Open Integrations Hub" icon="i-heroicons-arrow-top-right-on-square" to="/settings/integrations" />
         </div>
       </template>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
@@ -307,7 +250,7 @@
               <p class="text-[11px] text-gray-500">KHQR, merchant credentials, sandbox/live endpoints</p>
             </div>
           </div>
-          <AppButton size="sm" variant="ghost" label="Configure" to="/settings/integrations" />
+          <BaseButton size="sm" variant="ghost" label="Configure" to="/settings/integrations" />
         </div>
         <div class="p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 flex items-center justify-between">
           <div class="flex items-center gap-2.5">
@@ -317,20 +260,20 @@
               <p class="text-[11px] text-gray-500">Bots, alert channels, topic threads, and test pings</p>
             </div>
           </div>
-          <AppButton size="sm" variant="ghost" label="Manage" to="/settings/integrations" />
+          <BaseButton size="sm" variant="ghost" label="Manage" to="/settings/integrations" />
         </div>
       </div>
-    </AppCard>
+    </DataCard>
 
     <!-- Telegram Notification Integration -->
-    <AppCard>
+    <DataCard>
       <template #header>
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
             <UIcon name="i-heroicons-paper-airplane" class="w-4 h-4 text-gray-500" />
             <h3 class="font-semibold text-gray-900 dark:text-white text-sm">Telegram Bot Notifications</h3>
           </div>
-          <AppButton size="sm" variant="ghost" label="Refresh Bots" icon="i-heroicons-arrow-path" @click="loadTelegramAndLogs" />
+          <BaseButton size="sm" variant="ghost" label="Refresh Bots" icon="i-heroicons-arrow-path" @click="loadTelegramAndLogs" />
         </div>
       </template>
 
@@ -352,16 +295,12 @@
 
         <form class="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2" @submit.prevent="handleSendTestTelegram">
           <div class="md:col-span-2">
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Test Alert Message</label>
-            <input
-              v-model="testTelegramMessage"
-              type="text"
-              placeholder="Store alert test message..."
-              class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
-            >
+            <FormField label="Test Alert Message">
+              <BaseInput v-model="testTelegramMessage" placeholder="Store alert test message..." />
+            </FormField>
           </div>
           <div class="flex items-end">
-            <AppButton
+            <BaseButton
               type="submit"
               variant="secondary"
               label="Send Test Alert"
@@ -371,10 +310,10 @@
           </div>
         </form>
       </div>
-    </AppCard>
+    </DataCard>
 
     <!-- System & API Traffic Logs -->
-    <AppCard>
+    <DataCard>
       <template #header>
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-2">
@@ -382,41 +321,31 @@
             <h3 class="font-semibold text-gray-900 dark:text-white text-sm">Recent API &amp; System Traffic Logs</h3>
           </div>
           <div class="flex items-center gap-2">
-            <AppButton size="sm" variant="ghost" label="Domain Audit Trail" to="/audit-logs" />
-            <AppButton size="sm" variant="secondary" label="Refresh" icon="i-heroicons-arrow-path" @click="loadTelegramAndLogs" />
+            <BaseButton size="sm" variant="ghost" label="Domain Audit Trail" to="/audit-logs" />
+            <BaseButton size="sm" variant="secondary" label="Refresh" icon="i-heroicons-arrow-path" @click="loadTelegramAndLogs" />
           </div>
         </div>
       </template>
 
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs">
-          <thead>
-            <tr class="border-b border-gray-200 dark:border-gray-700 text-gray-500">
-              <th class="py-2 px-2">Method</th>
-              <th class="py-2 px-2">Path</th>
-              <th class="py-2 px-2">Status</th>
-              <th class="py-2 px-2">Latency</th>
-              <th class="py-2 px-2">Client IP</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-            <tr v-for="log in systemLogs" :key="log.id" class="text-gray-700 dark:text-gray-300">
-              <td class="py-2 px-2 font-mono font-semibold">{{ log.method }}</td>
-              <td class="py-2 px-2 font-mono">{{ log.path }}</td>
-              <td class="py-2 px-2 font-mono">{{ log.response_code }}</td>
-              <td class="py-2 px-2 font-mono">{{ log.process_time_ms != null ? `${Number(log.process_time_ms).toFixed(1)} ms` : '-' }}</td>
-              <td class="py-2 px-2 font-mono text-gray-500">{{ log.client_ip || '-' }}</td>
-            </tr>
-            <tr v-if="systemLogs.length === 0">
-              <td colspan="5" class="py-4 text-center text-gray-400">No system traffic logs recorded yet</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </AppCard>
+      <DataTable
+        :columns="logColumns"
+        :rows="systemLogs"
+        row-key="id"
+        empty-title="No system traffic logs recorded yet"
+        empty-icon="i-heroicons-command-line"
+      >
+        <template #cell-method="{ row }"><span class="font-mono font-semibold">{{ row.method }}</span></template>
+        <template #cell-path="{ row }"><span class="font-mono">{{ row.path }}</span></template>
+        <template #cell-response_code="{ row }"><span class="font-mono">{{ row.response_code }}</span></template>
+        <template #cell-process_time_ms="{ row }">
+          <span class="font-mono">{{ row.process_time_ms != null ? `${Number(row.process_time_ms).toFixed(1)} ms` : '-' }}</span>
+        </template>
+        <template #cell-client_ip="{ row }"><span class="font-mono">{{ row.client_ip || '-' }}</span></template>
+      </DataTable>
+    </DataCard>
 
     <!-- Account Security / Change Password -->
-    <AppCard>
+    <DataCard>
       <template #header>
         <div class="flex items-center gap-2">
           <UIcon name="i-heroicons-lock-closed" class="w-4 h-4 text-gray-500" />
@@ -424,48 +353,25 @@
         </div>
       </template>
       <form class="space-y-4" @submit.prevent="handleChangePassword">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label class="block text-xs font-medium text-gray-700 mb-1">Current Password *</label>
-            <input
-              v-model="passwordForm.current_password"
-              type="password"
-              required
-              placeholder="Current password"
-              class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
-            />
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-700 mb-1">New Password (min 8 chars) *</label>
-            <input
-              v-model="passwordForm.new_password"
-              type="password"
-              minlength="8"
-              required
-              placeholder="New password"
-              class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
-            />
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-700 mb-1">Confirm New Password *</label>
-            <input
-              v-model="passwordForm.confirm_password"
-              type="password"
-              minlength="8"
-              required
-              placeholder="Confirm new password"
-              class="w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm"
-            />
-          </div>
-        </div>
-        <div class="flex justify-end">
-          <AppButton type="submit" variant="primary" label="Update Password" :loading="changingPassword" />
-        </div>
+        <FormSection :columns="3">
+          <FormField label="Current Password" required>
+            <BaseInput v-model="passwordForm.current_password" type="password" required placeholder="Current password" autocomplete="current-password" />
+          </FormField>
+          <FormField label="New Password (min 8 chars)" required>
+            <BaseInput v-model="passwordForm.new_password" type="password" :minlength="8" required placeholder="New password" autocomplete="new-password" />
+          </FormField>
+          <FormField label="Confirm New Password" required>
+            <BaseInput v-model="passwordForm.confirm_password" type="password" :minlength="8" required placeholder="Confirm new password" autocomplete="new-password" />
+          </FormField>
+        </FormSection>
+        <FormActions>
+          <BaseButton type="submit" variant="primary" label="Update Password" :loading="changingPassword" />
+        </FormActions>
       </form>
-    </AppCard>
+    </DataCard>
 
     <!-- Danger Zone -->
-    <AppCard>
+    <DataCard>
       <template #header>
         <div class="flex items-center gap-2">
           <UIcon name="i-heroicons-exclamation-triangle" class="w-4 h-4 text-red-600 dark:text-red-400" />
@@ -478,19 +384,19 @@
             <p class="text-sm font-medium text-gray-900 dark:text-white">Clear Transaction History</p>
             <p class="text-xs text-gray-500">Permanently delete all sales records. This cannot be undone.</p>
           </div>
-          <AppButton variant="danger" size="sm" label="Clear History" @click="confirmDanger('clear_history')" />
+          <BaseButton variant="danger" size="sm" label="Clear History" @click="confirmDanger('clear_history')" />
         </div>
         <div class="flex items-center justify-between p-3 bg-red-50 dark:bg-red-950/30 rounded-lg">
           <div>
             <p class="text-sm font-medium text-gray-900 dark:text-white">Reset Inventory to Zero</p>
             <p class="text-xs text-gray-500">Set all stock levels to 0 for a fresh count.</p>
           </div>
-          <AppButton variant="danger" size="sm" label="Reset Stock" @click="confirmDanger('reset_stock')" />
+          <BaseButton variant="danger" size="sm" label="Reset Stock" @click="confirmDanger('reset_stock')" />
         </div>
       </div>
-    </AppCard>
+    </DataCard>
 
-    <AppConfirmDialog
+    <ConfirmDialog
       v-model="showDangerConfirm"
       :title="dangerAction === 'clear_history' ? 'Clear Transaction History' : 'Reset Inventory to Zero'"
       :description="dangerAction === 'clear_history' ? 'Are you sure you want to permanently delete ALL sales history?' : 'Are you sure you want to set ALL stock levels to zero?'"
@@ -505,6 +411,32 @@
 <script setup lang="ts">
 definePageMeta({ middleware: ['auth'] })
 
+const branchSelectOptions = computed(() => branchesList.value.map((b: any) => ({ value: b.id, label: b.name })))
+
+const logColumns = [
+  { key: 'method', label: 'Method' },
+  { key: 'path', label: 'Path' },
+  { key: 'response_code', label: 'Status' },
+  { key: 'process_time_ms', label: 'Latency' },
+  { key: 'client_ip', label: 'Client IP' },
+]
+const currencyOptions = [
+  { value: 'USD', label: 'USD - US Dollar' },
+  { value: 'KHR', label: 'KHR - Cambodian Riel' },
+  { value: 'EUR', label: 'EUR - Euro' },
+]
+const roundingOptions = [
+  { value: 'none', label: 'No rounding' },
+  { value: 'round', label: 'Round to nearest' },
+  { value: 'ceil', label: 'Always round up' },
+  { value: 'floor', label: 'Always round down' },
+]
+const paymentMethodOptions = [
+  { value: 'CASH', label: 'Cash' },
+  { value: 'CARD', label: 'Card' },
+  { value: 'BAKONG', label: 'Bakong' },
+  { value: 'KHQR', label: 'KHQR' },
+]
 const toast = useAppToast()
 const { apiFetch } = useApi()
 const branchApi = useBranchApi()

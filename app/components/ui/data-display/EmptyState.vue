@@ -7,7 +7,7 @@
     <p v-if="description" class="app-empty-state__desc">{{ description }}</p>
     <div v-if="$slots.default || actionLabel" class="app-empty-state__action">
       <slot>
-        <AppButton
+        <BaseButton
           v-if="actionLabel"
           size="sm"
           variant="primary"

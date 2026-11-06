@@ -146,12 +146,11 @@
           <label class="field-label">
             Description
           </label>
-          <textarea
-            v-model="form.description"
-            rows="3"
-            placeholder="Brand origin, target demographic, manufacturing quality notes..."
-            class="field-input field-textarea"
-          />
+          <AppTextarea
+          v-model="form.description"
+          rows="3"
+          placeholder="Brand origin, target demographic, manufacturing quality notes..."
+        />
         </div>
 
         <div class="form-field">
@@ -203,7 +202,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useCatalogApi } from '~/composables/useApi'
 import { useAppToast } from '~/composables/useAppToast'
 import type { Brand } from '~/types'
-import type { FilterChipItem } from '~/components/AppFilterBar.vue'
+import type { FilterChipItem } from '~/types'
 
 definePageMeta({ middleware: ['auth'] })
 useHead({ title: 'Brands — Clothing Store Admin' })

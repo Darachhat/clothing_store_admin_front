@@ -1,14 +1,14 @@
 <template>
   <div class="page-root">
     <!-- Header -->
-    <AppPageHeader
+    <PageHeader
       title="Content &amp; Language CMS"
       description="Manage system-wide UI translations across 5 languages backed by PostgreSQL and Redis sub-millisecond cache."
       :breadcrumbs="[{ label: 'System Settings', to: '/settings' }, { label: 'Translations CMS' }]"
       back-to="/settings"
     >
       <template #actions>
-        <AppButton
+        <BaseButton
           variant="default"
           size="sm"
           icon="i-heroicons-arrow-path"
@@ -16,7 +16,7 @@
           :loading="isPurging"
           @click="handlePurgeCache"
         />
-        <AppButton
+        <BaseButton
           variant="default"
           size="sm"
           icon="i-heroicons-sparkles"
@@ -24,7 +24,7 @@
           :loading="isReseeding"
           @click="handleReseed"
         />
-        <AppButton
+        <BaseButton
           variant="primary"
           size="sm"
           icon="i-heroicons-plus"
@@ -32,11 +32,11 @@
           @click="openCreateModal"
         />
       </template>
-    </AppPageHeader>
+    </PageHeader>
 
     <!-- Quick Stats -->
     <div class="kpi-grid">
-      <AppStatCard
+      <StatCard
         label="Total Translation Keys"
         :value="totalItems"
         sublabel="Database dictionary entries"
@@ -44,21 +44,21 @@
         tone="primary"
         :loading="loading"
       />
-      <AppStatCard
+      <StatCard
         label="Supported Locales"
         value="5 Languages"
         sublabel="EN, KM, CN, JP, KR"
         icon="i-heroicons-globe-alt"
         tone="info"
       />
-      <AppStatCard
+      <StatCard
         label="Active Schema"
         :value="schemaFilter || 'All Schemas'"
         sublabel="Current filter scope"
         icon="i-heroicons-squares-2x2"
         tone="neutral"
       />
-      <AppStatCard
+      <StatCard
         label="Redis Cache"
         value="Synchronized"
         sublabel="Sub-millisecond lookup"
@@ -68,433 +68,143 @@
     </div>
 
     <!-- Filters & Search Toolbar -->
-    <div class="flex flex-col sm:flex-row items-center gap-3">
-      <div class="relative flex-1 w-full">
-        <UIcon name="i-heroicons-magnifying-glass" class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-        <input
-          v-model="searchQuery"
-          type="text"
-          placeholder="Search by key, section, English, Khmer, Chinese, Japanese, Korean..."
-          class="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-gray-400"
-          @keyup.enter="fetchItems"
-        />
-      </div>
-
-      <AppSelect
+    <FilterBar
+      v-model:search="searchQuery"
+      search-placeholder="Search by key, section, English, Khmer, Chinese, Japanese, Korean..."
+      :total-count="totalItems"
+      count-label="keys"
+      @submit="onFilterChange"
+    >
+      <BaseSelect
         v-model="schemaFilter"
-        :options="[
-          { label: 'All Schemas', value: '' },
-          { label: 'admin_front', value: 'admin_front' },
-          { label: 'pos', value: 'pos' },
-          { label: 'web_store', value: 'web_store' },
-          { label: 'common', value: 'common' },
-        ]"
+        :options="schemaOptions"
         class="w-full sm:w-40"
-        @change="fetchItems"
+        @change="onFilterChange"
       />
-
-      <AppSelect
+      <BaseSelect
         v-model="statusFilter"
-        :options="[
-          { label: 'All Statuses', value: '' },
-          { label: 'ACTIVE', value: 'ACTIVE' },
-          { label: 'INACTIVE', value: 'INACTIVE' },
-        ]"
+        :options="statusOptions"
         class="w-full sm:w-36"
-        @change="fetchItems"
+        @change="onFilterChange"
       />
-
-      <AppButton
-        variant="ghost"
-        icon="i-heroicons-x-mark"
-        label="Reset"
-        @click="resetFilters"
-      />
-    </div>
+      <BaseButton variant="ghost" size="sm" icon="i-heroicons-x-mark" label="Reset" @click="resetFilters" />
+    </FilterBar>
 
     <!-- Translation Content Table -->
-    <AppCard :no-pad="true">
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-sm text-gray-700 dark:text-gray-300">
-          <thead class="bg-gray-50 dark:bg-gray-800/60 text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider border-b border-gray-200 dark:border-gray-700">
-            <tr>
-              <th scope="col" class="px-4 py-3 min-w-[200px]">Content Key</th>
-              <th scope="col" class="px-3 py-3 min-w-[160px]">
-                <div class="flex items-center gap-1.5">
-                  <span class="px-1.5 py-0.5 rounded font-mono text-[10px] font-bold bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">EN</span>
-                  <span>English</span>
-                </div>
-              </th>
-              <th scope="col" class="px-3 py-3 min-w-[160px]">
-                <div class="flex items-center gap-1.5">
-                  <span class="px-1.5 py-0.5 rounded font-mono text-[10px] font-bold bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">KM</span>
-                  <span>Khmer</span>
-                </div>
-              </th>
-              <th scope="col" class="px-3 py-3 min-w-[140px]">
-                <div class="flex items-center gap-1.5">
-                  <span class="px-1.5 py-0.5 rounded font-mono text-[10px] font-bold bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">CN</span>
-                  <span>Chinese</span>
-                </div>
-              </th>
-              <th scope="col" class="px-3 py-3 min-w-[140px]">
-                <div class="flex items-center gap-1.5">
-                  <span class="px-1.5 py-0.5 rounded font-mono text-[10px] font-bold bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">JP</span>
-                  <span>Japanese</span>
-                </div>
-              </th>
-              <th scope="col" class="px-3 py-3 min-w-[140px]">
-                <div class="flex items-center gap-1.5">
-                  <span class="px-1.5 py-0.5 rounded font-mono text-[10px] font-bold bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">KR</span>
-                  <span>Korean</span>
-                </div>
-              </th>
-              <th scope="col" class="px-3 py-3 min-w-[90px]">Status</th>
-              <th scope="col" class="px-4 py-3 text-right min-w-[100px]">Actions</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
-            <!-- Loading Skeletons -->
-            <tr v-if="loading" v-for="i in 8" :key="`skeleton-${i}`" class="animate-pulse">
-              <td class="px-4 py-3"><div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-32" /></td>
-              <td class="px-3 py-3"><div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24" /></td>
-              <td class="px-3 py-3"><div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-28" /></td>
-              <td class="px-3 py-3"><div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20" /></td>
-              <td class="px-3 py-3"><div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20" /></td>
-              <td class="px-3 py-3"><div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20" /></td>
-              <td class="px-3 py-3"><div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-14" /></td>
-              <td class="px-4 py-3 text-right"><div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16 ml-auto" /></td>
-            </tr>
-
-            <!-- Empty State -->
-            <tr v-else-if="items.length === 0">
-              <td colspan="8" class="px-4 py-12 text-center text-gray-500 dark:text-gray-400">
-                <UIcon name="i-heroicons-inbox" class="w-10 h-10 mx-auto text-gray-400 mb-2" />
-                <div class="text-sm font-medium">No translation keys found</div>
-                <div class="text-xs text-gray-400 mt-1">Try adjusting your search or filters, or add a new key.</div>
-              </td>
-            </tr>
-
-            <!-- Table Rows -->
-            <tr
-              v-else
-              v-for="item in items"
-              :key="item.id"
-              class="hover:bg-gray-50/75 dark:hover:bg-gray-800/40 transition-colors"
-            >
-              <!-- Content Key -->
-              <td class="px-4 py-3">
-                <div class="flex items-center gap-2">
-                  <div>
-                    <div class="font-mono text-xs font-semibold text-gray-900 dark:text-white flex items-center gap-1.5">
-                      <span>{{ item.table_name }}.{{ item.column_name }}</span>
-                    </div>
-                    <div class="flex items-center gap-1.5 mt-0.5">
-                      <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700">
-                        {{ item.schema_name }}
-                      </span>
-                      <span v-if="item.note" class="text-[11px] text-gray-400 truncate max-w-[140px]" :title="item.note">
-                        {{ item.note }}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </td>
-
-              <!-- English -->
-              <td class="px-3 py-3">
-                <span class="text-xs text-gray-900 dark:text-white font-medium break-words">
-                  {{ item.en || '—' }}
-                </span>
-              </td>
-
-              <!-- Khmer -->
-              <td class="px-3 py-3">
-                <span class="text-xs text-gray-900 dark:text-white font-medium break-words">
-                  {{ item.km || '—' }}
-                </span>
-              </td>
-
-              <!-- Chinese -->
-              <td class="px-3 py-3">
-                <span class="text-xs text-gray-800 dark:text-gray-200 break-words">
-                  {{ item.cn || '—' }}
-                </span>
-              </td>
-
-              <!-- Japanese -->
-              <td class="px-3 py-3">
-                <span class="text-xs text-gray-800 dark:text-gray-200 break-words">
-                  {{ item.jp || '—' }}
-                </span>
-              </td>
-
-              <!-- Korean -->
-              <td class="px-3 py-3">
-                <span class="text-xs text-gray-800 dark:text-gray-200 break-words">
-                  {{ item.kr || '—' }}
-                </span>
-              </td>
-
-              <!-- Status -->
-              <td class="px-3 py-3">
-                <AppBadge :color="item.status_code === 'ACTIVE' ? 'green' : 'default'">
-                  {{ item.status_code || 'ACTIVE' }}
-                </AppBadge>
-              </td>
-
-              <!-- Actions -->
-              <td class="px-4 py-3 text-right">
-                <div class="flex items-center justify-end gap-1">
-                  <button
-                    type="button"
-                    class="p-1.5 text-gray-500 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
-                    title="Edit Translation"
-                    @click="openEditModal(item)"
-                  >
-                    <UIcon name="i-heroicons-pencil-square" class="w-4 h-4" />
-                  </button>
-                  <button
-                    type="button"
-                    class="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20 rounded transition-colors"
-                    title="Delete Key"
-                    @click="confirmDeleteItem(item)"
-                  >
-                    <UIcon name="i-heroicons-trash" class="w-4 h-4" />
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Pagination Footer -->
-      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 px-4 py-3 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400">
-        <div class="flex items-center gap-2">
-          <span>Showing page <strong>{{ currentPage }}</strong> of <strong>{{ totalPages }}</strong> ({{ totalItems }} items total)</span>
+    <DataTable
+      :columns="columns"
+      :rows="items"
+      row-key="id"
+      :loading="loading"
+      empty-title="No translation keys found"
+      empty-text="Try adjusting your search or filters, or add a new key."
+      empty-icon="i-heroicons-inbox"
+    >
+      <template #cell-key="{ row }">
+        <div class="tr-key">
+          <span class="tr-key__name">{{ row.table_name }}.{{ row.column_name }}</span>
+          <div class="tr-key__meta">
+            <StatusBadge status="DEFAULT" :label="row.schema_name" />
+            <span v-if="row.note" class="tr-key__note" :title="row.note">{{ row.note }}</span>
+          </div>
         </div>
-        <div class="flex items-center gap-2">
-          <AppButton
-            variant="ghost"
-            size="sm"
-            icon="i-heroicons-chevron-left"
-            label="Previous"
-            :disabled="currentPage <= 1 || loading"
-            @click="changePage(currentPage - 1)"
-          />
-          <AppButton
-            variant="ghost"
-            size="sm"
-            icon="i-heroicons-chevron-right"
-            label="Next"
-            :disabled="currentPage >= totalPages || loading"
-            @click="changePage(currentPage + 1)"
-          />
+      </template>
+      <template #cell-en="{ row }">{{ row.en || '—' }}</template>
+      <template #cell-km="{ row }">{{ row.km || '—' }}</template>
+      <template #cell-cn="{ row }">{{ row.cn || '—' }}</template>
+      <template #cell-jp="{ row }">{{ row.jp || '—' }}</template>
+      <template #cell-kr="{ row }">{{ row.kr || '—' }}</template>
+      <template #cell-status_code="{ row }">
+        <StatusBadge :status="row.status_code || 'ACTIVE'" :label="row.status_code || 'ACTIVE'" />
+      </template>
+      <template #cell-actions="{ row }">
+        <div class="tr-actions">
+          <IconButton icon="i-heroicons-pencil-square" label="Edit Translation" @click="openEditModal(row)" />
+          <IconButton icon="i-heroicons-trash" label="Delete Key" variant="danger" @click="confirmDeleteItem(row)" />
         </div>
-      </div>
-    </AppCard>
+      </template>
+      <template #footer>
+        <Pagination
+          :page="currentPage"
+          :page-size="pageSize"
+          :total="totalItems"
+          @update:page="changePage"
+        />
+      </template>
+    </DataTable>
 
     <!-- Create / Edit Modal -->
-    <AppModal
+    <BaseModal
       v-model="showModal"
       :title="isEditing ? 'Edit Content Translation' : 'Add New Content Key'"
       size="lg"
     >
       <form class="space-y-4" @submit.prevent="handleSubmit">
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          <div>
-            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-              Schema <span class="text-red-500">*</span>
-            </label>
-            <input
-              v-model="form.schema_name"
-              type="text"
-              required
-              placeholder="e.g. admin_front"
-              class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-gray-400"
-            />
+        <FormSection :columns="3">
+          <FormField label="Schema" required>
+            <BaseInput v-model="form.schema_name" required placeholder="e.g. admin_front" />
+          </FormField>
+          <FormField label="Section / Table" required>
+            <BaseInput v-model="form.table_name" required placeholder="e.g. nav, common, product" />
+          </FormField>
+          <FormField label="Key / Column" required>
+            <BaseInput v-model="form.column_name" required placeholder="e.g. settings_btn, title" />
+          </FormField>
+        </FormSection>
+
+        <FormField label="Translator Note / Context Description">
+          <BaseInput v-model="form.note" placeholder="e.g. Label displayed on the topbar navigation button" />
+        </FormField>
+
+        <FormSection title="Localized Content (5 Languages)" bordered>
+          <FormField label="English (en)" required>
+            <BaseInput v-model="form.en" required placeholder="English translation text" />
+          </FormField>
+          <FormField label="Khmer / ភាសាខ្មែរ (km)" required>
+            <BaseInput v-model="form.km" required placeholder="អត្ថបទជាភាសាខ្មែរ" />
+          </FormField>
+          <div class="tr-lang-grid">
+            <FormField label="Chinese / 中文 (cn)">
+              <BaseInput v-model="form.cn" placeholder="中文翻译" />
+            </FormField>
+            <FormField label="Japanese / 日本語 (jp)">
+              <BaseInput v-model="form.jp" placeholder="日本語の翻訳" />
+            </FormField>
+            <FormField label="Korean / 한국어 (kr)">
+              <BaseInput v-model="form.kr" placeholder="한국어 번역" />
+            </FormField>
           </div>
+        </FormSection>
 
-          <div>
-            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-              Section / Table <span class="text-red-500">*</span>
-            </label>
-            <input
-              v-model="form.table_name"
-              type="text"
-              required
-              placeholder="e.g. nav, common, product"
-              class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-gray-400"
-            />
-          </div>
+        <FormField label="Status">
+          <BaseSelect v-model="form.status_code" :options="formStatusOptions" />
+        </FormField>
 
-          <div>
-            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-              Key / Column <span class="text-red-500">*</span>
-            </label>
-            <input
-              v-model="form.column_name"
-              type="text"
-              required
-              placeholder="e.g. settings_btn, title"
-              class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-gray-400"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-            Translator Note / Context Description
-          </label>
-          <input
-            v-model="form.note"
-            type="text"
-            placeholder="e.g. Label displayed on the topbar navigation button"
-            class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-gray-400"
-          />
-        </div>
-
-        <!-- Multi-language fields -->
-        <div class="space-y-3 pt-2 border-t border-gray-200 dark:border-gray-700">
-          <div class="text-xs font-bold text-gray-900 dark:text-white uppercase tracking-wider">
-            Localized Content (5 Languages)
-          </div>
-
-          <div>
-            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1.5">
-              <span class="px-1.5 py-0.5 rounded font-mono text-[10px] font-bold bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">EN</span>
-              <span>English (en) <span class="text-red-500">*</span></span>
-            </label>
-            <input
-              v-model="form.en"
-              type="text"
-              required
-              placeholder="English translation text"
-              class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-gray-400"
-            />
-          </div>
-
-          <div>
-            <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1.5">
-              <span class="px-1.5 py-0.5 rounded font-mono text-[10px] font-bold bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">KM</span>
-              <span>Khmer / ភាសាខ្មែរ (km) <span class="text-red-500">*</span></span>
-            </label>
-            <input
-              v-model="form.km"
-              type="text"
-              required
-              placeholder="អត្ថបទជាភាសាខ្មែរ"
-              class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-gray-400"
-            />
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
-              <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1.5">
-                <span class="px-1.5 py-0.5 rounded font-mono text-[10px] font-bold bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">CN</span>
-                <span>Chinese / 中文 (cn)</span>
-              </label>
-              <input
-                v-model="form.cn"
-                type="text"
-                placeholder="中文翻译"
-                class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-gray-400"
-              />
-            </div>
-
-            <div>
-              <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1.5">
-                <span class="px-1.5 py-0.5 rounded font-mono text-[10px] font-bold bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">JP</span>
-                <span>Japanese / 日本語 (jp)</span>
-              </label>
-              <input
-                v-model="form.jp"
-                type="text"
-                placeholder="日本語の翻訳"
-                class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-gray-400"
-              />
-            </div>
-
-            <div>
-              <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1.5">
-                <span class="px-1.5 py-0.5 rounded font-mono text-[10px] font-bold bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">KR</span>
-                <span>Korean / 한국어 (kr)</span>
-              </label>
-              <input
-                v-model="form.kr"
-                type="text"
-                placeholder="한국어 번역"
-                class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-gray-400"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div class="pt-2">
-          <label class="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
-            Status
-          </label>
-          <select
-            v-model="form.status_code"
-            class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-gray-400"
-          >
-            <option value="ACTIVE">ACTIVE</option>
-            <option value="INACTIVE">INACTIVE</option>
-          </select>
-        </div>
-
-        <div class="flex justify-end gap-2.5 pt-4 border-t border-gray-200 dark:border-gray-700">
-          <AppButton
-            type="button"
-            variant="ghost"
-            label="Cancel"
-            @click="showModal = false"
-          />
-          <AppButton
+        <FormActions>
+          <BaseButton type="button" variant="ghost" label="Cancel" @click="showModal = false" />
+          <BaseButton
             type="submit"
             variant="primary"
             :loading="isSubmitting"
             :label="isEditing ? 'Save Changes' : 'Create Key'"
           />
-        </div>
+        </FormActions>
       </form>
-    </AppModal>
+    </BaseModal>
 
-    <!-- Delete Confirmation Modal -->
-    <AppModal
+    <!-- Delete Confirmation -->
+    <ConfirmDialog
       v-model="showDeleteModal"
       title="Delete Translation Key"
-      size="sm"
-    >
-      <div class="space-y-4">
-        <p class="text-sm text-gray-600 dark:text-gray-300">
-          Are you sure you want to deactivate translation key
-          <strong class="font-mono text-gray-900 dark:text-white">
-            {{ selectedItem?.table_name }}.{{ selectedItem?.column_name }}
-          </strong>?
-          The key will be marked as inactive and removed from live Redis caches.
-        </p>
-
-        <div class="flex justify-end gap-2.5 pt-2 border-t border-gray-200 dark:border-gray-700">
-          <AppButton
-            variant="ghost"
-            label="Cancel"
-            @click="showDeleteModal = false"
-          />
-          <AppButton
-            variant="primary"
-            label="Deactivate Key"
-            class="bg-red-600 hover:bg-red-700 text-white"
-            :loading="isDeleting"
-            @click="handleDeleteItem"
-          />
-        </div>
-      </div>
-    </AppModal>
+      :message="`Are you sure you want to deactivate translation key ${selectedItem?.table_name}.${selectedItem?.column_name}?`"
+      consequence="The key will be marked as inactive and removed from live Redis caches."
+      confirm-label="Deactivate Key"
+      variant="danger"
+      :loading="isDeleting"
+      @confirm="handleDeleteItem"
+    />
   </div>
 </template>
-
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { useTranslationsApi } from '~/composables/useApi'
@@ -757,5 +467,44 @@ async function handleReseed() {
 onMounted(() => {
   fetchItems()
 })
+
+const columns = [
+  { key: 'key', label: 'Content Key' },
+  { key: 'en', label: 'English (EN)' },
+  { key: 'km', label: 'Khmer (KM)' },
+  { key: 'cn', label: 'Chinese (CN)' },
+  { key: 'jp', label: 'Japanese (JP)' },
+  { key: 'kr', label: 'Korean (KR)' },
+  { key: 'status_code', label: 'Status' },
+  { key: 'actions', label: 'Actions', align: 'right' as const },
+]
+
+const schemaOptions = [
+  { label: 'All Schemas', value: '' },
+  { label: 'admin_front', value: 'admin_front' },
+  { label: 'pos', value: 'pos' },
+  { label: 'web_store', value: 'web_store' },
+  { label: 'common', value: 'common' },
+]
+const statusOptions = [
+  { label: 'All Statuses', value: '' },
+  { label: 'ACTIVE', value: 'ACTIVE' },
+  { label: 'INACTIVE', value: 'INACTIVE' },
+]
+const formStatusOptions = statusOptions.slice(1)
+
+function onFilterChange() {
+  currentPage.value = 1
+  fetchItems()
+}
 </script>
 
+
+<style scoped>
+.tr-key { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.tr-key__name { font-family: var(--font-mono); font-size: 12px; font-weight: 600; color: var(--text-primary, #0f172a); }
+.tr-key__meta { display: flex; align-items: center; gap: 6px; }
+.tr-key__note { font-size: 11px; color: var(--text-tertiary, #64748b); max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tr-actions { display: flex; justify-content: flex-end; gap: 4px; }
+.tr-lang-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+</style>

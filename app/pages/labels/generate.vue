@@ -1,19 +1,14 @@
 <template>
   <div class="page-root">
     <!-- Header (no-print) -->
-    <div class="page-header no-print">
-      <div class="page-header__left">
-        <NuxtLink to="/labels" class="back-link">
-          <UIcon name="i-heroicons-arrow-left" class="w-3.5 h-3.5" />
-          Labels &amp; Barcodes
-        </NuxtLink>
-        <h2 class="page-title kh-text">បោះពុម្ពស្លាកទំនិញ &bull; Product Sticker &amp; Label Studio</h2>
-        <p class="page-subtitle">
-          Modern Khmer garment stickers (50×30mm, 40×30mm, 60×40mm) with Code-128 barcode &amp; UTF-8 Khmer typography
-        </p>
-      </div>
-
-      <div class="page-header__actions">
+    <PageHeader
+      class="no-print"
+      title="បោះពុម្ពស្លាកទំនិញ • Product Sticker &amp; Label Studio"
+      description="Modern Khmer garment stickers (50×30mm, 40×30mm, 60×40mm) with Code-128 barcode &amp; UTF-8 Khmer typography"
+      back-to="/labels"
+      back-label="Labels &amp; Barcodes"
+    >
+      <template #actions>
         <AppButton
           variant="default"
           :loading="generating"
@@ -36,8 +31,8 @@
           </template>
           <span class="kh-text">បោះពុម្ពស្លាកទំនិញ (Print Product Label • {{ totalLabels }})</span>
         </AppButton>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <div class="studio-grid no-print">
       <!-- Left: Variant Selector & Sticker Configuration -->
@@ -110,13 +105,7 @@
         <AppCard title="2. ជ្រើសរើសទំនិញ & ចំនួនស្លាក (Select Variants & Quantities)">
           <div class="selector-toolbar">
             <div class="search-wrap">
-              <UIcon name="i-heroicons-magnifying-glass" class="search-icon w-4 h-4" />
-              <input
-                v-model="productSearch"
-                type="text"
-                placeholder="ស្វែងរកឈ្មោះទំនិញ, SKU, barcode, ពណ៌, ទំហំ..."
-                class="search-input kh-text"
-              />
+              <SearchBar v-model="productSearch" placeholder="ស្វែងរកឈ្មោះទំនិញ, SKU, barcode, ពណ៌, ទំហំ..." />
             </div>
             <div class="toolbar-btns">
               <AppButton size="sm" variant="ghost" @click="selectAllFiltered">Select Visible</AppButton>

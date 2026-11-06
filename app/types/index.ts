@@ -165,3 +165,55 @@ export interface TranslationPurgeResult {
   status: string
   message: string
 }
+
+// ── Shared UI Component System Types ─────────────────────────────────────────
+export type ButtonVariant = 'primary' | 'secondary' | 'default' | 'outline' | 'ghost' | 'danger' | 'success' | 'link' | string
+export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg'
+
+export interface SelectOption {
+  label: string
+  value: string | number
+  disabled?: boolean
+}
+
+export interface FilterChipItem {
+  key: string
+  label: string
+  value: string
+}
+
+export interface TableColumn {
+  key: string
+  label: string
+  sortable?: boolean
+  width?: string
+  align?: 'left' | 'center' | 'right'
+  mobilePriority?: number
+  mobileHidden?: boolean
+}
+
+export interface BreadcrumbItem {
+  label: string
+  to?: string
+  icon?: string
+}
+
+export interface TabItem {
+  key: string
+  label: string
+  icon?: string
+  count?: number | string
+  disabled?: boolean
+}
+
+export interface DropdownMenuItem {
+  key?: string
+  label: string
+  icon?: string
+  to?: string
+  variant?: 'default' | 'danger'
+  disabled?: boolean
+  divider?: boolean
+  onSelect?: () => void
+}
+

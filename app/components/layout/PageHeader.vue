@@ -1,20 +1,7 @@
 <template>
   <header class="app-page-header">
     <div class="app-page-header__left">
-      <nav v-if="breadcrumbs && breadcrumbs.length" class="app-breadcrumbs" aria-label="Breadcrumb">
-        <template v-for="(crumb, idx) in breadcrumbs" :key="idx">
-          <NuxtLink v-if="crumb.to" :to="crumb.to" class="app-breadcrumb-link">
-            <UIcon v-if="crumb.icon" :name="crumb.icon" class="w-3.5 h-3.5" />
-            <span>{{ crumb.label }}</span>
-          </NuxtLink>
-          <span v-else class="app-breadcrumb-current">{{ crumb.label }}</span>
-          <UIcon
-            v-if="idx < breadcrumbs.length - 1"
-            name="i-heroicons-chevron-right"
-            class="app-breadcrumb-sep"
-          />
-        </template>
-      </nav>
+      <Breadcrumb v-if="breadcrumbs && breadcrumbs.length" :items="breadcrumbs" />
       <NuxtLink v-else-if="backTo" :to="backTo" class="back-link">
         <UIcon name="i-heroicons-arrow-left" class="w-3.5 h-3.5" />
         <span>{{ backLabel || 'Back' }}</span>
@@ -45,11 +32,7 @@
 </template>
 
 <script setup lang="ts">
-export interface BreadcrumbItem {
-  label: string
-  to?: string
-  icon?: string
-}
+import type { BreadcrumbItem } from '~/types'
 
 defineProps<{
   title: string

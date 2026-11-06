@@ -1,26 +1,17 @@
 <template>
   <div class="app-filter-bar">
     <div class="app-filter-bar__controls">
-      <!-- Search Input -->
+      <!-- Reusable Centralized SearchBar -->
       <div v-if="searchable" class="app-filter-search">
-        <UIcon name="i-heroicons-magnifying-glass" class="app-filter-search__icon" />
-        <input
-          type="text"
-          :value="search"
+        <SearchBar
+          :model-value="search"
           :placeholder="searchPlaceholder || 'Search...'"
-          class="app-filter-search__input search-bare"
-          @input="$emit('update:search', ($event.target as HTMLInputElement).value)"
-          @keyup.enter="$emit('submit')"
+          :debounce="searchDebounce"
+          :loading="searchLoading"
+          @update:model-value="$emit('update:search', $event)"
+          @search="$emit('submit')"
+          @clear="$emit('update:search', ''); $emit('submit')"
         />
-        <button
-          v-if="search"
-          type="button"
-          class="app-filter-search__clear"
-          aria-label="Clear search"
-          @click="$emit('update:search', ''); $emit('submit')"
-        >
-          <UIcon name="i-heroicons-x-mark" class="w-3.5 h-3.5" />
-        </button>
       </div>
 
       <!-- Custom Filter Controls Slot (Supports both default slot and #filters slot) -->
@@ -40,25 +31,24 @@
       </div>
     </div>
 
-    <!-- Active Filter Chips -->
+    <!-- Active Filter Chips (Using Reusable FilterChip) -->
     <div v-if="(resolvedChips.length > 0) || hasActiveSearch" class="app-filter-chips">
       <span class="app-filter-chips__label">Active filters:</span>
 
-      <span v-if="hasActiveSearch" class="app-filter-chip">
-        <span class="app-filter-chip__key">Search:</span>
-        <span class="app-filter-chip__val">"{{ search }}"</span>
-        <button type="button" class="app-filter-chip__remove" @click="$emit('update:search', ''); $emit('submit')">
-          <UIcon name="i-heroicons-x-mark" class="w-3 h-3" />
-        </button>
-      </span>
+      <FilterChip
+        v-if="hasActiveSearch"
+        label="Search"
+        :value="`&quot;${search}&quot;`"
+        @remove="$emit('update:search', ''); $emit('submit')"
+      />
 
-      <span v-for="chip in resolvedChips" :key="chip.key" class="app-filter-chip">
-        <span class="app-filter-chip__key">{{ chip.label }}:</span>
-        <span class="app-filter-chip__val">{{ chip.value }}</span>
-        <button type="button" class="app-filter-chip__remove" @click="$emit('remove-chip', chip.key)">
-          <UIcon name="i-heroicons-x-mark" class="w-3 h-3" />
-        </button>
-      </span>
+      <FilterChip
+        v-for="chip in resolvedChips"
+        :key="chip.key"
+        :label="chip.label"
+        :value="chip.value"
+        @remove="$emit('remove-chip', chip.key)"
+      />
 
       <button type="button" class="app-filter-chips__clear-all" @click="$emit('clear-all')">
         Clear all
@@ -68,16 +58,16 @@
 </template>
 
 <script setup lang="ts">
-export interface FilterChipItem {
-  key: string
-  label: string
-  value: string
-}
+import type { FilterChipItem } from '~/types'
+
+export type { FilterChipItem }
 
 const props = withDefaults(defineProps<{
   search?: string
   searchable?: boolean
   searchPlaceholder?: string
+  searchDebounce?: number
+  searchLoading?: boolean
   chips?: FilterChipItem[]
   activeChips?: FilterChipItem[]
   totalCount?: number
@@ -86,6 +76,8 @@ const props = withDefaults(defineProps<{
   resultLabel?: string
 }>(), {
   searchable: true,
+  searchDebounce: 0,
+  searchLoading: false,
 })
 
 defineEmits<{
@@ -176,58 +168,6 @@ const hasActiveSearch = computed(() => Boolean(props.search && props.search.trim
   }
 }
 
-.app-filter-search__icon {
-  position: absolute;
-  left: 10px;
-  width: 15px;
-  height: 15px;
-  color: var(--text-tertiary, #64748b);
-  pointer-events: none;
-}
-
-.app-filter-search__input {
-  width: 100%;
-  height: 36px;
-  padding: 6px 30px 6px 32px;
-  font-family: var(--font-body);
-  font-size: 13px;
-  color: var(--text-primary, #0f172a);
-  background: var(--surface-inset, #f8fafc);
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  border-radius: var(--radius-md, 6px);
-  outline: none;
-  transition: border-color 0.12s, background 0.12s;
-}
-
-.app-filter-search__input:hover {
-  border-color: var(--border-default, #d1d5db);
-}
-
-.app-filter-search__input:focus {
-  border-color: var(--border-strong, #9ca3af);
-  background: var(--surface-card, #ffffff);
-}
-
-.app-filter-search__clear {
-  position: absolute;
-  right: 8px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  border-radius: var(--radius-sm, 4px);
-  border: none;
-  background: transparent;
-  color: var(--text-tertiary, #64748b);
-  cursor: pointer;
-}
-
-.app-filter-search__clear:hover {
-  color: var(--text-primary, #0f172a);
-  background: var(--surface-hover, #f1f5f9);
-}
-
 .app-filter-bar__right {
   margin-left: auto;
   display: flex;
@@ -262,44 +202,6 @@ const hasActiveSearch = computed(() => Boolean(props.search && props.search.trim
   margin-right: 2px;
 }
 
-.app-filter-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 8px;
-  border-radius: var(--radius-full, 9999px);
-  background: var(--surface-hover, #f1f5f9);
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  font-size: 11.5px;
-  color: var(--text-primary, #0f172a);
-}
-
-.app-filter-chip__key {
-  color: var(--text-tertiary, #64748b);
-  font-weight: 500;
-}
-
-.app-filter-chip__val {
-  font-weight: 600;
-}
-
-.app-filter-chip__remove {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: none;
-  color: var(--text-tertiary, #64748b);
-  cursor: pointer;
-  padding: 1px;
-  border-radius: 50%;
-}
-
-.app-filter-chip__remove:hover {
-  color: var(--text-primary, #0f172a);
-  background: var(--surface-active, #e2e8f0);
-}
-
 .app-filter-chips__clear-all {
   font-size: 11.5px;
   font-weight: 600;
@@ -315,3 +217,4 @@ const hasActiveSearch = computed(() => Boolean(props.search && props.search.trim
   color: var(--text-primary, #0f172a);
 }
 </style>
+

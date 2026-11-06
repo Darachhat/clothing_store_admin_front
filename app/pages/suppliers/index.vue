@@ -85,33 +85,33 @@
       <form class="form-grid" @submit.prevent="handleSubmit">
         <div class="form-field">
           <label class="field-label">Company Name <span class="required">*</span></label>
-          <input v-model="form.name" type="text" required placeholder="e.g. Alpha Garment Co." class="field-input" />
+          <AppInput v-model="form.name" type="text" required placeholder="e.g. Alpha Garment Co." />
         </div>
 
         <div class="form-row">
           <div class="form-field">
             <label class="field-label">Contact Person</label>
-            <input v-model="form.contact_person" type="text" placeholder="Sales representative name" class="field-input" />
+            <AppInput v-model="form.contact_person" type="text" placeholder="Sales representative name" />
           </div>
           <div class="form-field">
             <label class="field-label">Phone</label>
-            <input v-model="form.phone" type="tel" placeholder="+855 23 ..." class="field-input" />
+            <AppInput v-model="form.phone" type="tel" placeholder="+855 23 ..." />
           </div>
         </div>
 
         <div class="form-field">
           <label class="field-label">Email</label>
-          <input v-model="form.email" type="email" placeholder="supplier@example.com" class="field-input" />
+          <AppInput v-model="form.email" type="email" placeholder="supplier@example.com" />
         </div>
 
         <div class="form-field">
           <label class="field-label">Address</label>
-          <textarea v-model="form.address" rows="2" placeholder="Full address" class="field-input field-textarea" />
+          <AppTextarea v-model="form.address" rows="2" placeholder="Full address" />
         </div>
 
         <div class="form-field">
           <label class="field-label">Notes</label>
-          <input v-model="form.notes" type="text" placeholder="Payment terms, lead times, etc." class="field-input" />
+          <AppInput v-model="form.notes" type="text" placeholder="Payment terms, lead times, etc." />
         </div>
 
         <div class="modal-actions">

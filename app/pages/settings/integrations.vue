@@ -1,211 +1,131 @@
 <template>
   <div class="page-root">
     <!-- Page Header -->
-    <AppPageHeader
+    <PageHeader
       title="Integrations &amp; Gateways"
       description="Manage database-stored ABA PayWay payment gateway credentials and Telegram notification bots."
-      :breadcrumbs="[{ label: 'System Settings', to: '/settings' }, { label: 'Integrations & Gateways' }]"
+      :breadcrumbs="[{ label: 'System Settings', to: '/settings' }, { label: 'Integrations &amp; Gateways' }]"
       back-to="/settings"
     >
       <template #actions>
-        <!-- Tab Switcher -->
-        <div class="inline-flex rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-1">
-          <button
-            type="button"
-            class="flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
-            :class="activeTab === 'payway' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'"
-            @click="activeTab = 'payway'"
-          >
-            <UIcon name="i-heroicons-credit-card" class="w-4 h-4" />
-            <span>ABA PayWay Gateway</span>
-          </button>
-          <button
-            type="button"
-            class="flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-colors"
-            :class="activeTab === 'telegram' ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'"
-            @click="activeTab = 'telegram'"
-          >
-            <UIcon name="i-heroicons-paper-airplane" class="w-4 h-4" />
-            <span>Telegram Notifications</span>
-          </button>
-        </div>
+        <BaseTabs v-model="activeTab" :tabs="integrationTabs" />
       </template>
-    </AppPageHeader>
+    </PageHeader>
 
-    <!-- ═══════════════════════════════════════════════════════════════════════ -->
-    <!-- TAB 1: ABA PAYWAY GATEWAY CONFIGURATION                                 -->
-    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- TAB 1: ABA PAYWAY GATEWAY CONFIGURATION -->
     <div v-show="activeTab === 'payway'" class="space-y-6">
-      <AppCard>
+      <DataCard>
         <template #header>
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
+          <div class="int-card-header">
+            <div class="int-card-header__title">
               <UIcon name="i-heroicons-credit-card" class="w-5 h-5 text-gray-500" />
               <div>
-                <h3 class="font-semibold text-gray-900 dark:text-white text-sm">ABA PayWay Payment Gateway</h3>
-                <p class="text-xs text-gray-500">Configured in auth.system and auth.credential_api_key</p>
+                <h3 class="int-card-header__h">ABA PayWay Payment Gateway</h3>
+                <p class="int-card-header__sub">Configured in auth.system and auth.credential_api_key</p>
               </div>
             </div>
-            <div class="flex items-center gap-2">
-              <AppBadge :variant="paywayForm.status_code === 'active' ? 'success' : 'default'">
-                {{ paywayForm.status_code === 'active' ? 'Active' : 'Inactive' }}
-              </AppBadge>
-              <AppButton size="sm" variant="ghost" icon="i-heroicons-arrow-path" :loading="loadingPayway" @click="loadPaywayConfig" />
+            <div class="int-card-header__actions">
+              <StatusBadge
+                :status="paywayForm.status_code === 'active' ? 'ACTIVE' : 'INACTIVE'"
+                :label="paywayForm.status_code === 'active' ? 'Active' : 'Inactive'"
+              />
+              <IconButton icon="i-heroicons-arrow-path" label="Reload configuration" :loading="loadingPayway" @click="loadPaywayConfig" />
             </div>
           </div>
         </template>
 
         <form class="space-y-5" @submit.prevent="savePaywayConfig">
           <!-- Gateway Status & Mode -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-3.5 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/40">
-            <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Gateway Status</label>
-              <select
-                v-model="paywayForm.status_code"
-                class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white"
-              >
-                <option value="active">Active (Processing Transactions)</option>
-                <option value="inactive">Inactive (Disabled)</option>
-              </select>
-            </div>
-            <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Gateway Environment</label>
-              <select
-                v-model="paywayForm.base_url"
-                class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white"
-              >
-                <option value="https://checkout-sandbox.payway.com.kh">Sandbox (https://checkout-sandbox.payway.com.kh)</option>
-                <option value="https://checkout.payway.com.kh">Production / Live (https://checkout.payway.com.kh)</option>
-              </select>
-            </div>
+          <div class="int-panel">
+            <FormSection :columns="2">
+              <FormField label="Gateway Status">
+                <BaseSelect v-model="paywayForm.status_code" :options="paywayStatusOptions" />
+              </FormField>
+              <FormField label="Gateway Environment">
+                <BaseSelect v-model="paywayForm.base_url" :options="paywayEnvOptions" />
+              </FormField>
+            </FormSection>
           </div>
 
           <!-- Merchant & Secret Keys -->
-          <div class="space-y-4">
-            <h4 class="text-xs font-semibold uppercase tracking-wider text-gray-500">Gateway API Credentials</h4>
+          <FormSection title="Gateway API Credentials" :columns="2">
+            <FormField label="PayWay Merchant ID" required>
+              <BaseInput v-model="paywayForm.merchant_id" mono required placeholder="e.g. ec479700" />
+            </FormField>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">PayWay Merchant ID</label>
-                <input
-                  v-model="paywayForm.merchant_id"
-                  type="text"
-                  placeholder="e.g. ec479700"
-                  class="w-full font-mono rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white"
-                  required
-                >
-              </div>
-
-              <div>
-                <div class="flex items-center justify-between mb-1">
-                  <label class="text-xs font-medium text-gray-700 dark:text-gray-300">Public HMAC Signing Key</label>
-                  <button
-                    type="button"
-                    class="text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 inline-flex items-center gap-1"
-                    @click="showPublicKey = !showPublicKey"
-                  >
-                    <UIcon :name="showPublicKey ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'" class="w-3.5 h-3.5" />
-                    <span>{{ showPublicKey ? 'Hide' : 'Reveal' }}</span>
+            <FormField label="Public HMAC Signing Key" required>
+              <BaseInput
+                v-model="paywayForm.public_key"
+                mono
+                required
+                :type="showPublicKey ? 'text' : 'password'"
+                placeholder="3F3C50388E2F0236777CC5E9BB90D47C35447D5B"
+              >
+                <template #trailing>
+                  <button type="button" class="int-reveal" :aria-label="showPublicKey ? 'Hide key' : 'Reveal key'" @click="showPublicKey = !showPublicKey">
+                    <UIcon :name="showPublicKey ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'" class="w-4 h-4" />
                   </button>
-                </div>
-                <input
-                  v-model="paywayForm.public_key"
-                  :type="showPublicKey ? 'text' : 'password'"
-                  placeholder="3F3C50388E2F0236777CC5E9BB90D47C35447D5B"
-                  class="w-full font-mono rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white"
-                  required
-                >
-              </div>
-            </div>
+                </template>
+              </BaseInput>
+            </FormField>
+          </FormSection>
 
-            <!-- RSA Keys Section (Collapsible) -->
-            <div class="rounded-lg border border-gray-200 dark:border-gray-700 p-3.5 space-y-3">
-              <div class="flex items-center justify-between cursor-pointer" @click="showRsaKeys = !showRsaKeys">
-                <div class="flex items-center gap-2">
-                  <UIcon name="i-heroicons-key" class="w-4 h-4 text-gray-500" />
-                  <span class="text-xs font-medium text-gray-900 dark:text-white">PayWay RSA Cryptographic Keys (Optional for standard KHQR)</span>
-                </div>
-                <UIcon :name="showRsaKeys ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down'" class="w-4 h-4 text-gray-500" />
-              </div>
+          <!-- RSA Keys Section (Collapsible) -->
+          <div class="int-panel int-panel--plain">
+            <button type="button" class="int-collapse" :aria-expanded="showRsaKeys" @click="showRsaKeys = !showRsaKeys">
+              <span class="int-collapse__title">
+                <UIcon name="i-heroicons-key" class="w-4 h-4 text-gray-500" />
+                <span>PayWay RSA Cryptographic Keys (Optional for standard KHQR)</span>
+              </span>
+              <UIcon :name="showRsaKeys ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down'" class="w-4 h-4 text-gray-500" />
+            </button>
 
-              <div v-show="showRsaKeys" class="space-y-3 pt-2 border-t border-gray-200 dark:border-gray-700">
-                <div>
-                  <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">RSA Public Key</label>
-                  <textarea
-                    v-model="paywayForm.rsa_public_key"
-                    rows="3"
-                    placeholder="MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQ..."
-                    class="w-full font-mono text-xs rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-2 text-gray-900 dark:text-white"
-                  />
-                </div>
-                <div>
-                  <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">RSA Private Key</label>
-                  <textarea
-                    v-model="paywayForm.rsa_private_key"
-                    rows="3"
-                    placeholder="MIICXAIBAAKBgQDCt4VrCyJJ9hYhA..."
-                    class="w-full font-mono text-xs rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 p-2 text-gray-900 dark:text-white"
-                  />
-                </div>
-              </div>
+            <div v-show="showRsaKeys" class="int-collapse__body">
+              <FormField label="RSA Public Key">
+                <BaseTextarea v-model="paywayForm.rsa_public_key" mono :rows="3" placeholder="MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQ..." />
+              </FormField>
+              <FormField label="RSA Private Key">
+                <BaseTextarea v-model="paywayForm.rsa_private_key" mono :rows="3" placeholder="MIICXAIBAAKBgQDCt4VrCyJJ9hYhA..." />
+              </FormField>
             </div>
           </div>
 
           <!-- Webhook & Checkout Endpoints -->
-          <div class="space-y-4 pt-2">
-            <h4 class="text-xs font-semibold uppercase tracking-wider text-gray-500">Endpoints &amp; Timers</h4>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div class="md:col-span-2">
-                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Pushback Webhook Domain (Callback Base URL)</label>
-                <input
-                  v-model="paywayForm.callback_base_url"
-                  type="url"
-                  placeholder="https://api.kimvannak.store"
-                  class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white"
+          <FormSection title="Endpoints &amp; Timers">
+            <div class="int-endpoints">
+              <div class="int-endpoints__wide">
+                <FormField
+                  label="Pushback Webhook Domain (Callback Base URL)"
+                  hint="ABA sends instant payment IPN callbacks to /api/payments/aba/pushback under this domain."
                 >
-                <p class="text-[11px] text-gray-400 mt-1">ABA sends instant payment IPN callbacks to /api/payments/aba/pushback under this domain.</p>
+                  <BaseInput v-model="paywayForm.callback_base_url" type="url" placeholder="https://api.kimvannak.store" />
+                </FormField>
               </div>
-
-              <div>
-                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">QR Expiration (Minutes)</label>
-                <input
-                  v-model.number="paywayForm.qr_lifetime_minutes"
-                  type="number"
-                  min="1"
-                  max="120"
-                  class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white"
-                >
-              </div>
-
-              <div class="md:col-span-3">
-                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Checkout Script Plugin URL</label>
-                <input
-                  v-model="paywayForm.checkout_script_url"
-                  type="text"
-                  placeholder="https://checkout.payway.com.kh/plugins/checkout2-0.js?hide-close=2"
-                  class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm font-mono text-gray-900 dark:text-white"
-                >
-              </div>
+              <FormField label="QR Expiration (Minutes)">
+                <BaseInput v-model="paywayForm.qr_lifetime_minutes" type="number" :min="1" :max="120" />
+              </FormField>
             </div>
-          </div>
+            <FormField label="Checkout Script Plugin URL">
+              <BaseInput
+                v-model="paywayForm.checkout_script_url"
+                mono
+                placeholder="https://checkout.payway.com.kh/plugins/checkout2-0.js?hide-close=2"
+              />
+            </FormField>
+          </FormSection>
 
           <!-- Test Results Display -->
-          <div
+          <InlineAlert
             v-if="testResult"
-            class="p-3.5 rounded-lg border text-xs space-y-1.5"
-            :class="testResult.is_valid ? 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/80' : 'border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800'"
+            :variant="testResult.is_valid ? 'success' : 'warning'"
+            :title="testResult.message"
           >
-            <div class="flex items-center gap-2 font-semibold" :class="testResult.is_valid ? 'text-gray-900 dark:text-white' : 'text-gray-800 dark:text-gray-200'">
-              <UIcon :name="testResult.is_valid ? 'i-heroicons-check-circle' : 'i-heroicons-exclamation-triangle'" class="w-4 h-4 text-gray-600 dark:text-gray-300" />
-              <span>{{ testResult.message }}</span>
-            </div>
-            <pre v-if="testResult.details" class="p-2 rounded bg-white dark:bg-gray-900 font-mono text-[11px] overflow-x-auto text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">{{ JSON.stringify(testResult.details, null, 2) }}</pre>
-          </div>
+            <pre v-if="testResult.details" class="int-pre">{{ JSON.stringify(testResult.details, null, 2) }}</pre>
+          </InlineAlert>
 
           <!-- Action Buttons -->
-          <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <AppButton
+          <FormActions>
+            <BaseButton
               type="button"
               variant="secondary"
               label="Test Gateway Connectivity"
@@ -213,320 +133,188 @@
               :loading="testingPayway"
               @click="handleTestPayway"
             />
-            <AppButton
+            <BaseButton
               type="submit"
               variant="primary"
               label="Save Gateway Configuration"
               icon="i-heroicons-check"
               :loading="savingPayway"
             />
-          </div>
+          </FormActions>
         </form>
-      </AppCard>
+      </DataCard>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════════════════════ -->
-    <!-- TAB 2: TELEGRAM NOTIFICATIONS & BOT INTEGRATION                         -->
-    <!-- ═══════════════════════════════════════════════════════════════════════ -->
+    <!-- TAB 2: TELEGRAM NOTIFICATIONS & BOT INTEGRATION -->
     <div v-show="activeTab === 'telegram'" class="space-y-6">
       <!-- Active Bots Card -->
-      <AppCard>
+      <DataCard>
         <template #header>
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
+          <div class="int-card-header">
+            <div class="int-card-header__title">
               <UIcon name="i-heroicons-paper-airplane" class="w-5 h-5 text-gray-500" />
               <div>
-                <h3 class="font-semibold text-gray-900 dark:text-white text-sm">Configured Telegram Bots</h3>
-                <p class="text-xs text-gray-500">Stored in auth.telegram_bot table</p>
+                <h3 class="int-card-header__h">Configured Telegram Bots</h3>
+                <p class="int-card-header__sub">Stored in auth.telegram_bot table</p>
               </div>
             </div>
-            <AppButton size="sm" variant="ghost" icon="i-heroicons-arrow-path" :loading="loadingTelegram" @click="loadTelegramData" />
+            <IconButton icon="i-heroicons-arrow-path" label="Reload Telegram data" :loading="loadingTelegram" @click="loadTelegramData" />
           </div>
         </template>
 
         <div class="space-y-4">
-          <div v-if="telegramBots.length === 0 && !loadingTelegram" class="py-6 text-center text-xs text-gray-500">
-            No Telegram bots configured.
-          </div>
+          <EmptyState
+            v-if="telegramBots.length === 0 && !loadingTelegram"
+            icon="i-heroicons-paper-airplane"
+            title="No Telegram bots configured."
+          />
 
-          <div
-            v-for="bot in telegramBots"
-            :key="bot.id"
-            class="p-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/40 space-y-3"
-          >
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <div>
-                <span class="font-semibold text-sm text-gray-900 dark:text-white">{{ bot.name }}</span>
-                <span class="ml-2 font-mono text-xs text-gray-500">({{ bot.code }})</span>
-                <span v-if="bot.username" class="ml-2 font-mono text-xs text-gray-600 dark:text-gray-300">@{{ bot.username }}</span>
+          <div v-for="bot in telegramBots" :key="bot.id" class="int-panel int-bot">
+            <div class="int-bot__top">
+              <div class="int-bot__name">
+                <span class="int-bot__title">{{ bot.name }}</span>
+                <span class="int-bot__code">({{ bot.code }})</span>
+                <span v-if="bot.username" class="int-bot__user">@{{ bot.username }}</span>
               </div>
-              <div class="flex items-center gap-2">
-                <AppBadge :variant="bot.status_code === 'active' ? 'success' : 'default'">
-                  {{ bot.status_code || 'active' }}
-                </AppBadge>
-                <AppButton size="sm" variant="secondary" label="Edit Token" icon="i-heroicons-pencil-square" @click="openEditBotModal(bot)" />
+              <div class="int-card-header__actions">
+                <StatusBadge :status="(bot.status_code || 'active').toUpperCase()" :label="bot.status_code || 'active'" />
+                <BaseButton size="sm" variant="secondary" label="Edit Token" icon="i-heroicons-pencil-square" @click="openEditBotModal(bot)" />
               </div>
             </div>
-            <div class="flex items-center justify-between text-xs text-gray-500 pt-2 border-t border-gray-200 dark:border-gray-700 font-mono">
+            <div class="int-bot__meta">
               <span>Token: {{ bot.token ? bot.token.slice(0, 8) + '...' + bot.token.slice(-6) : 'Not configured' }}</span>
               <span>Updated: {{ bot.updated_datetime ? new Date(bot.updated_datetime).toLocaleDateString() : 'N/A' }}</span>
             </div>
           </div>
         </div>
-      </AppCard>
+      </DataCard>
 
       <!-- Alert Channels & Groups Card -->
-      <AppCard>
+      <DataCard no-pad>
         <template #header>
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
+          <div class="int-card-header">
+            <div class="int-card-header__title">
               <UIcon name="i-heroicons-chat-bubble-left-right" class="w-5 h-5 text-gray-500" />
               <div>
-                <h3 class="font-semibold text-gray-900 dark:text-white text-sm">Operational Alert Channels</h3>
-                <p class="text-xs text-gray-500">Configured Telegram chat groups stored in auth.telegram_chat</p>
+                <h3 class="int-card-header__h">Operational Alert Channels</h3>
+                <p class="int-card-header__sub">Configured Telegram chat groups stored in auth.telegram_chat</p>
               </div>
             </div>
-            <AppButton size="sm" variant="primary" label="Add Channel" icon="i-heroicons-plus" @click="openCreateChatModal" />
+            <BaseButton size="sm" variant="primary" label="Add Channel" icon="i-heroicons-plus" @click="openCreateChatModal" />
           </div>
         </template>
 
-        <div class="space-y-4">
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
-              <thead>
-                <tr class="border-b border-gray-200 dark:border-gray-700 text-gray-500 font-medium">
-                  <th class="py-2.5 px-3">Code</th>
-                  <th class="py-2.5 px-3">Channel Name</th>
-                  <th class="py-2.5 px-3">Chat ID</th>
-                  <th class="py-2.5 px-3">Thread / Topic</th>
-                  <th class="py-2.5 px-3">Type</th>
-                  <th class="py-2.5 px-3">Status</th>
-                  <th class="py-2.5 px-3 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-                <tr v-if="telegramChats.length === 0 && !loadingTelegram">
-                  <td colspan="7" class="py-6 text-center text-gray-400">No alert channels found.</td>
-                </tr>
-                <tr v-for="chat in telegramChats" :key="chat.id" class="text-gray-700 dark:text-gray-300 hover:bg-gray-50/50 dark:hover:bg-gray-800/30">
-                  <td class="py-2.5 px-3 font-mono font-semibold">{{ chat.code }}</td>
-                  <td class="py-2.5 px-3 font-medium text-gray-900 dark:text-white">{{ chat.name }}</td>
-                  <td class="py-2.5 px-3 font-mono text-gray-500">{{ chat.chat_id || 'N/A' }}</td>
-                  <td class="py-2.5 px-3 font-mono text-gray-500">{{ chat.thread_id || 'General' }}</td>
-                  <td class="py-2.5 px-3 uppercase text-[11px]">{{ chat.type || 'group' }}</td>
-                  <td class="py-2.5 px-3">
-                    <AppBadge :variant="chat.status_code === 'active' ? 'success' : 'default'">
-                      {{ chat.status_code || 'active' }}
-                    </AppBadge>
-                  </td>
-                  <td class="py-2.5 px-3 text-right">
-                    <div class="inline-flex items-center gap-1">
-                      <button
-                        type="button"
-                        class="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300"
-                        title="Edit Channel"
-                        @click="openEditChatModal(chat)"
-                      >
-                        <UIcon name="i-heroicons-pencil-square" class="w-4 h-4" />
-                      </button>
-                      <button
-                        type="button"
-                        class="p-1.5 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500"
-                        title="Delete Channel"
-                        @click="handleDeleteChat(chat.id)"
-                      >
-                        <UIcon name="i-heroicons-trash" class="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </AppCard>
+        <DataTable
+          :columns="chatColumns"
+          :rows="telegramChats"
+          row-key="id"
+          :loading="loadingTelegram"
+          empty-title="No alert channels found."
+          empty-icon="i-heroicons-chat-bubble-left-right"
+        >
+          <template #cell-code="{ row }"><span class="int-mono-strong">{{ row.code }}</span></template>
+          <template #cell-chat_id="{ row }"><span class="int-mono">{{ row.chat_id || 'N/A' }}</span></template>
+          <template #cell-thread_id="{ row }"><span class="int-mono">{{ row.thread_id || 'General' }}</span></template>
+          <template #cell-type="{ row }"><span class="int-upper">{{ row.type || 'group' }}</span></template>
+          <template #cell-status_code="{ row }">
+            <StatusBadge :status="(row.status_code || 'active').toUpperCase()" :label="row.status_code || 'active'" />
+          </template>
+          <template #cell-actions="{ row }">
+            <div class="int-row-actions">
+              <IconButton icon="i-heroicons-pencil-square" label="Edit Channel" @click="openEditChatModal(row)" />
+              <IconButton icon="i-heroicons-trash" label="Delete Channel" variant="danger" @click="handleDeleteChat(row.id)" />
+            </div>
+          </template>
+        </DataTable>
+      </DataCard>
 
       <!-- Test Telegram Dispatcher Card -->
-      <AppCard>
+      <DataCard>
         <template #header>
-          <div class="flex items-center gap-2">
+          <div class="int-card-header__title">
             <UIcon name="i-heroicons-signal" class="w-5 h-5 text-gray-500" />
-            <h3 class="font-semibold text-gray-900 dark:text-white text-sm">Send Operational Test Notification</h3>
+            <h3 class="int-card-header__h">Send Operational Test Notification</h3>
           </div>
         </template>
 
         <form class="space-y-4" @submit.prevent="handleSendTestTelegram">
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Target Channel</label>
-              <select
-                v-model="testTelegramTarget"
-                class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white"
-                required
-              >
-                <option v-for="c in telegramChats" :key="c.id" :value="c.code">
-                  {{ c.name }} ({{ c.code }})
-                </option>
-              </select>
-            </div>
-            <div class="md:col-span-2">
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Message Body (Markdown / HTML)</label>
-              <input
-                v-model="testTelegramMessage"
-                type="text"
-                placeholder="Operational status test: Systems online and verified."
-                class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white"
-                required
-              >
+          <div class="int-endpoints">
+            <FormField label="Target Channel" required>
+              <BaseSelect v-model="testTelegramTarget" :options="chatTargetOptions" required />
+            </FormField>
+            <div class="int-endpoints__wide">
+              <FormField label="Message Body (Markdown / HTML)" required>
+                <BaseInput v-model="testTelegramMessage" required placeholder="Operational status test: Systems online and verified." />
+              </FormField>
             </div>
           </div>
-          <div class="flex justify-end">
-            <AppButton
+          <FormActions>
+            <BaseButton
               type="submit"
               variant="secondary"
               label="Dispatch Test Message"
               icon="i-heroicons-paper-airplane"
               :loading="sendingTelegram"
             />
-          </div>
+          </FormActions>
         </form>
-      </AppCard>
+      </DataCard>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════════════════════ -->
-    <!-- MODAL: EDIT TELEGRAM BOT TOKEN                                          -->
-    <!-- ═══════════════════════════════════════════════════════════════════════ -->
-    <AppModal v-model="editBotModalOpen" title="Update Telegram Bot">
+    <!-- MODAL: EDIT TELEGRAM BOT TOKEN -->
+    <BaseModal v-model="editBotModalOpen" title="Update Telegram Bot">
       <form class="space-y-4" @submit.prevent="handleSaveBot">
-        <div>
-          <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Bot Name</label>
-          <input
-            v-model="selectedBotForm.name"
-            type="text"
-            class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white"
-            required
-          >
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Public Bot Username (@username)</label>
-          <input
-            v-model="selectedBotForm.username"
-            type="text"
-            placeholder="clothing_store_kvm_bot"
-            class="w-full font-mono rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white"
-          >
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Telegram Bot API Token</label>
-          <input
-            v-model="selectedBotForm.token"
-            type="text"
-            placeholder="8453886789:AAEYlrepnR..."
-            class="w-full font-mono rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white"
-            required
-          >
-        </div>
-        <div>
-          <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
-          <select
-            v-model="selectedBotForm.status_code"
-            class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white"
-          >
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </select>
-        </div>
-        <div class="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-          <AppButton type="button" variant="ghost" label="Cancel" @click="editBotModalOpen = false" />
-          <AppButton type="submit" variant="primary" label="Save Bot" :loading="savingBot" />
-        </div>
+        <FormField label="Bot Name" required>
+          <BaseInput v-model="selectedBotForm.name" required />
+        </FormField>
+        <FormField label="Public Bot Username (@username)">
+          <BaseInput v-model="selectedBotForm.username" mono placeholder="clothing_store_kvm_bot" />
+        </FormField>
+        <FormField label="Telegram Bot API Token" required>
+          <BaseInput v-model="selectedBotForm.token" mono required placeholder="8453886789:AAEYlrepnR..." />
+        </FormField>
+        <FormField label="Status">
+          <BaseSelect v-model="selectedBotForm.status_code" :options="activeInactiveOptions" />
+        </FormField>
+        <FormActions>
+          <BaseButton type="button" variant="ghost" label="Cancel" @click="editBotModalOpen = false" />
+          <BaseButton type="submit" variant="primary" label="Save Bot" :loading="savingBot" />
+        </FormActions>
       </form>
-    </AppModal>
+    </BaseModal>
 
-    <!-- ═══════════════════════════════════════════════════════════════════════ -->
-    <!-- MODAL: ADD / EDIT ALERT CHANNEL                                         -->
-    <!-- ═══════════════════════════════════════════════════════════════════════ -->
-    <AppModal v-model="chatModalOpen" :title="isEditingChat ? 'Edit Alert Channel' : 'Add Alert Channel'">
+    <!-- MODAL: ADD / EDIT ALERT CHANNEL -->
+    <BaseModal v-model="chatModalOpen" :title="isEditingChat ? 'Edit Alert Channel' : 'Add Alert Channel'">
       <form class="space-y-4" @submit.prevent="handleSaveChat">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Channel Code</label>
-            <input
-              v-model="chatForm.code"
-              type="text"
-              placeholder="e.g. clothing_store_alerts"
-              class="w-full font-mono rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white"
-              :disabled="isEditingChat"
-              required
-            >
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Channel Name</label>
-            <input
-              v-model="chatForm.name"
-              type="text"
-              placeholder="Store Operational Alerts"
-              class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white"
-              required
-            >
-          </div>
-        </div>
+        <FormSection :columns="2">
+          <FormField label="Channel Code" required>
+            <BaseInput v-model="chatForm.code" mono required :disabled="isEditingChat" placeholder="e.g. clothing_store_alerts" />
+          </FormField>
+          <FormField label="Channel Name" required>
+            <BaseInput v-model="chatForm.name" required placeholder="Store Operational Alerts" />
+          </FormField>
+          <FormField label="Chat ID (Group or Channel)" required>
+            <BaseInput v-model="chatForm.chat_id" mono required placeholder="-5195769348" />
+          </FormField>
+          <FormField label="Thread / Topic ID (Optional)">
+            <BaseInput v-model="chatForm.thread_id" mono placeholder="e.g. 12" />
+          </FormField>
+          <FormField label="Bot Association" required>
+            <BaseSelect v-model="chatForm.telegram_bot_code" :options="botOptions" required />
+          </FormField>
+          <FormField label="Status">
+            <BaseSelect v-model="chatForm.status_code" :options="activeInactiveOptions" />
+          </FormField>
+        </FormSection>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Chat ID (Group or Channel)</label>
-            <input
-              v-model="chatForm.chat_id"
-              type="text"
-              placeholder="-5195769348"
-              class="w-full font-mono rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white"
-              required
-            >
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Thread / Topic ID (Optional)</label>
-            <input
-              v-model="chatForm.thread_id"
-              type="text"
-              placeholder="e.g. 12"
-              class="w-full font-mono rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white"
-            >
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Bot Association</label>
-            <select
-              v-model="chatForm.telegram_bot_code"
-              class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white"
-              required
-            >
-              <option v-for="b in telegramBots" :key="b.id" :value="b.code">
-                {{ b.name }} ({{ b.code }})
-              </option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
-            <select
-              v-model="chatForm.status_code"
-              class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white"
-            >
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="flex justify-end gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-          <AppButton type="button" variant="ghost" label="Cancel" @click="chatModalOpen = false" />
-          <AppButton type="submit" variant="primary" :label="isEditingChat ? 'Save Channel' : 'Create Channel'" :loading="savingChat" />
-        </div>
+        <FormActions>
+          <BaseButton type="button" variant="ghost" label="Cancel" @click="chatModalOpen = false" />
+          <BaseButton type="submit" variant="primary" :label="isEditingChat ? 'Save Channel' : 'Create Channel'" :loading="savingChat" />
+        </FormActions>
       </form>
-    </AppModal>
+    </BaseModal>
 
-    <AppConfirmDialog
+    <ConfirmDialog
       v-model="showDeleteChatConfirm"
       title="Remove Alert Channel"
       description="Are you sure you want to remove this Telegram alert channel?"
@@ -790,5 +578,66 @@ onMounted(async () => {
     loadTelegramData(),
   ])
 })
+
+const integrationTabs = [
+  { key: 'payway', label: 'ABA PayWay Gateway', icon: 'i-heroicons-credit-card' },
+  { key: 'telegram', label: 'Telegram Notifications', icon: 'i-heroicons-paper-airplane' },
+]
+
+const paywayStatusOptions = [
+  { value: 'active', label: 'Active (Processing Transactions)' },
+  { value: 'inactive', label: 'Inactive (Disabled)' },
+]
+const paywayEnvOptions = [
+  { value: 'https://checkout-sandbox.payway.com.kh', label: 'Sandbox (https://checkout-sandbox.payway.com.kh)' },
+  { value: 'https://checkout.payway.com.kh', label: 'Production / Live (https://checkout.payway.com.kh)' },
+]
+const activeInactiveOptions = [
+  { value: 'active', label: 'Active' },
+  { value: 'inactive', label: 'Inactive' },
+]
+
+const chatColumns = [
+  { key: 'code', label: 'Code' },
+  { key: 'name', label: 'Channel Name' },
+  { key: 'chat_id', label: 'Chat ID' },
+  { key: 'thread_id', label: 'Thread / Topic' },
+  { key: 'type', label: 'Type' },
+  { key: 'status_code', label: 'Status' },
+  { key: 'actions', label: 'Actions', align: 'right' as const },
+]
+
+const botOptions = computed(() => telegramBots.value.map((b: any) => ({ value: b.code, label: `${b.name} (${b.code})` })))
+const chatTargetOptions = computed(() => telegramChats.value.map((c: any) => ({ value: c.code, label: `${c.name} (${c.code})` })))
 </script>
 
+<style scoped>
+.int-card-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; width: 100%; }
+.int-card-header__title { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.int-card-header__h { margin: 0; font-size: 13.5px; font-weight: 600; color: var(--text-primary, #0f172a); }
+.int-card-header__sub { margin: 0; font-size: 12px; color: var(--text-tertiary, #64748b); }
+.int-card-header__actions { display: flex; align-items: center; gap: 8px; }
+.int-panel { padding: 14px; border-radius: var(--radius-lg, 8px); border: 1px solid var(--border-subtle, #e5e7eb); background: var(--surface-inset, #f8fafc); }
+.int-panel--plain { background: var(--surface-card, #ffffff); }
+.int-collapse { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px; background: none; border: none; padding: 0; cursor: pointer; text-align: left; }
+.int-collapse__title { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: var(--text-primary, #0f172a); }
+.int-collapse__body { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-subtle, #e5e7eb); }
+.int-reveal { background: none; border: none; cursor: pointer; color: var(--text-tertiary, #64748b); display: inline-flex; padding: 2px; }
+.int-endpoints { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.int-endpoints__wide { grid-column: span 2; }
+.int-pre { margin: 8px 0 0; padding: 8px; font-family: var(--font-mono); font-size: 11px; overflow-x: auto; background: var(--surface-card, #ffffff); border: 1px solid var(--border-subtle, #e5e7eb); border-radius: var(--radius-md, 6px); color: var(--text-secondary, #475569); }
+.int-bot { display: flex; flex-direction: column; gap: 10px; }
+.int-bot__top { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.int-bot__title { font-size: 13px; font-weight: 600; color: var(--text-primary, #0f172a); }
+.int-bot__code, .int-bot__user { margin-left: 8px; font-family: var(--font-mono); font-size: 12px; color: var(--text-tertiary, #64748b); }
+.int-bot__meta { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; padding-top: 8px; border-top: 1px solid var(--border-subtle, #e5e7eb); font-family: var(--font-mono); font-size: 12px; color: var(--text-tertiary, #64748b); }
+.int-mono { font-family: var(--font-mono); color: var(--text-tertiary, #64748b); }
+.int-mono-strong { font-family: var(--font-mono); font-weight: 600; }
+.int-upper { text-transform: uppercase; font-size: 11px; }
+.int-row-actions { display: flex; justify-content: flex-end; gap: 4px; }
+
+@media (max-width: 767px) {
+  .int-endpoints { grid-template-columns: 1fr; }
+  .int-endpoints__wide { grid-column: auto; }
+}
+</style>

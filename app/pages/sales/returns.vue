@@ -30,11 +30,11 @@
     >
       <div class="flex items-center gap-1.5">
         <span class="text-xs text-gray-500">From:</span>
-        <input v-model="fromDate" type="date" class="field-input" style="width: 140px;" @change="fetchReturns" />
+        <AppInput v-model="fromDate" type="date" style="width: 140px;" @change="fetchReturns" />
       </div>
       <div class="flex items-center gap-1.5">
         <span class="text-xs text-gray-500">To:</span>
-        <input v-model="toDate" type="date" class="field-input" style="width: 140px;" @change="fetchReturns" />
+        <AppInput v-model="toDate" type="date" style="width: 140px;" @change="fetchReturns" />
       </div>
     </AppFilterBar>
 
@@ -85,12 +85,13 @@
       <form class="form-grid" @submit.prevent="submitReturn">
         <div class="form-field">
           <label class="field-label">Original Sale Transaction <span class="required">*</span></label>
-          <select v-model="returnForm.sale_id" required class="field-input" @change="onSelectSale">
-            <option value="" disabled>Select completed sale...</option>
-            <option v-for="s in salesList" :key="s.id" :value="s.id">
-              {{ s.invoice_number || s.sale_number }} — ${{ Number(s.total ?? s.total_amount ?? 0).toFixed(2) }} ({{ new Date(s.created_at).toLocaleDateString() }})
-            </option>
-          </select>
+          <AppSelect
+            v-model="returnForm.sale_id"
+            :options="salesList.map(s => ({ label: `${s.invoice_number || s.sale_number} \u2013 ${Number(s.total ?? s.total_amount ?? 0).toFixed(2)} (${new Date(s.created_at).toLocaleDateString()})`, value: s.id }))"
+            placeholder="Select completed sale..."
+            required
+            @change="onSelectSale"
+          />
         </div>
 
         <div v-if="selectedSale?.items?.length" class="space-y-2">
@@ -109,12 +110,12 @@
                 <input v-model="item.restock" type="checkbox" class="rounded" />
                 Restock
               </label>
-              <input
+              <AppInput
                 v-model.number="item.quantity_returned"
                 type="number"
                 min="0"
                 :max="item.max_qty"
-                class="field-input w-20 text-right mono"
+                class="w-20 text-right mono"
               />
             </div>
           </div>
@@ -122,12 +123,11 @@
 
         <div class="form-field">
           <label class="field-label">Return Reason <span class="required">*</span></label>
-          <input
+          <AppInput
             v-model="returnForm.reason"
             type="text"
             required
             placeholder="e.g. Wrong size, defective item, customer exchange..."
-            class="field-input"
           />
         </div>
 
@@ -141,7 +141,7 @@
 </template>
 
 <script setup lang="ts">
-import type { FilterChipItem } from '~/components/AppFilterBar.vue'
+import type { FilterChipItem } from '~/types'
 
 definePageMeta({ middleware: ['auth'] })
 useHead({ title: 'Sales Returns — Clothing Store Admin' })

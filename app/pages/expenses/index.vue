@@ -235,7 +235,7 @@
 </template>
 
 <script setup lang="ts">
-import type { FilterChipItem } from '~/components/AppFilterBar.vue'
+import type { FilterChipItem } from '~/types'
 
 definePageMeta({ middleware: ['auth'] })
 useHead({ title: 'Business Expenses — Clothing Store Admin' })
