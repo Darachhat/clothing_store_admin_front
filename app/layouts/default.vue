@@ -32,13 +32,21 @@
           <!-- Quick Operational Shortcuts -->
           <div class="topbar-quick-links">
             <NuxtLink
+              to="/pos"
+              class="topbar-pill"
+              title="Open Point of Sale Terminal"
+            >
+              <UIcon name="i-heroicons-computer-desktop" class="w-3.5 h-3.5" />
+              <span>{{ t('common.open_pos', 'Open POS') }}</span>
+            </NuxtLink>
+            <NuxtLink
               to="/settings/terminals"
               class="topbar-pill"
               :class="{ 'is-active': route.path === '/settings/terminals' }"
               title="Monitor POS Registers & Shifts"
             >
-              <UIcon name="i-heroicons-computer-desktop" class="w-3.5 h-3.5" />
-              <span>POS Registers</span>
+              <UIcon name="i-heroicons-cpu-chip" class="w-3.5 h-3.5" />
+              <span>{{ t('nav.pos_registers', 'POS Registers') }}</span>
             </NuxtLink>
             <NuxtLink
               to="/products/new"

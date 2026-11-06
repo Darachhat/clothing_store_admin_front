@@ -2,58 +2,68 @@
   <div class="page-root">
     <AppPageHeader
       title="Edit Product"
-      :description="product ? `Editing ${product.name} (${product.sku_prefix})` : 'Loading product...'"
+      :description="product ? `Editing ${product.name} (${product.code || product.sku_prefix || ''})` : 'Loading product...'"
       :breadcrumbs="[
         { label: 'Catalog', to: '/products' },
         { label: 'Products', to: '/products' },
         { label: product?.name || 'Product', to: `/products/${id}` },
         { label: 'Edit' },
       ]"
-    />
+    >
+      <template #actions>
+        <AppButton :to="`/products/${id}`" variant="default" size="sm" icon="i-heroicons-arrow-left" label="Back to Product" />
+      </template>
+    </AppPageHeader>
 
     <div v-if="loading" class="state-card">Loading product…</div>
 
-    <form v-else-if="product" class="product-form-layout" @submit.prevent="handleSubmit">
+    <form v-else-if="product" class="product-form-layout" @submit.prevent="save">
       <div class="product-form-main">
         <AppCard title="Basic Information">
           <div class="form-grid">
-            <div class="form-row">
-              <AppInput v-model="form.name" label="Product Name" required />
-              <AppInput v-model="form.sku_prefix" label="SKU Prefix" required />
-            </div>
-
-            <div class="form-row">
-              <AppSelect v-model="form.category_id" label="Category" :options="categoryOptions" />
-              <AppSelect v-model="form.brand_id" label="Brand" :options="brandOptions" />
-            </div>
-
-            <div class="form-row">
-              <AppSelect v-model="form.gender" label="Gender" :options="genderOptions" />
-              <AppSelect v-model="form.season" label="Season" :options="seasonOptions" />
+            <div class="form-field">
+              <label class="field-label">Product Name <span class="required">*</span></label>
+              <input v-model="form.name" class="field-input" required />
             </div>
 
             <div class="form-field">
               <label class="field-label">Description</label>
-              <textarea v-model="form.description" class="field-input field-textarea" rows="3" />
+              <textarea v-model="form.description" class="field-input field-textarea" rows="4" />
             </div>
-          </div>
-        </AppCard>
 
-        <AppCard title="Pricing & Valuation">
-          <div class="form-row">
-            <AppInput v-model="form.cost_price" label="Unit Cost Price (USD)" type="number" step="0.01" min="0" required />
-            <AppInput v-model="form.retail_price" label="Retail Selling Price (USD)" type="number" step="0.01" min="0" required />
+            <div class="form-row">
+              <div class="form-field">
+                <label class="field-label">Category</label>
+                <AppSelect v-model="form.category_id" :options="categoryOptions" placeholder="Select category" />
+              </div>
+              <div class="form-field">
+                <label class="field-label">Brand</label>
+                <AppSelect v-model="form.brand_id" :options="brandOptions" placeholder="Select brand" />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-field">
+                <label class="field-label">Supplier</label>
+                <AppSelect v-model="form.supplier_id" :options="supplierOptions" placeholder="Select supplier" />
+              </div>
+              <div class="form-field">
+                <label class="field-label">Status</label>
+                <AppSelect v-model="form.status" :options="statusOptions" />
+              </div>
+            </div>
           </div>
         </AppCard>
       </div>
 
       <div class="product-form-side">
-        <AppCard title="Visibility & Status">
-          <AppSelect v-model="form.status" label="Catalog Status" :options="statusOptions" />
-        </AppCard>
-
-        <AppCard title="Product Image">
-          <AppFileUpload v-model="form.image_url" label="Product Photo" />
+        <AppCard title="Product Photo">
+          <AppFileUpload
+            v-model="form.image_url"
+            folder="products"
+            label="Product Main Photo"
+            hint="Upload high-res product photo (PNG, JPG, WEBP)"
+          />
         </AppCard>
 
         <div class="form-actions-bar">
@@ -62,11 +72,13 @@
         </div>
       </div>
     </form>
+
+    <div v-else class="state-card">Product not found.</div>
   </div>
 </template>
 
 <script setup lang="ts">
-import type { Product, Category, Brand } from '~/types'
+import type { Product, Category, Brand, Supplier } from '~/types'
 
 definePageMeta({ middleware: ['auth'] })
 
@@ -76,70 +88,42 @@ useHead({ title: 'Edit Product — Clothing Store Admin' })
 
 const { getProduct, updateProduct } = useProductApi()
 const { listCategories, listBrands } = useCatalogApi()
+const { listSuppliers } = useSupplierApi()
 const { addToast } = useAppToast()
 
 const product = ref<Product | null>(null)
-const categories = ref<Category[]>([])
-const brands = ref<Brand[]>([])
 const loading = ref(true)
 const saving = ref(false)
 
 const form = reactive({
   name: '',
-  sku_prefix: '',
+  description: '',
   category_id: '',
   brand_id: '',
-  gender: 'UNISEX',
-  season: '',
-  cost_price: '',
-  retail_price: '',
-  description: '',
-  image_url: null as string | null,
+  supplier_id: '',
+  image_url: '' as string | null,
   status: 'ACTIVE',
 })
-
-const categoryOptions = computed(() => [
-  { label: 'None', value: '' },
-  ...categories.value.map(c => ({ label: c.name, value: c.id })),
-])
-
-const brandOptions = computed(() => [
-  { label: 'None', value: '' },
-  ...brands.value.map(b => ({ label: b.name, value: b.id })),
-])
-
-const genderOptions = [
-  { label: 'Unisex', value: 'UNISEX' },
-  { label: 'Men', value: 'MEN' },
-  { label: 'Women', value: 'WOMEN' },
-  { label: 'Kids', value: 'KIDS' },
-]
-
-const seasonOptions = [
-  { label: 'All Season', value: '' },
-  { label: 'Spring / Summer', value: 'SS' },
-  { label: 'Autumn / Winter', value: 'AW' },
-]
 
 const statusOptions = [
   { label: 'Active', value: 'ACTIVE' },
   { label: 'Inactive', value: 'INACTIVE' },
-  { label: 'Archived', value: 'ARCHIVED' },
+  { label: 'Discontinued', value: 'DISCONTINUED' },
 ]
 
-async function handleSubmit() {
+const categoryOptions = ref<{ label: string; value: string }[]>([{ label: 'None', value: '' }])
+const brandOptions = ref<{ label: string; value: string }[]>([{ label: 'None', value: '' }])
+const supplierOptions = ref<{ label: string; value: string }[]>([{ label: 'None', value: '' }])
+
+async function save() {
   saving.value = true
   try {
     await updateProduct(id, {
       name: form.name.trim(),
-      sku_prefix: form.sku_prefix.trim().toUpperCase(),
+      description: form.description || null,
       category_id: form.category_id || null,
       brand_id: form.brand_id || null,
-      gender: form.gender,
-      season: form.season || null,
-      cost_price: Number(form.cost_price),
-      retail_price: Number(form.retail_price),
-      description: form.description || null,
+      supplier_id: form.supplier_id || null,
       image_url: form.image_url || null,
       status_code: form.status,
       status: form.status,
@@ -147,7 +131,7 @@ async function handleSubmit() {
     addToast({ type: 'success', title: 'Product updated' })
     await navigateTo(`/products/${id}`)
   } catch (e: any) {
-    addToast({ type: 'error', title: 'Error', message: e?.data?.detail ?? String(e) })
+    addToast({ type: 'error', title: 'Update failed', message: e?.data?.detail ?? String(e) })
   } finally {
     saving.value = false
   }
@@ -155,29 +139,31 @@ async function handleSubmit() {
 
 onMounted(async () => {
   try {
-    const [p, cats, brs] = await Promise.all([
+    const [rawProduct, cats, brands, suppliers] = await Promise.all([
       getProduct(id),
       listCategories(),
       listBrands(),
+      listSuppliers(),
     ])
+    const p = rawProduct as Product
     product.value = p
-    categories.value = cats ?? []
-    brands.value = brs ?? []
     if (p) {
       Object.assign(form, {
         name: p.name,
-        sku_prefix: p.sku_prefix,
+        description: p.description ?? '',
         category_id: p.category_id ?? '',
         brand_id: p.brand_id ?? '',
-        gender: p.gender,
-        season: p.season ?? '',
-        cost_price: String(p.cost_price),
-        retail_price: String(p.retail_price),
-        description: p.description ?? '',
-        image_url: p.image_url ?? null,
+        supplier_id: p.supplier_id ?? '',
+        image_url: p.image_url ?? '',
         status: (p as any).status_code || p.status || 'ACTIVE',
       })
     }
+    const catList = Array.isArray(cats) ? cats : ((cats as any)?.items || [])
+    const brandList = Array.isArray(brands) ? brands : ((brands as any)?.items || [])
+    const supList = Array.isArray(suppliers) ? suppliers : ((suppliers as any)?.items || [])
+    categoryOptions.value = [{ label: 'None', value: '' }, ...(catList as Category[]).map(c => ({ label: c.name, value: c.id }))]
+    brandOptions.value = [{ label: 'None', value: '' }, ...(brandList as Brand[]).map(b => ({ label: b.name, value: b.id }))]
+    supplierOptions.value = [{ label: 'None', value: '' }, ...(supList as Supplier[]).map(s => ({ label: s.name, value: s.id }))]
   } finally {
     loading.value = false
   }

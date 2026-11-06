@@ -1,15 +1,18 @@
 /**
- * Database-Backed Multi-Language Translation Composable (admin_front)
- * Supports 5 languages: English (en), Khmer (km), Chinese (cn), Japanese (jp), Korean (kr).
- * Synchronizes with Redis-cached backend endpoint `/api/v1/translations/dictionary`.
- * Strict Compliance: No emojis used (AGENTS.md). Uses clean ISO codes for flags.
+ * Application Translation & Localization Composable.
+ *
+ * Fast multi-language UI localization for English, Khmer (ភាសាខ្មែរ),
+ * Chinese (中文), Japanese (日本語), and Korean (한국어).
+ * Backed by backend TRANSLATE_MODEL & Redis cache with instant local fallback.
  */
 
-import { ref, computed } from 'vue'
+import { API_ENDPOINTS } from '~/api/endpoints'
 import type { SupportedLocale } from '~/types'
 
+export type LocaleCode = SupportedLocale
+
 export interface LocaleOption {
-  code: SupportedLocale
+  code: LocaleCode
   name: string
   native: string
   flag: string
@@ -23,198 +26,444 @@ export const SUPPORTED_LOCALES: LocaleOption[] = [
   { code: 'kr', name: 'Korean', native: '한국어', flag: 'KR' },
 ]
 
-const STORAGE_KEY = 'clothing_store_admin_locale'
-const CACHE_KEY = 'clothing_store_admin_i18n_dict'
-
-// Built-in fallback dictionary if backend is unreachable
-const FALLBACK_DICTIONARY: Record<string, Record<string, string>> = {
+// Baseline offline cache to guarantee zero-flash and sub-millisecond local rendering
+export const BASELINE_TRANSLATIONS: Record<LocaleCode, Record<string, string>> = {
   en: {
-    'nav.overview': 'Overview',
+    'nav_section.overview': 'Overview',
+    'nav_section.store': 'Store',
+    'nav_section.catalog': 'Catalog',
+    'nav_section.inventory': 'Inventory',
+    'nav_section.purchasing': 'Purchasing',
+    'nav_section.customers': 'Customers',
+    'nav_section.finance': 'Finance',
+    'nav_section.reports': 'Reports',
+    'nav_section.administration': 'Administration',
     'nav.dashboard': 'Dashboard',
-    'nav.catalog': 'Catalog',
+    'nav.pos_registers': 'POS Registers',
+    'nav.receipt_templates': 'Receipt Templates',
+    'nav.sales_orders': 'Sales Orders',
+    'nav.returns': 'Returns',
     'nav.products': 'Products',
     'nav.categories': 'Categories',
     'nav.brands': 'Brands',
-    'nav.labels': 'Print Labels',
-    'nav.inventory': 'Inventory',
+    'nav.print_labels': 'Print Labels',
     'nav.stock_levels': 'Stock Levels',
     'nav.movements': 'Movements',
     'nav.transfers': 'Transfers',
     'nav.adjustments': 'Adjustments',
-    'nav.sales_crm': 'Sales & CRM',
-    'nav.sales': 'Sales Orders',
-    'nav.customers': 'Customers',
-    'nav.promotions': 'Promotions',
-    'nav.purchasing': 'Purchasing',
     'nav.purchase_orders': 'Purchase Orders',
     'nav.suppliers': 'Suppliers',
-    'nav.finance': 'Finance & Reports',
+    'nav.customers': 'Customers',
+    'nav.loyalty': 'Promotions & Loyalty',
+    'nav.promotions': 'Promotions',
     'nav.expenses': 'Expenses',
-    'nav.reports': 'Reports',
-    'nav.administration': 'Administration',
-    'nav.users': 'Users & Staff',
+    'nav.payment_transactions': 'Payment Transactions',
+    'nav.reports': 'Reports Overview',
+    'nav.sales_report': 'Sales Report',
+    'nav.inventory_report': 'Inventory Report',
+    'nav.purchases_report': 'Purchases Report',
+    'nav.profit_loss': 'Profit & Loss',
+    'nav.users': 'Users',
     'nav.roles': 'Roles & Permissions',
+    'nav.system_settings': 'System Settings',
     'nav.audit_logs': 'Audit Logs',
-    'nav.settings': 'System Settings',
+    'nav.integrations': 'Integrations',
     'nav.translations': 'Translations CMS',
-    'common.open_pos': 'Open POS',
-    'common.sign_out': 'Sign out',
+    'nav.settings': 'Settings',
     'common.save': 'Save',
     'common.cancel': 'Cancel',
-    'common.create': 'Create',
-    'common.edit': 'Edit',
     'common.delete': 'Delete',
+    'common.edit': 'Edit',
+    'common.create': 'Create',
+    'common.add': 'Add',
     'common.search': 'Search...',
+    'common.filter': 'Filter',
+    'common.reset': 'Reset',
     'common.refresh': 'Refresh',
+    'common.export_csv': 'Export CSV',
+    'common.print': 'Print',
+    'common.close': 'Close',
+    'common.confirm': 'Confirm',
+    'common.submit': 'Submit',
+    'common.back': 'Back',
     'common.actions': 'Actions',
     'common.status': 'Status',
+    'common.loading': 'Loading...',
+    'common.no_data': 'No data found',
+    'common.open_pos': 'Open POS',
+    'common.language': 'Language',
+    'common.sign_out': 'Sign out',
   },
   km: {
-    'nav.overview': 'ទិដ្ឋភាពទូទៅ',
-    'nav.dashboard': 'ផ្ទាំងគ្រប់គ្រង',
-    'nav.catalog': 'បញ្ជីទំនិញ',
+    'nav_section.overview': 'ទិដ្ឋភាពទូទៅ',
+    'nav_section.store': 'ហាង',
+    'nav_section.catalog': 'កាតាឡុក',
+    'nav_section.inventory': 'សារពើភ័ណ្ឌ',
+    'nav_section.purchasing': 'ការទិញចូល',
+    'nav_section.customers': 'អតិថិជន',
+    'nav_section.finance': 'ហិរញ្ញវត្ថុ',
+    'nav_section.reports': 'របាយការណ៍',
+    'nav_section.administration': 'ការគ្រប់គ្រងប្រព័ន្ធ',
+    'nav.dashboard': 'ផ្ទាំងព័ត៌មាន',
+    'nav.pos_registers': 'ម៉ាស៊ីនគិតប្រាក់ POS',
+    'nav.receipt_templates': 'គំរូវិក្កយបត្រ',
+    'nav.sales_orders': 'បញ្ជាទិញលក់',
+    'nav.returns': 'ការប្តូរ/សងទំនិញ',
     'nav.products': 'ផលិតផល',
-    'nav.categories': 'ប្រភេទទំនិញ',
+    'nav.categories': 'ប្រភេទផលិតផល',
     'nav.brands': 'ម៉ាកយីហោ',
-    'nav.labels': 'បោះពុម្ពស្លាក',
-    'nav.inventory': 'ស្តុកទំនិញ',
-    'nav.stock_levels': 'កម្រិតស្តុក',
-    'nav.movements': 'ចលនាស្តុក',
-    'nav.transfers': 'ផ្ទេរស្តុក',
-    'nav.adjustments': 'កែតម្រូវស្តុក',
-    'nav.sales_crm': 'ការលក់ និងអតិថិជន',
-    'nav.sales': 'បញ្ជាទិញលក់',
-    'nav.customers': 'អតិថិជន',
-    'nav.promotions': 'ប្រូម៉ូសិន',
-    'nav.purchasing': 'ការបញ្ជាទិញចូល',
-    'nav.purchase_orders': 'បញ្ជាទិញទំនិញ',
+    'nav.print_labels': 'បោះពុម្ពស្លាកបាកូដ',
+    'nav.stock_levels': 'ចំនួនស្តុក',
+    'nav.movements': 'បន្លាស់ទីស្តុក',
+    'nav.transfers': 'ផ្ទេរទំនិញ',
+    'nav.adjustments': 'ការកែតម្រូវស្តុក',
+    'nav.purchase_orders': 'ការបញ្ជាទិញទំនិញ',
     'nav.suppliers': 'អ្នកផ្គត់ផ្គង់',
-    'nav.finance': 'ហិរញ្ញវត្ថុ និងរបាយការណ៍',
-    'nav.expenses': 'ចំណាយ',
-    'nav.reports': 'របាយការណ៍',
-    'nav.administration': 'ការគ្រប់គ្រងប្រព័ន្ធ',
-    'nav.users': 'បុគ្គលិក និងអ្នកប្រើប្រាស់',
-    'nav.roles': 'តួនាទី និងសិទ្ធិ',
-    'nav.audit_logs': 'កំណត់ហេតុប្រព័ន្ធ',
-    'nav.settings': 'ការកំណត់ប្រព័ន្ធ',
-    'nav.translations': 'គ្រប់គ្រងភាសា (CMS)',
-    'common.open_pos': 'បើកផ្ទាំងលក់ POS',
-    'common.sign_out': 'ចាកចេញ',
+    'nav.customers': 'អតិថិជន',
+    'nav.loyalty': 'ប្រូម៉ូសិន & ពិន្ទុសន្សំ',
+    'nav.promotions': 'ការបញ្ចុះតម្លៃ & ប្រូម៉ូសិន',
+    'nav.expenses': 'ចំណាយប្រតិបត្តិការ',
+    'nav.payment_transactions': 'ប្រតិបត្តិការទូទាត់',
+    'nav.reports': 'របាយការណ៍សរុប',
+    'nav.sales_report': 'របាយការណ៍លក់',
+    'nav.inventory_report': 'របាយការណ៍ស្តុក',
+    'nav.purchases_report': 'របាយការណ៍ទិញចូល',
+    'nav.profit_loss': 'ចំណេញ & ខាត',
+    'nav.users': 'អ្នកប្រើប្រាស់',
+    'nav.roles': 'តួនាទី & សិទ្ធិ',
+    'nav.system_settings': 'ការកំណត់ប្រព័ន្ធ',
+    'nav.audit_logs': 'កំណត់ហេតុសវនកម្ម',
+    'nav.integrations': 'ការតភ្ជាប់ប្រព័ន្ធ',
+    'nav.translations': 'ការគ្រប់គ្រងខ្លឹមសារ & ភាសា',
+    'nav.settings': 'ការកំណត់ហាង',
     'common.save': 'រក្សាទុក',
     'common.cancel': 'បោះបង់',
-    'common.create': 'បង្កើតថ្មី',
-    'common.edit': 'កែប្រែ',
     'common.delete': 'លុប',
+    'common.edit': 'កែប្រែ',
+    'common.create': 'បង្កើត',
+    'common.add': 'បន្ថែម',
     'common.search': 'ស្វែងរក...',
+    'common.filter': 'ចម្រោះ',
+    'common.reset': 'កំណត់ឡើងវិញ',
     'common.refresh': 'ផ្ទុកឡើងវិញ',
+    'common.export_csv': 'ទាញយក CSV',
+    'common.print': 'បោះពុម្ព',
+    'common.close': 'បិទ',
+    'common.confirm': 'បញ្ជាក់',
+    'common.submit': 'ដាក់ស្នើ',
+    'common.back': 'ថយក្រោយ',
     'common.actions': 'សកម្មភាព',
     'common.status': 'ស្ថានភាព',
+    'common.loading': 'កំពុងដំណើរការ...',
+    'common.no_data': 'មិនមានទិន្នន័យទេ',
+    'common.open_pos': 'បើកម៉ាស៊ីន POS',
+    'common.language': 'ភាសា',
+    'common.sign_out': 'ចាកចេញ',
+  },
+  cn: {
+    'nav_section.overview': '概览',
+    'nav_section.store': '门店',
+    'nav_section.catalog': '目录',
+    'nav_section.inventory': '库存',
+    'nav_section.purchasing': '采购',
+    'nav_section.customers': '客户',
+    'nav_section.finance': '财务',
+    'nav_section.reports': '报表',
+    'nav_section.administration': '系统管理',
+    'nav.dashboard': '仪表板',
+    'nav.pos_registers': '收银机终端',
+    'nav.receipt_templates': '小票模板',
+    'nav.sales_orders': '销售订单',
+    'nav.returns': '退换货',
+    'nav.products': '商品列表',
+    'nav.categories': '商品分类',
+    'nav.brands': '品牌管理',
+    'nav.print_labels': '打印条码标签',
+    'nav.stock_levels': '库存余量',
+    'nav.movements': '库存变动',
+    'nav.transfers': '调拨管理',
+    'nav.adjustments': '盘点调整',
+    'nav.purchase_orders': '采购订单',
+    'nav.suppliers': '供应商',
+    'nav.customers': '客户档案',
+    'nav.loyalty': '促销与会员',
+    'nav.promotions': '促销活动',
+    'nav.expenses': '费用支出',
+    'nav.payment_transactions': '支付流水',
+    'nav.reports': '报表中心',
+    'nav.sales_report': '销售报表',
+    'nav.inventory_report': '库存报表',
+    'nav.purchases_report': '采购报表',
+    'nav.profit_loss': '损益表',
+    'nav.users': '用户管理',
+    'nav.roles': '角色权限',
+    'nav.system_settings': '系统设置',
+    'nav.audit_logs': '审计日志',
+    'nav.integrations': '集成中心',
+    'nav.translations': '多语言内容管理',
+    'nav.settings': '店铺设置',
+    'common.save': '保存',
+    'common.cancel': '取消',
+    'common.delete': '删除',
+    'common.edit': '编辑',
+    'common.create': '新建',
+    'common.add': '添加',
+    'common.search': '搜索...',
+    'common.filter': '筛选',
+    'common.reset': '重置',
+    'common.refresh': '刷新',
+    'common.export_csv': '导出 CSV',
+    'common.print': '打印',
+    'common.close': '关闭',
+    'common.confirm': '确认',
+    'common.submit': '提交',
+    'common.back': '返回',
+    'common.actions': '操作',
+    'common.status': '状态',
+    'common.loading': '加载中...',
+    'common.no_data': '暂无数据',
+    'common.open_pos': '进入收银',
+    'common.language': '语言',
+    'common.sign_out': '退出登录',
+  },
+  jp: {
+    'nav_section.overview': '概要',
+    'nav_section.store': '店舗',
+    'nav_section.catalog': 'カタログ',
+    'nav_section.inventory': '在庫',
+    'nav_section.purchasing': '仕入れ',
+    'nav_section.customers': '顧客',
+    'nav_section.finance': '財務',
+    'nav_section.reports': 'レポート',
+    'nav_section.administration': 'システム管理',
+    'nav.dashboard': 'ダッシュボード',
+    'nav.pos_registers': 'POSレジ端末',
+    'nav.receipt_templates': 'レシート雛形',
+    'nav.sales_orders': '販売注文',
+    'nav.returns': '返品管理',
+    'nav.products': '商品一覧',
+    'nav.categories': 'カテゴリー',
+    'nav.brands': 'ブランド',
+    'nav.print_labels': 'バーコードラベル印刷',
+    'nav.stock_levels': '在庫水準',
+    'nav.movements': '在庫移動履歴',
+    'nav.transfers': '在庫転送',
+    'nav.adjustments': '在庫調整',
+    'nav.purchase_orders': '発注書',
+    'nav.suppliers': '仕入先',
+    'nav.customers': '顧客一覧',
+    'nav.loyalty': 'プロモーション・会員',
+    'nav.promotions': 'プロモーション',
+    'nav.expenses': '経費管理',
+    'nav.payment_transactions': '決済履歴',
+    'nav.reports': 'レポート一覧',
+    'nav.sales_report': '売上レポート',
+    'nav.inventory_report': '在庫レポート',
+    'nav.purchases_report': '仕入レポート',
+    'nav.profit_loss': '損益計算書',
+    'nav.users': 'ユーザー管理',
+    'nav.roles': '役割と権限',
+    'nav.system_settings': 'システム設定',
+    'nav.audit_logs': '監査ログ',
+    'nav.integrations': '連携ハブ',
+    'nav.translations': '多言語コンテンツ管理',
+    'nav.settings': '店舗設定',
+    'common.save': '保存',
+    'common.cancel': 'キャンセル',
+    'common.delete': '削除',
+    'common.edit': '編集',
+    'common.create': '新規作成',
+    'common.add': '追加',
+    'common.search': '検索...',
+    'common.filter': '絞り込み',
+    'common.reset': 'リセット',
+    'common.refresh': '更新',
+    'common.export_csv': 'CSVエクスポート',
+    'common.print': '印刷',
+    'common.close': '閉じる',
+    'common.confirm': '確認',
+    'common.submit': '送信',
+    'common.back': '戻る',
+    'common.actions': '操作',
+    'common.status': '状態',
+    'common.loading': '読み込み中...',
+    'common.no_data': 'データがありません',
+    'common.open_pos': 'POSを開く',
+    'common.language': '言語',
+    'common.sign_out': 'ログアウト',
+  },
+  kr: {
+    'nav_section.overview': '개요',
+    'nav_section.store': '매장',
+    'nav_section.catalog': '카탈로그',
+    'nav_section.inventory': '재고',
+    'nav_section.purchasing': '구매',
+    'nav_section.customers': '고객',
+    'nav_section.finance': '재무',
+    'nav_section.reports': '보고서',
+    'nav_section.administration': '시스템 관리',
+    'nav.dashboard': '대시보드',
+    'nav.pos_registers': 'POS 단말기',
+    'nav.receipt_templates': '영수증 템플릿',
+    'nav.sales_orders': '판매 주문',
+    'nav.returns': '반품 관리',
+    'nav.products': '상품 목록',
+    'nav.categories': '카테고리',
+    'nav.brands': '브랜드',
+    'nav.print_labels': '바코드 라벨 인쇄',
+    'nav.stock_levels': '재고 현황',
+    'nav.movements': '재고 변동 내역',
+    'nav.transfers': '재고 이전',
+    'nav.adjustments': '재고 조정',
+    'nav.purchase_orders': '발주서',
+    'nav.suppliers': '공급업체',
+    'nav.customers': '고객 관리',
+    'nav.loyalty': '프로모션 및 멤버십',
+    'nav.promotions': '프로모션',
+    'nav.expenses': '지출 관리',
+    'nav.payment_transactions': '결제 내역',
+    'nav.reports': '보고서 개요',
+    'nav.sales_report': '매출 보고서',
+    'nav.inventory_report': '재고 보고서',
+    'nav.purchases_report': '구매 보고서',
+    'nav.profit_loss': '손익 계산서',
+    'nav.users': '사용자 관리',
+    'nav.roles': '역할 및 권한',
+    'nav.system_settings': '시스템 설정',
+    'nav.audit_logs': '감사 로그',
+    'nav.integrations': '연동 허브',
+    'nav.translations': '다국어 콘텐츠 관리',
+    'nav.settings': '매장 설정',
+    'common.save': '저장',
+    'common.cancel': '취소',
+    'common.delete': '삭제',
+    'common.edit': '수정',
+    'common.create': '생성',
+    'common.add': '추가',
+    'common.search': '검색...',
+    'common.filter': '필터',
+    'common.reset': '재설정',
+    'common.refresh': '새로고침',
+    'common.export_csv': 'CSV 내보내기',
+    'common.print': '인쇄',
+    'common.close': '닫기',
+    'common.confirm': '확인',
+    'common.submit': '제출',
+    'common.back': '뒤로',
+    'common.actions': '작업',
+    'common.status': '상태',
+    'common.loading': '로딩 중...',
+    'common.no_data': '데이터 없음',
+    'common.open_pos': 'POS 열기',
+    'common.language': '언어',
+    'common.sign_out': '로그아웃',
   },
 }
 
-// Singleton reactive state shared across components
-const currentLocale = ref<SupportedLocale>('en')
-const dictionary = ref<Record<string, Record<string, string>>>({ ...FALLBACK_DICTIONARY })
-const isLoaded = ref(false)
-const isLoading = ref(false)
+const STORAGE_KEY = 'admin_locale'
 
 export function useAppTranslation() {
-  const config = useRuntimeConfig()
-  const baseURL = (config.public.apiBaseUrl as string) || 'http://localhost:8000'
+  const currentLocale = useState<LocaleCode>('app_current_locale', () => {
+    if (import.meta.client) {
+      const stored = localStorage.getItem(STORAGE_KEY) as LocaleCode
+      if (stored && ['en', 'km', 'cn', 'jp', 'kr'].includes(stored)) {
+        return stored
+      }
+    }
+    return 'en'
+  })
+
+  const translations = useState<Record<LocaleCode, Record<string, string>>>(
+    'app_translations_registry',
+    () => BASELINE_TRANSLATIONS,
+  )
+
+  const isLoaded = useState<boolean>('app_translations_loaded', () => false)
+
+  const activeLocaleOption = computed(() =>
+    SUPPORTED_LOCALES.find(l => l.code === currentLocale.value) || SUPPORTED_LOCALES[0],
+  )
 
   function initLocale() {
-    if (import.meta.client) {
-      const savedLocale = localStorage.getItem(STORAGE_KEY) as SupportedLocale | null
-      if (savedLocale && SUPPORTED_LOCALES.some((l) => l.code === savedLocale)) {
-        currentLocale.value = savedLocale
-      }
-      const cachedDict = localStorage.getItem(CACHE_KEY)
-      if (cachedDict) {
-        try {
-          const parsed = JSON.parse(cachedDict)
-          dictionary.value = {
-            ...FALLBACK_DICTIONARY,
-            ...parsed,
-            en: { ...FALLBACK_DICTIONARY.en, ...(parsed.en || {}) },
-            km: { ...FALLBACK_DICTIONARY.km, ...(parsed.km || {}) },
-          }
-        } catch {
-          // Ignore corrupt local cache
-        }
-      }
-    }
-  }
-
-  async function fetchTranslations(schemaName?: string) {
-    if (isLoading.value) return
-    isLoading.value = true
-    try {
-      const query = schemaName ? `?schema_name=${encodeURIComponent(schemaName)}` : ''
-      const res = await $fetch<{
-        status: string
-        source: string
-        locales: Record<string, Record<string, string>>
-      }>(`${baseURL}/api/v1/translations/dictionary${query}`)
-
-      if (res?.locales) {
-        const merged: Record<string, Record<string, string>> = { ...dictionary.value }
-        for (const [loc, map] of Object.entries(res.locales)) {
-          merged[loc] = {
-            ...(FALLBACK_DICTIONARY[loc] || {}),
-            ...(merged[loc] || {}),
-            ...map,
-          }
-        }
-        dictionary.value = merged
-        isLoaded.value = true
-
-        if (import.meta.client) {
-          localStorage.setItem(CACHE_KEY, JSON.stringify(merged))
-        }
-      }
-    } catch {
-      // Fallback to built-in + localStorage dictionary silently
-    } finally {
-      isLoading.value = false
-    }
-  }
-
-  function setLocale(locale: SupportedLocale) {
-    currentLocale.value = locale
-    if (import.meta.client) {
-      localStorage.setItem(STORAGE_KEY, locale)
-      document.documentElement.setAttribute('lang', locale === 'km' ? 'km' : locale)
+    if (!import.meta.client) return
+    const saved = localStorage.getItem(STORAGE_KEY) as LocaleCode | null
+    if (saved && SUPPORTED_LOCALES.some(l => l.code === saved)) {
+      currentLocale.value = saved
+      document.documentElement.lang = saved
     }
   }
 
   /**
-   * Translate a key (e.g. `nav.dashboard`) with automatic fallback to English or provided default text.
+   * Synchronous instantaneous translation lookup.
    */
-  function t(key: string, fallbackText?: string): string {
-    const loc = currentLocale.value
-    const val = dictionary.value?.[loc]?.[key]
-    if (val && val.trim().length > 0) return val
-
-    const enVal = dictionary.value?.en?.[key]
-    if (enVal && enVal.trim().length > 0) return enVal
-
-    return fallbackText ?? key
+  function t(key: string, fallback?: string): string {
+    const loc = currentLocale.value || 'en'
+    const dict = translations.value[loc]
+    if (dict && dict[key]) {
+      return dict[key]
+    }
+    const enDict = translations.value['en']
+    if (enDict && enDict[key]) {
+      return enDict[key]
+    }
+    return fallback !== undefined ? fallback : key
   }
 
-  const activeLocaleOption = computed(
-    () => SUPPORTED_LOCALES.find((l) => l.code === currentLocale.value) ?? SUPPORTED_LOCALES[0],
-  )
+  /**
+   * Fetch latest translations from backend TRANSLATE_MODEL (cached in Redis).
+   */
+  async function fetchTranslations() {
+    if (!import.meta.client) return
+    try {
+      const { apiFetch } = useApi()
+      const data = await apiFetch<any>(API_ENDPOINTS.system.translations, {
+        params: { schema_name: 'admin_front' },
+      })
+
+      if (data && data.locales) {
+        for (const loc of ['en', 'km', 'cn', 'jp', 'kr'] as LocaleCode[]) {
+          if (data.locales[loc]) {
+            translations.value[loc] = {
+              ...translations.value[loc],
+              ...data.locales[loc],
+            }
+          }
+        }
+        localStorage.setItem('admin_cached_translations', JSON.stringify(translations.value))
+        isLoaded.value = true
+      }
+    } catch {
+      const cached = localStorage.getItem('admin_cached_translations')
+      if (cached) {
+        try {
+          const parsed = JSON.parse(cached)
+          translations.value = { ...translations.value, ...parsed }
+        } catch {}
+      }
+    }
+  }
+
+  /**
+   * Set active language.
+   */
+  function setLocale(code: LocaleCode) {
+    if (['en', 'km', 'cn', 'jp', 'kr'].includes(code)) {
+      currentLocale.value = code
+      if (import.meta.client) {
+        localStorage.setItem(STORAGE_KEY, code)
+        document.documentElement.lang = code
+      }
+    }
+  }
 
   return {
     currentLocale,
     supportedLocales: SUPPORTED_LOCALES,
     activeLocaleOption,
-    dictionary,
-    isLoaded,
-    isLoading,
     initLocale,
-    fetchTranslations,
-    setLocale,
     t,
+    setLocale,
+    fetchTranslations,
+    isLoaded,
   }
 }

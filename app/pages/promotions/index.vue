@@ -1,20 +1,24 @@
 <template>
   <div class="page-root">
     <AppPageHeader
-      title="Promotions"
-      description="Create and manage promotional discount codes, percentage/fixed offers, and validity dates."
+      title="Promotions & Coupons"
+      description="Create discount campaigns and manage coupon codes for POS and online checkout."
       :breadcrumbs="[
         { label: 'Customers', to: '/customers' },
         { label: 'Promotions' },
       ]"
-      primary-label="Create Promotion"
+      primary-label="New Promotion"
       primary-icon="i-heroicons-plus"
       @primary-click="openCreateModal"
-    />
+    >
+      <template #secondary>
+        <AppButton size="sm" variant="default" icon="i-heroicons-arrow-path" label="Refresh" :loading="loading" @click="fetchPromotions" />
+      </template>
+    </AppPageHeader>
 
     <AppFilterBar
       v-model:search="searchQuery"
-      search-placeholder="Search promotions by name or promo code..."
+      search-placeholder="Search promotions by campaign name or coupon code..."
       :chips="statusFilter ? [{ key: 'status', label: 'Status', value: statusFilter }] : []"
       :shown-count="filteredPromotions.length"
       :total-count="promotions.length"
@@ -33,168 +37,225 @@
       />
     </AppFilterBar>
 
+    <!-- Promotions Table -->
     <AppCard :no-pad="true">
       <AppTable
         :columns="columns"
         :rows="filteredPromotions"
         :loading="loading"
         :empty-state="{
-          icon: 'i-heroicons-receipt-percent',
-          label: 'No promotions created yet',
-          description: 'Create percentage or fixed-amount promotions for POS checkout.',
+          icon: 'i-heroicons-gift',
+          label: 'No promotions active',
+          description: 'Create discount campaigns and coupon codes for POS checkout.',
         }"
       >
-        <template #cell-code="{ row }">
-          <code class="mono font-semibold text-gray-900">{{ row.code || '—' }}</code>
+        <template #cell-name="{ row }">
+          <div>
+            <p class="font-semibold text-gray-900">{{ row.name }}</p>
+            <p v-if="row.code" class="text-xs font-mono text-gray-600">
+              Code: {{ row.code }}
+            </p>
+          </div>
         </template>
 
-        <template #cell-discount_type="{ row }">
-          <AppBadge :color="row.discount_type === 'PERCENTAGE' ? 'blue' : 'green'" size="sm">
-            {{ row.discount_type }}
+        <template #cell-type="{ row }">
+          <AppBadge :color="(row.type || row.discount_type) === 'PERCENTAGE' ? 'blue' : 'green'" size="sm">
+            {{ row.type || row.discount_type }}
           </AppBadge>
         </template>
 
-        <template #cell-discount_value="{ row }">
-          <span class="mono font-bold text-gray-900">
-            {{ row.discount_type === 'PERCENTAGE' ? `${row.discount_value}%` : `$${Number(row.discount_value).toFixed(2)}` }}
+        <template #cell-discount="{ row }">
+          <span class="font-bold mono text-gray-900">
+            {{ (row.type || row.discount_type) === 'PERCENTAGE' ? `${row.value ?? row.discount_value}% OFF` : `$${Number(row.value ?? row.discount_value ?? 0).toFixed(2)} OFF` }}
+          </span>
+        </template>
+
+        <template #cell-validity="{ row }">
+          <div class="text-xs text-gray-500">
+            {{ fmtDate(row.start_datetime || row.valid_from) }} – {{ fmtDate(row.end_datetime || row.valid_until) }}
+          </div>
+        </template>
+
+        <template #cell-usage="{ row }">
+          <span class="text-xs mono">
+            {{ row.usage_count ?? 0 }} / {{ row.usage_limit || 'Unlimited' }}
           </span>
         </template>
 
         <template #cell-status="{ row }">
-          <AppBadge :color="(row.status_code || row.status) === 'ACTIVE' ? 'green' : 'default'" size="sm">
-            {{ row.status_code || row.status || 'ACTIVE' }}
-          </AppBadge>
+          <AppBadge
+            :color="(row.status_code || row.status) === 'ACTIVE' ? 'green' : 'default'"
+            :label="row.status_code || row.status || 'ACTIVE'"
+            size="sm"
+          />
         </template>
 
         <template #cell-actions="{ row }">
           <div class="flex items-center justify-end gap-1">
-            <AppButton size="xs" variant="ghost" label="Edit" @click="openEditModal(row)" />
             <AppButton
-              v-if="(row.status_code || row.status) === 'ACTIVE'"
+              variant="ghost"
               size="xs"
+              icon="i-heroicons-pencil-square"
+              label="Edit"
+              @click="openEditModal(row)"
+            />
+            <AppButton
               variant="danger"
-              label="Deactivate"
-              @click="promptDeactivate(row)"
+              size="xs"
+              icon="i-heroicons-trash"
+              label="Delete"
+              @click="promptDelete(row)"
             />
           </div>
         </template>
       </AppTable>
     </AppCard>
 
-    <!-- Create / Edit Modal -->
+    <!-- Create / Edit Promotion Modal -->
     <AppModal
-      v-model="showModal"
-      :title="editingPromo ? 'Edit Promotion' : 'New Promotion'"
+      v-model="showCreateModal"
+      :title="editingPromotionId ? 'Edit Promotion' : 'Create Promotion'"
       size="md"
     >
-      <form class="form-grid" @submit.prevent="handleSubmit">
-        <div class="form-row">
-          <div class="form-field">
-            <label class="field-label">Promotion Name <span class="required">*</span></label>
-            <input v-model="form.name" type="text" required placeholder="Summer Sale 20%" class="field-input" />
-          </div>
-          <div class="form-field">
-            <label class="field-label">Promo Code</label>
-            <input v-model="form.code" type="text" placeholder="SUMMER20" class="field-input mono uppercase" />
-          </div>
+      <form class="form-grid" @submit.prevent="handleCreatePromotion">
+        <div class="form-field">
+          <label class="field-label">Campaign Name <span class="required">*</span></label>
+          <input
+            v-model="createForm.name"
+            type="text"
+            required
+            placeholder="e.g. Summer Special 15%"
+            class="field-input"
+          />
         </div>
 
         <div class="form-row">
           <div class="form-field">
             <label class="field-label">Discount Type <span class="required">*</span></label>
-            <select v-model="form.discount_type" required class="field-input">
+            <select
+              v-model="createForm.type"
+              required
+              class="field-input"
+            >
               <option value="PERCENTAGE">Percentage (%)</option>
               <option value="FIXED">Fixed Amount ($)</option>
             </select>
           </div>
           <div class="form-field">
             <label class="field-label">Discount Value <span class="required">*</span></label>
-            <input v-model.number="form.discount_value" type="number" step="0.01" min="0" required class="field-input mono" />
+            <input
+              v-model.number="createForm.value"
+              type="number"
+              step="0.01"
+              min="0.01"
+              required
+              placeholder="e.g. 10"
+              class="field-input mono"
+            />
           </div>
         </div>
 
         <div class="form-row">
           <div class="form-field">
-            <label class="field-label">Min Order Amount ($)</label>
-            <input v-model.number="form.min_order_amount" type="number" step="0.01" min="0" class="field-input mono" />
+            <label class="field-label">Coupon Code (optional)</label>
+            <input
+              v-model="createForm.code"
+              type="text"
+              placeholder="e.g. SUMMER10"
+              class="field-input uppercase font-mono"
+            />
           </div>
           <div class="form-field">
-            <label class="field-label">Usage Limit</label>
-            <input v-model.number="form.usage_limit" type="number" min="1" placeholder="Unlimited" class="field-input mono" />
+            <label class="field-label">Min. Order Total ($)</label>
+            <input
+              v-model.number="createForm.min_purchase_amount"
+              type="number"
+              step="0.01"
+              min="0"
+              class="field-input mono"
+            />
           </div>
         </div>
 
         <div class="form-row">
           <div class="form-field">
-            <label class="field-label">Valid From <span class="required">*</span></label>
-            <input v-model="form.valid_from" type="date" required class="field-input" />
+            <label class="field-label">Start Date <span class="required">*</span></label>
+            <input
+              v-model="createForm.start_datetime"
+              type="date"
+              required
+              class="field-input"
+            />
           </div>
           <div class="form-field">
-            <label class="field-label">Valid Until</label>
-            <input v-model="form.valid_until" type="date" class="field-input" />
+            <label class="field-label">End Date <span class="required">*</span></label>
+            <input
+              v-model="createForm.end_datetime"
+              type="date"
+              required
+              class="field-input"
+            />
           </div>
         </div>
 
         <div class="modal-actions">
-          <AppButton type="button" variant="ghost" label="Cancel" @click="showModal = false" />
-          <AppButton type="submit" variant="primary" :label="editingPromo ? 'Save Changes' : 'Create Promotion'" :loading="saving" />
+          <AppButton type="button" variant="ghost" label="Cancel" @click="showCreateModal = false" />
+          <AppButton type="submit" variant="primary" label="Save Campaign" :loading="saving" />
         </div>
       </form>
     </AppModal>
 
     <AppConfirmDialog
-      v-model="showDeactivateConfirm"
-      title="Deactivate Promotion"
+      v-model="showDeleteConfirm"
+      title="Delete Promotion"
       variant="danger"
-      confirm-label="Deactivate Promotion"
-      :loading="deactivating"
-      :message="`Are you sure you want to deactivate promotion &quot;${deactivateTarget?.name}&quot;?`"
-      consequence="Cashiers will no longer be able to apply this promotion code at checkout."
-      @confirm="executeDeactivatePromo"
+      confirm-label="Delete Promotion"
+      :loading="deleting"
+      :message="`Are you sure you want to delete promotion &quot;${deleteTarget?.name}&quot;?`"
+      consequence="Cashiers and customers will no longer be able to apply this promotion code."
+      @confirm="executeDeletePromotion"
     />
   </div>
 </template>
 
 <script setup lang="ts">
 definePageMeta({ middleware: ['auth'] })
-useHead({ title: 'Promotions — Clothing Store Admin' })
+useHead({ title: 'Promotions & Coupons — Clothing Store Admin' })
 
-const promoApi = usePromotionApi()
+const promotionApi = usePromotionApi()
 const toast = useAppToast()
 
 const loading = ref(false)
 const saving = ref(false)
-const deactivating = ref(false)
+const deleting = ref(false)
 const promotions = ref<any[]>([])
 const searchQuery = ref('')
 const statusFilter = ref('')
 
-const showModal = ref(false)
-const editingPromo = ref<any>(null)
-const showDeactivateConfirm = ref(false)
-const deactivateTarget = ref<any>(null)
-
-const form = ref({
-  name: '',
-  code: '',
-  discount_type: 'PERCENTAGE',
-  discount_value: 10,
-  min_order_amount: 0,
-  usage_limit: null as number | null,
-  valid_from: new Date().toISOString().slice(0, 10),
-  valid_until: '',
-})
-
 const columns = [
-  { key: 'name', label: 'Name', sortable: true },
-  { key: 'code', label: 'Code', sortable: true },
-  { key: 'discount_type', label: 'Type', sortable: true },
-  { key: 'discount_value', label: 'Value', sortable: true },
-  { key: 'valid_from', label: 'Valid From', sortable: true },
-  { key: 'valid_until', label: 'Valid Until', sortable: true },
-  { key: 'status', label: 'Status', sortable: true },
+  { key: 'name', label: 'Promotion', sortable: true },
+  { key: 'type', label: 'Type' },
+  { key: 'discount', label: 'Discount' },
+  { key: 'validity', label: 'Validity Period' },
+  { key: 'usage', label: 'Usage' },
+  { key: 'status', label: 'Status' },
   { key: 'actions', label: 'Actions', align: 'right' as const },
 ]
+
+const showCreateModal = ref(false)
+const editingPromotionId = ref<string | null>(null)
+const showDeleteConfirm = ref(false)
+const deleteTarget = ref<any>(null)
+
+const createForm = ref({
+  name: '',
+  type: 'PERCENTAGE',
+  value: 10,
+  code: '',
+  min_purchase_amount: 0,
+  start_datetime: new Date().toISOString().split('T')[0] ?? '',
+  end_datetime: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0] ?? '',
+})
 
 const filteredPromotions = computed(() => {
   const q = searchQuery.value.trim().toLowerCase()
@@ -202,48 +263,51 @@ const filteredPromotions = computed(() => {
     const st = p.status_code || p.status || 'ACTIVE'
     if (statusFilter.value && st !== statusFilter.value) return false
     if (q) {
-      const hay = [p.name, p.code, p.discount_type].filter(Boolean).join(' ').toLowerCase()
+      const hay = [p.name, p.code, p.type].filter(Boolean).join(' ').toLowerCase()
       if (!hay.includes(q)) return false
     }
     return true
   })
 })
 
+function fmtDate(d?: string) {
+  if (!d) return '—'
+  return new Date(d).toLocaleDateString()
+}
+
 function openCreateModal() {
-  editingPromo.value = null
-  form.value = {
+  editingPromotionId.value = null
+  createForm.value = {
     name: '',
+    type: 'PERCENTAGE',
+    value: 10,
     code: '',
-    discount_type: 'PERCENTAGE',
-    discount_value: 10,
-    min_order_amount: 0,
-    usage_limit: null,
-    valid_from: new Date().toISOString().slice(0, 10),
-    valid_until: '',
+    min_purchase_amount: 0,
+    start_datetime: new Date().toISOString().split('T')[0] ?? '',
+    end_datetime: new Date(Date.now() + 30 * 86400000).toISOString().split('T')[0] ?? '',
   }
-  showModal.value = true
+  showCreateModal.value = true
 }
 
 function openEditModal(promo: any) {
-  editingPromo.value = promo
-  form.value = {
-    name: promo.name,
+  editingPromotionId.value = promo.id
+  createForm.value = {
+    name: promo.name || '',
+    type: promo.type || promo.discount_type || 'PERCENTAGE',
+    value: Number(promo.value ?? promo.discount_value ?? 10),
     code: promo.code || '',
-    discount_type: promo.discount_type,
-    discount_value: Number(promo.discount_value),
-    min_order_amount: Number(promo.min_order_amount || 0),
-    usage_limit: promo.usage_limit || null,
-    valid_from: promo.valid_from?.slice(0, 10) || '',
-    valid_until: promo.valid_until?.slice(0, 10) || '',
+    min_purchase_amount: Number(promo.min_purchase_amount ?? promo.min_order_amount ?? 0),
+    start_datetime: promo.start_datetime ? new Date(promo.start_datetime).toISOString().split('T')[0] ?? '' : '',
+    end_datetime: promo.end_datetime ? new Date(promo.end_datetime).toISOString().split('T')[0] ?? '' : '',
   }
-  showModal.value = true
+  showCreateModal.value = true
 }
 
 async function fetchPromotions() {
   loading.value = true
   try {
-    const data = await promoApi.listPromotions() as any[]
-    promotions.value = data || []
+    const data = await promotionApi.listPromotions() as any
+    promotions.value = Array.isArray(data) ? data : (data?.items || [])
   } catch (err: any) {
     toast.add({ title: 'Error', description: err?.data?.detail || err.message, color: 'red' })
   } finally {
@@ -251,22 +315,28 @@ async function fetchPromotions() {
   }
 }
 
-async function handleSubmit() {
+async function handleCreatePromotion() {
   saving.value = true
   try {
     const payload = {
-      ...form.value,
-      code: form.value.code ? form.value.code.toUpperCase() : undefined,
-      valid_until: form.value.valid_until || undefined,
+      name: createForm.value.name,
+      type: createForm.value.type,
+      value: createForm.value.value,
+      code: createForm.value.code ? createForm.value.code.toUpperCase() : null,
+      min_purchase_amount: createForm.value.min_purchase_amount,
+      start_datetime: new Date(createForm.value.start_datetime).toISOString(),
+      end_datetime: new Date(createForm.value.end_datetime).toISOString(),
+      status: 'ACTIVE',
+      status_code: 'ACTIVE',
     }
-    if (editingPromo.value) {
-      await promoApi.updatePromotion(editingPromo.value.id, payload)
-      toast.add({ title: 'Updated', description: 'Promotion updated', color: 'green' })
+    if (editingPromotionId.value) {
+      await promotionApi.updatePromotion(editingPromotionId.value, payload)
+      toast.add({ title: 'Success', description: 'Promotion updated successfully', color: 'green' })
     } else {
-      await promoApi.createPromotion(payload)
-      toast.add({ title: 'Created', description: 'Promotion created', color: 'green' })
+      await promotionApi.createPromotion(payload)
+      toast.add({ title: 'Success', description: 'Promotion created successfully', color: 'green' })
     }
-    showModal.value = false
+    showCreateModal.value = false
     await fetchPromotions()
   } catch (err: any) {
     toast.add({ title: 'Error', description: err?.data?.detail || err.message, color: 'red' })
@@ -275,25 +345,27 @@ async function handleSubmit() {
   }
 }
 
-function promptDeactivate(promo: any) {
-  deactivateTarget.value = promo
-  showDeactivateConfirm.value = true
+function promptDelete(row: any) {
+  deleteTarget.value = row
+  showDeleteConfirm.value = true
 }
 
-async function executeDeactivatePromo() {
-  if (!deactivateTarget.value) return
-  deactivating.value = true
+async function executeDeletePromotion() {
+  if (!deleteTarget.value) return
+  deleting.value = true
   try {
-    await promoApi.deletePromotion(deactivateTarget.value.id)
-    toast.add({ title: 'Deactivated', description: `${deactivateTarget.value.name} deactivated`, color: 'amber' })
-    showDeactivateConfirm.value = false
+    await promotionApi.deletePromotion(deleteTarget.value.id)
+    toast.add({ title: 'Success', description: 'Promotion deleted', color: 'green' })
+    showDeleteConfirm.value = false
     await fetchPromotions()
   } catch (err: any) {
     toast.add({ title: 'Error', description: err?.data?.detail || err.message, color: 'red' })
   } finally {
-    deactivating.value = false
+    deleting.value = false
   }
 }
 
-onMounted(fetchPromotions)
+onMounted(async () => {
+  await fetchPromotions()
+})
 </script>

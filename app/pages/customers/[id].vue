@@ -1,13 +1,18 @@
 <template>
   <div class="page-root">
     <AppPageHeader
-      :title="customer?.full_name || 'Customer Detail'"
-      :description="customer ? `Customer Code: ${customer.code}` : 'Loading customer profile...'"
+      :title="customer?.name || customer?.full_name || 'Customer Detail'"
+      :description="customer ? `Customer Code: ${customer.customer_code || customer.code}` : 'Loading customer profile...'"
       :breadcrumbs="[
         { label: 'Customers', to: '/customers' },
-        { label: customer?.full_name || 'Detail' },
+        { label: customer?.name || customer?.full_name || 'Detail' },
       ]"
     >
+      <template v-if="customer" #badge>
+        <AppBadge :color="(customer.status_code || customer.status) === 'ACTIVE' ? 'green' : 'default'" size="sm">
+          {{ customer.status_code || customer.status || 'ACTIVE' }}
+        </AppBadge>
+      </template>
       <template v-if="customer" #actions>
         <AppButton variant="default" size="sm" icon="i-heroicons-pencil-square" label="Edit Profile" @click="openEdit" />
       </template>
@@ -19,38 +24,47 @@
       <div class="kpi-grid-3">
         <AppStatCard
           label="Loyalty Points Balance"
-          :value="`${(customer as any).loyalty_points ?? 0} pts`"
+          :value="`${customer.loyalty_account?.points_balance ?? customer.loyalty_points ?? 0} pts`"
           icon="i-heroicons-sparkles"
           tone="blue"
-          sublabel="Earned from completed store purchases"
+          :sublabel="`Tier: ${customer.loyalty_account?.tier || 'BRONZE'}`"
         />
         <AppStatCard
           label="Total Lifetime Spend"
-          :value="`$${Number((customer as any).total_spent ?? totalSpentFromSales).toFixed(2)}`"
+          :value="`$${Number(customer.total_spent ?? totalSpentFromSales).toFixed(2)}`"
           icon="i-heroicons-banknotes"
           tone="green"
           :sublabel="`Across ${customerSales.length} recorded orders`"
         />
         <AppStatCard
           label="Member Since"
-          :value="customer.created_at ? new Date(customer.created_at).toLocaleDateString() : '—'"
+          :value="(customer.created_at || customer.created_datetime) ? new Date((customer.created_at || customer.created_datetime) as string).toLocaleDateString() : '—'"
           icon="i-heroicons-calendar"
           tone="neutral"
-          :sublabel="customer.phone || customer.email || 'Walk-in / Registered'"
+          :sublabel="customer.phone || customer.email || 'Registered Customer'"
         />
       </div>
 
       <div class="detail-grid">
-        <AppCard title="Contact Information">
+        <AppCard title="Customer Information">
           <dl class="detail-list">
-            <div class="detail-row"><dt>Customer Code</dt><dd><code class="mono font-semibold">{{ customer.code }}</code></dd></div>
-            <div class="detail-row"><dt>Full Name</dt><dd>{{ customer.full_name }}</dd></div>
+            <div class="detail-row"><dt>Code</dt><dd><code class="mono font-semibold">{{ customer.customer_code || customer.code }}</code></dd></div>
+            <div class="detail-row"><dt>Name</dt><dd>{{ customer.name || customer.full_name }}</dd></div>
             <div class="detail-row"><dt>Phone</dt><dd>{{ customer.phone ?? '—' }}</dd></div>
             <div class="detail-row"><dt>Email</dt><dd>{{ customer.email ?? '—' }}</dd></div>
+            <div class="detail-row"><dt>Address</dt><dd>{{ customer.address ?? '—' }}</dd></div>
             <div class="detail-row"><dt>Notes</dt><dd>{{ customer.notes ?? '—' }}</dd></div>
             <div class="detail-row">
-              <dt>Registered</dt>
-              <dd>{{ customer.created_at ? new Date(customer.created_at).toLocaleDateString() : '—' }}</dd>
+              <dt>Status</dt>
+              <dd>
+                <AppBadge :color="(customer.status_code || customer.status) === 'ACTIVE' ? 'green' : 'default'" size="sm">
+                  {{ customer.status_code || customer.status || 'ACTIVE' }}
+                </AppBadge>
+              </dd>
+            </div>
+            <div class="detail-row">
+              <dt>Joined</dt>
+              <dd>{{ (customer.created_at || customer.created_datetime) ? new Date((customer.created_at || customer.created_datetime) as string).toLocaleDateString() : '—' }}</dd>
             </div>
           </dl>
         </AppCard>
@@ -89,8 +103,8 @@
     <AppModal v-model="showEdit" title="Edit Customer" size="sm">
       <form class="form-grid" @submit.prevent="save">
         <div class="form-field">
-          <label class="field-label">Full Name <span class="required">*</span></label>
-          <input v-model="form.full_name" class="field-input" required />
+          <label class="field-label">Name <span class="required">*</span></label>
+          <input v-model="form.name" class="field-input" required />
         </div>
         <div class="form-row">
           <div class="form-field">
@@ -103,12 +117,20 @@
           </div>
         </div>
         <div class="form-field">
+          <label class="field-label">Address</label>
+          <textarea v-model="form.address" class="field-input field-textarea" rows="2" />
+        </div>
+        <div class="form-field">
           <label class="field-label">Notes</label>
           <textarea v-model="form.notes" class="field-input field-textarea" rows="2" />
         </div>
+        <div class="form-field">
+          <label class="field-label">Status</label>
+          <AppSelect v-model="form.status" :options="statusOptions" />
+        </div>
         <div class="modal-actions">
           <AppButton type="button" variant="ghost" label="Cancel" @click="showEdit = false" />
-          <AppButton type="submit" variant="primary" label="Save Changes" :loading="saving" />
+          <AppButton type="submit" variant="primary" label="Save" :loading="saving" />
         </div>
       </form>
     </AppModal>
@@ -134,7 +156,19 @@ const loading = ref(true)
 const saving = ref(false)
 const showEdit = ref(false)
 
-const form = reactive({ full_name: '', phone: '', email: '', notes: '' })
+const statusOptions = [
+  { label: 'Active', value: 'ACTIVE' },
+  { label: 'Inactive', value: 'INACTIVE' },
+]
+
+const form = reactive({
+  name: '',
+  phone: '',
+  email: '',
+  address: '',
+  notes: '',
+  status: 'ACTIVE',
+})
 
 const saleCols = [
   { key: 'invoice', label: 'Invoice #' },
@@ -150,10 +184,12 @@ const totalSpentFromSales = computed(() =>
 function openEdit() {
   if (!customer.value) return
   Object.assign(form, {
-    full_name: customer.value.full_name,
+    name: customer.value.name || customer.value.full_name || '',
     phone: customer.value.phone ?? '',
     email: customer.value.email ?? '',
+    address: customer.value.address ?? '',
     notes: customer.value.notes ?? '',
+    status: customer.value.status_code || customer.value.status || 'ACTIVE',
   })
   showEdit.value = true
 }
@@ -162,10 +198,13 @@ async function save() {
   saving.value = true
   try {
     await updateCustomer(id, {
-      full_name: form.full_name,
+      name: form.name,
       phone: form.phone || null,
       email: form.email || null,
+      address: form.address || null,
       notes: form.notes || null,
+      status: form.status,
+      status_code: form.status,
     })
     addToast({ type: 'success', title: 'Customer updated' })
     customer.value = await getCustomer(id) as Customer

@@ -1,104 +1,203 @@
 <template>
   <div class="page-root">
     <AppPageHeader
-      title="Customers"
-      description="Manage customer profiles, contact information, loyalty points, and purchase history."
+      title="Customers & Loyalty"
+      description="Manage client profiles, loyalty tiers, reward points, and purchase history."
       :breadcrumbs="[
         { label: 'Customers', to: '/customers' },
-        { label: 'Customer Directory' },
+        { label: 'Customers & Loyalty' },
       ]"
-      primary-label="Add Customer"
+      primary-label="New Customer"
       primary-icon="i-heroicons-plus"
       @primary-click="openCreateModal"
-    />
+    >
+      <template #secondary>
+        <AppButton
+          size="sm"
+          variant="default"
+          icon="i-heroicons-arrow-path"
+          label="Refresh"
+          :loading="loading"
+          @click="fetchCustomers"
+        />
+      </template>
+    </AppPageHeader>
 
     <AppFilterBar
       v-model:search="search"
-      search-placeholder="Search customers by name, code, phone, or email..."
-      :shown-count="paginatedCustomers.length"
-      :total-count="customers.length"
+      search-placeholder="Search by name, phone, code, or email..."
+      :chips="activeChips"
+      :shown-count="customers.length"
+      :total-count="total"
       count-label="customers"
       @submit="fetchCustomers"
-      @clear-all="search = ''; fetchCustomers()"
-    />
+      @remove-chip="statusFilter = ''; fetchCustomers()"
+      @clear-all="clearFilters"
+    >
+      <AppSelect
+        v-model="statusFilter"
+        :options="statusOptions"
+        placeholder="All Statuses"
+        style="min-width: 155px;"
+        @change="fetchCustomers"
+      />
+    </AppFilterBar>
 
+    <!-- Customers table -->
     <AppCard :no-pad="true">
       <AppTable
         :columns="columns"
-        :rows="paginatedCustomers"
+        :rows="customers"
         :loading="loading"
         :empty-state="{
-          icon: 'i-heroicons-users',
+          icon: 'i-heroicons-user-group',
           label: 'No customers found',
           description: 'Add customer profiles to track loyalty points and purchase history.',
         }"
       >
-        <template #cell-code="{ row }">
-          <code class="mono font-semibold text-gray-900">{{ row.code }}</code>
+        <template #cell-customer_code="{ row }">
+          <code class="mono font-semibold text-gray-900">{{ row.customer_code || row.code || '—' }}</code>
         </template>
 
-        <template #cell-full_name="{ row }">
+        <template #cell-name="{ row }">
           <NuxtLink :to="`/customers/${row.id}`" class="font-semibold text-gray-900 hover:underline">
-            {{ row.full_name }}
+            {{ row.name || row.full_name }}
           </NuxtLink>
         </template>
 
-        <template #cell-loyalty_points="{ row }">
-          <AppBadge color="blue" size="sm">{{ row.loyalty_points ?? 0 }} pts</AppBadge>
+        <template #cell-tier="{ row }">
+          <AppBadge
+            :color="getTierColor(row.loyalty_account?.tier)"
+            :label="row.loyalty_account?.tier || 'BRONZE'"
+            size="sm"
+            variant="subtle"
+          />
         </template>
 
-        <template #cell-total_spent="{ row }">
-          <span class="mono font-semibold">${{ Number(row.total_spent || 0).toFixed(2) }}</span>
-        </template>
-
-        <template #cell-actions="{ row }">
-          <div class="flex items-center justify-end gap-1">
-            <AppButton size="xs" variant="ghost" label="View" :to="`/customers/${row.id}`" />
-            <AppButton size="xs" variant="ghost" label="Edit" @click="openEditModal(row)" />
+        <template #cell-points="{ row }">
+          <div class="font-semibold mono text-gray-900">
+            {{ (row.loyalty_account?.points_balance ?? row.loyalty_points ?? 0).toLocaleString() }} pts
           </div>
         </template>
 
-        <template v-if="customers.length > pageSize" #footer>
+        <template #cell-status="{ row }">
+          <AppBadge
+            :color="(row.status_code || row.status || 'ACTIVE') === 'ACTIVE' ? 'green' : 'default'"
+            :label="row.status_code || row.status || 'ACTIVE'"
+            size="sm"
+          />
+        </template>
+
+        <template #cell-actions="{ row }">
+          <div class="flex items-center justify-end gap-1.5">
+            <AppButton
+              size="xs"
+              variant="ghost"
+              label="View"
+              :to="`/customers/${row.id}`"
+            />
+            <AppButton
+              size="xs"
+              variant="ghost"
+              label="Edit"
+              @click="openEditModal(row)"
+            />
+            <AppButton
+              size="xs"
+              variant="primary"
+              icon="i-heroicons-sparkles"
+              label="Points"
+              @click="openPointsModal(row)"
+            />
+          </div>
+        </template>
+
+        <template v-if="total > limit" #footer>
           <AppPagination
-            v-model:page="currentPage"
-            :page-size="pageSize"
-            :total="customers.length"
+            v-model:page="page"
+            :page-size="limit"
+            :total="total"
+            @update:page="fetchCustomers"
           />
         </template>
       </AppTable>
     </AppCard>
 
-    <!-- Create / Edit Modal -->
+    <!-- Create / Edit Customer Modal -->
     <AppModal
-      v-model="showModal"
-      :title="editingCustomer ? 'Edit Customer' : 'Add Customer'"
-      size="sm"
+      v-model="isCreateModalOpen"
+      :title="editingCustomer ? 'Edit Customer' : 'Add New Customer'"
+      size="md"
     >
-      <form class="form-grid" @submit.prevent="handleSubmit">
+      <form class="form-grid" @submit.prevent="submitCreate">
         <div class="form-field">
           <label class="field-label">Full Name <span class="required">*</span></label>
-          <input v-model="form.full_name" type="text" required placeholder="Customer full name" class="field-input" />
+          <AppInput v-model="createForm.name" placeholder="John Doe" required />
         </div>
 
         <div class="form-row">
           <div class="form-field">
             <label class="field-label">Phone</label>
-            <input v-model="form.phone" type="tel" placeholder="+855 12 ..." class="field-input" />
+            <AppInput v-model="createForm.phone" placeholder="012345678" />
           </div>
+
           <div class="form-field">
             <label class="field-label">Email</label>
-            <input v-model="form.email" type="email" placeholder="email@example.com" class="field-input" />
+            <AppInput v-model="createForm.email" type="email" placeholder="john@example.com" />
           </div>
         </div>
 
         <div class="form-field">
+          <label class="field-label">Address</label>
+          <AppInput v-model="createForm.address" placeholder="Street, City" />
+        </div>
+
+        <div class="form-field">
           <label class="field-label">Notes</label>
-          <textarea v-model="form.notes" rows="2" placeholder="Optional customer preferences or sizing notes..." class="field-input field-textarea" />
+          <textarea
+            v-model="createForm.notes"
+            rows="2"
+            placeholder="Customer preferences..."
+            class="field-input field-textarea"
+          />
         </div>
 
         <div class="modal-actions">
-          <AppButton type="button" variant="ghost" label="Cancel" @click="showModal = false" />
-          <AppButton type="submit" variant="primary" :label="editingCustomer ? 'Save Changes' : 'Add Customer'" :loading="saving" />
+          <AppButton type="button" variant="ghost" @click="isCreateModalOpen = false">Cancel</AppButton>
+          <AppButton type="submit" variant="primary" :loading="isSubmitting">
+            {{ editingCustomer ? 'Save Changes' : 'Save Customer' }}
+          </AppButton>
+        </div>
+      </form>
+    </AppModal>
+
+    <!-- Adjust Points Modal -->
+    <AppModal
+      v-model="isPointsModalOpen"
+      :title="`Adjust Points: ${selectedCustomer?.name || selectedCustomer?.full_name || ''}`"
+      size="sm"
+    >
+      <form class="form-grid" @submit.prevent="submitAdjustPoints">
+        <div class="p-3 rounded-lg bg-gray-50 border border-gray-200 text-xs flex items-center justify-between">
+          <span class="text-gray-600">Current Balance:</span>
+          <strong class="mono text-sm text-gray-900">
+            {{ selectedCustomer?.loyalty_account?.points_balance ?? selectedCustomer?.loyalty_points ?? 0 }} pts
+          </strong>
+        </div>
+
+        <div class="form-field">
+          <label class="field-label">Points Adjustment (+ to add, - to deduct) <span class="required">*</span></label>
+          <AppInput v-model.number="pointsDelta" type="number" placeholder="e.g. 100 or -50" required />
+        </div>
+
+        <div class="form-field">
+          <label class="field-label">Reason / Note</label>
+          <AppInput v-model="pointsNote" placeholder="e.g. VIP birthday bonus" />
+        </div>
+
+        <div class="modal-actions">
+          <AppButton type="button" variant="ghost" @click="isPointsModalOpen = false">Cancel</AppButton>
+          <AppButton type="submit" variant="primary" :loading="isSubmitting">Update Points</AppButton>
         </div>
       </form>
     </AppModal>
@@ -106,94 +205,195 @@
 </template>
 
 <script setup lang="ts">
-definePageMeta({ middleware: ['auth'] })
-useHead({ title: 'Customers — Clothing Store Admin' })
+import type { FilterChipItem } from '~/components/AppFilterBar.vue'
+
+definePageMeta({
+  middleware: ['auth'],
+})
+useHead({ title: 'Customers & Loyalty — Clothing Store Admin' })
 
 const customerApi = useCustomerApi()
 const toast = useAppToast()
 
-const loading = ref(false)
-const saving = ref(false)
-const customers = ref<any[]>([])
 const search = ref('')
-const currentPage = ref(1)
-const pageSize = 20
+const statusFilter = ref('')
+const loading = ref(false)
+const isSubmitting = ref(false)
+const page = ref(1)
+const limit = ref(20)
+const total = ref(0)
+const customers = ref<any[]>([])
 
-const showModal = ref(false)
+const isCreateModalOpen = ref(false)
 const editingCustomer = ref<any>(null)
-const form = ref({ full_name: '', phone: '', email: '', notes: '' })
+const createForm = reactive({
+  name: '',
+  phone: '',
+  email: '',
+  address: '',
+  notes: '',
+})
+
+const isPointsModalOpen = ref(false)
+const selectedCustomer = ref<any>(null)
+const pointsDelta = ref<number>(0)
+const pointsNote = ref('')
+
+const statusOptions = [
+  { label: 'All Statuses', value: '' },
+  { label: 'Active', value: 'ACTIVE' },
+  { label: 'Inactive', value: 'INACTIVE' },
+]
 
 const columns = [
-  { key: 'code', label: 'Code', sortable: true },
-  { key: 'full_name', label: 'Full Name', sortable: true },
+  { key: 'customer_code', label: 'Code', sortable: true },
+  { key: 'name', label: 'Customer Name', sortable: true },
   { key: 'phone', label: 'Phone' },
   { key: 'email', label: 'Email' },
-  { key: 'loyalty_points', label: 'Loyalty Points', sortable: true },
-  { key: 'total_spent', label: 'Total Spent', sortable: true },
+  { key: 'tier', label: 'Tier' },
+  { key: 'points', label: 'Loyalty Points', sortable: true },
+  { key: 'status', label: 'Status' },
   { key: 'actions', label: 'Actions', align: 'right' as const },
 ]
 
-const paginatedCustomers = computed(() => {
-  const start = (currentPage.value - 1) * pageSize
-  return customers.value.slice(start, start + pageSize)
+const activeChips = computed<FilterChipItem[]>(() => {
+  const chips: FilterChipItem[] = []
+  if (statusFilter.value) chips.push({ key: 'status', label: 'Status', value: statusFilter.value })
+  return chips
 })
 
-let debounceTimer: ReturnType<typeof setTimeout> | null = null
-watch(search, () => {
-  currentPage.value = 1
-  if (debounceTimer) clearTimeout(debounceTimer)
-  debounceTimer = setTimeout(fetchCustomers, 300)
-})
-
-function openCreateModal() {
-  editingCustomer.value = null
-  form.value = { full_name: '', phone: '', email: '', notes: '' }
-  showModal.value = true
+function getTierColor(tier?: string) {
+  switch (tier) {
+    case 'PLATINUM': return 'purple'
+    case 'GOLD': return 'amber'
+    case 'SILVER': return 'gray'
+    default: return 'orange'
+  }
 }
 
-function openEditModal(customer: any) {
-  editingCustomer.value = customer
-  form.value = {
-    full_name: customer.full_name,
-    phone: customer.phone || '',
-    email: customer.email || '',
-    notes: customer.notes || '',
-  }
-  showModal.value = true
+let searchDebounce: ReturnType<typeof setTimeout> | null = null
+watch(search, () => {
+  if (searchDebounce) clearTimeout(searchDebounce)
+  searchDebounce = setTimeout(() => {
+    page.value = 1
+    fetchCustomers()
+  }, 350)
+})
+
+function clearFilters() {
+  search.value = ''
+  statusFilter.value = ''
+  page.value = 1
+  fetchCustomers()
 }
 
 async function fetchCustomers() {
   loading.value = true
   try {
-    const params: Record<string, string> = {}
-    if (search.value.trim()) params.search = search.value.trim()
-    const data = await customerApi.listCustomers(params) as any[]
-    customers.value = data || []
+    const skip = (page.value - 1) * limit.value
+    const params: Record<string, any> = { skip, limit: limit.value }
+    if (search.value.trim()) params.q = search.value.trim()
+    if (statusFilter.value) params.status = statusFilter.value
+
+    const res: any = await customerApi.listCustomers(params)
+    if (Array.isArray(res)) {
+      customers.value = res
+      total.value = res.length
+    } else {
+      customers.value = res?.items || []
+      total.value = res?.total ?? customers.value.length
+    }
   } catch (err: any) {
-    toast.add({ title: 'Error', description: err?.data?.detail || err.message, color: 'red' })
+    toast.add({
+      title: 'Failed to load customers',
+      description: err?.data?.detail || err.message,
+      color: 'red',
+    })
   } finally {
     loading.value = false
   }
 }
 
-async function handleSubmit() {
-  saving.value = true
+function openCreateModal() {
+  editingCustomer.value = null
+  createForm.name = ''
+  createForm.phone = ''
+  createForm.email = ''
+  createForm.address = ''
+  createForm.notes = ''
+  isCreateModalOpen.value = true
+}
+
+function openEditModal(cust: any) {
+  editingCustomer.value = cust
+  createForm.name = cust.name || cust.full_name || ''
+  createForm.phone = cust.phone || ''
+  createForm.email = cust.email || ''
+  createForm.address = cust.address || ''
+  createForm.notes = cust.notes || ''
+  isCreateModalOpen.value = true
+}
+
+async function submitCreate() {
+  isSubmitting.value = true
   try {
-    if (editingCustomer.value) {
-      await customerApi.updateCustomer(editingCustomer.value.id, form.value)
-      toast.add({ title: 'Updated', description: 'Customer updated', color: 'green' })
-    } else {
-      await customerApi.createCustomer(form.value)
-      toast.add({ title: 'Created', description: 'Customer added', color: 'green' })
+    const payload = {
+      name: createForm.name.trim(),
+      phone: createForm.phone || undefined,
+      email: createForm.email || undefined,
+      address: createForm.address || undefined,
+      notes: createForm.notes || undefined,
     }
-    showModal.value = false
+    if (editingCustomer.value) {
+      await customerApi.updateCustomer(editingCustomer.value.id, payload)
+      toast.add({ title: 'Customer updated successfully', color: 'green' })
+    } else {
+      await customerApi.createCustomer(payload)
+      toast.add({ title: 'Customer created successfully', color: 'green' })
+    }
+    isCreateModalOpen.value = false
     await fetchCustomers()
   } catch (err: any) {
-    toast.add({ title: 'Error', description: err?.data?.detail || err.message, color: 'red' })
+    toast.add({
+      title: 'Error saving customer',
+      description: err?.data?.detail || err.message,
+      color: 'red',
+    })
   } finally {
-    saving.value = false
+    isSubmitting.value = false
   }
 }
 
-onMounted(fetchCustomers)
+function openPointsModal(cust: any) {
+  selectedCustomer.value = cust
+  pointsDelta.value = 0
+  pointsNote.value = ''
+  isPointsModalOpen.value = true
+}
+
+async function submitAdjustPoints() {
+  if (!selectedCustomer.value || !pointsDelta.value) return
+  isSubmitting.value = true
+  try {
+    await customerApi.adjustPoints(selectedCustomer.value.id, {
+      points: Number(pointsDelta.value),
+      note: pointsNote.value || undefined,
+    })
+    toast.add({ title: 'Loyalty points updated', color: 'green' })
+    isPointsModalOpen.value = false
+    await fetchCustomers()
+  } catch (err: any) {
+    toast.add({
+      title: 'Failed to adjust points',
+      description: err?.data?.detail || err.message,
+      color: 'red',
+    })
+  } finally {
+    isSubmitting.value = false
+  }
+}
+
+onMounted(() => {
+  fetchCustomers()
+})
 </script>

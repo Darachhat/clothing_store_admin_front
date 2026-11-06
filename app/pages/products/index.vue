@@ -2,7 +2,7 @@
   <div class="page-root">
     <AppPageHeader
       title="Products"
-      description="Manage master catalog products, pricing, categories, brands, and SKU variants."
+      description="Manage master catalog products, categories, brands, suppliers, and SKU variants."
       :breadcrumbs="[
         { label: 'Catalog', to: '/products' },
         { label: 'Products' },
@@ -15,9 +15,9 @@
         <AppButton
           size="sm"
           variant="default"
-          icon="i-heroicons-qr-code"
+          icon="i-heroicons-tag"
           label="Print Labels"
-          to="/labels"
+          to="/labels/generate"
         />
         <AppButton
           size="sm"
@@ -32,7 +32,7 @@
 
     <AppFilterBar
       v-model:search="search"
-      search-placeholder="Search products by name, SKU prefix, category, or brand..."
+      search-placeholder="Search products by name, code, slug, category, or brand..."
       :chips="activeChips"
       :shown-count="paginatedProducts.length"
       :total-count="filteredProducts.length"
@@ -54,7 +54,7 @@
       <AppSelect
         v-model="statusFilter"
         :options="statusOptions"
-        style="min-width: 140px;"
+        style="min-width: 145px;"
         @change="fetchProducts"
       />
     </AppFilterBar>
@@ -70,6 +70,10 @@
           description: 'Adjust your filters or add a new product to the catalog.',
         }"
       >
+        <template #cell-code="{ row }">
+          <code class="mono font-semibold text-gray-800">{{ row.code || row.sku_prefix || '—' }}</code>
+        </template>
+
         <template #cell-name="{ row }">
           <div class="product-cell">
             <img
@@ -83,25 +87,21 @@
             </div>
             <div class="min-w-0">
               <NuxtLink :to="`/products/${row.id}`" class="product-name">{{ row.name }}</NuxtLink>
-              <div class="product-sku mono">{{ row.sku_prefix }}</div>
+              <div class="product-sku mono">{{ row.slug || row.code || row.sku_prefix || '' }}</div>
             </div>
           </div>
         </template>
 
         <template #cell-category_name="{ row }">
-          <span>{{ row.category_name || categoryMap[row.category_id] || '—' }}</span>
+          <span>{{ row.category?.name || row.category_name || categoryMap[row.category_id] || '—' }}</span>
         </template>
 
         <template #cell-brand_name="{ row }">
-          <span>{{ row.brand_name || brandMap[row.brand_id] || '—' }}</span>
+          <span>{{ row.brand?.name || row.brand_name || brandMap[row.brand_id] || '—' }}</span>
         </template>
 
-        <template #cell-retail_price="{ value }">
-          <span class="mono font-semibold">${{ Number(value || 0).toFixed(2) }}</span>
-        </template>
-
-        <template #cell-cost_price="{ value }">
-          <span class="mono text-gray-500">${{ Number(value || 0).toFixed(2) }}</span>
+        <template #cell-total_stock="{ row }">
+          <span class="mono font-semibold">{{ row.total_stock ?? 0 }}</span>
         </template>
 
         <template #cell-status="{ row }">
@@ -111,16 +111,18 @@
         </template>
 
         <template #actions="{ row }">
-          <AppButton size="xs" variant="ghost" label="View" :to="`/products/${row.id}`" />
-          <AppButton size="xs" variant="ghost" label="Edit" :to="`/products/${row.id}/edit`" />
-          <AppButton size="xs" variant="default" label="Variants" :to="`/products/${row.id}/variants`" />
-          <AppButton
-            v-if="(row.status_code || row.status) !== 'ARCHIVED'"
-            size="xs"
-            variant="danger"
-            label="Archive"
-            @click="confirmArchive(row)"
-          />
+          <div class="flex items-center justify-end gap-1">
+            <AppButton size="xs" variant="ghost" label="View" :to="`/products/${row.id}`" />
+            <AppButton size="xs" variant="ghost" label="Edit" :to="`/products/${row.id}/edit`" />
+            <AppButton size="xs" variant="default" label="Variants" :to="`/products/${row.id}/variants`" />
+            <AppButton
+              v-if="(row.status_code || row.status) !== 'ARCHIVED' && (row.status_code || row.status) !== 'DISCONTINUED'"
+              size="xs"
+              variant="danger"
+              label="Archive"
+              @click="confirmArchive(row)"
+            />
+          </div>
         </template>
 
         <template v-if="filteredProducts.length > pageSize" #footer>
@@ -177,7 +179,7 @@ const statusOptions = [
   { label: 'All Statuses', value: '' },
   { label: 'Active', value: 'ACTIVE' },
   { label: 'Inactive', value: 'INACTIVE' },
-  { label: 'Archived', value: 'ARCHIVED' },
+  { label: 'Discontinued', value: 'DISCONTINUED' },
 ]
 
 const categoryMap = computed<Record<string, string>>(() => {
@@ -207,14 +209,12 @@ const brandOptions = computed(() => [
 ])
 
 const columns = [
-  { key: 'name', label: 'Product', sortable: true },
+  { key: 'code', label: 'Code', width: '130px', sortable: true },
+  { key: 'name', label: 'Product Name', sortable: true },
   { key: 'category_name', label: 'Category', sortable: true },
   { key: 'brand_name', label: 'Brand', sortable: true },
-  { key: 'gender', label: 'Gender', width: '90px', sortable: true },
-  { key: 'retail_price', label: 'Retail Price', width: '115px', sortable: true },
-  { key: 'cost_price', label: 'Cost', width: '100px', sortable: true },
-  { key: 'variant_count', label: 'Variants', width: '85px', sortable: true },
-  { key: 'status', label: 'Status', width: '105px', sortable: true },
+  { key: 'total_stock', label: 'Total Stock', width: '110px', sortable: true },
+  { key: 'status', label: 'Status', width: '115px', sortable: true },
 ]
 
 const filteredProducts = computed(() => {
@@ -223,9 +223,11 @@ const filteredProducts = computed(() => {
     if (q) {
       const hay = [
         p.name,
+        p.code,
+        p.slug,
         p.sku_prefix,
-        p.category_name || categoryMap.value[p.category_id],
-        p.brand_name || brandMap.value[p.brand_id],
+        p.category?.name || p.category_name || categoryMap.value[p.category_id],
+        p.brand?.name || p.brand_name || brandMap.value[p.brand_id],
       ]
         .filter(Boolean)
         .join(' ')
@@ -282,7 +284,7 @@ watch([search, categoryFilter, brandFilter, statusFilter], () => {
 })
 
 function statusColor(s: string) {
-  const map: Record<string, string> = { ACTIVE: 'green', INACTIVE: 'yellow', ARCHIVED: 'default' }
+  const map: Record<string, string> = { ACTIVE: 'green', INACTIVE: 'yellow', DISCONTINUED: 'red', ARCHIVED: 'default' }
   return map[s] ?? 'default'
 }
 
@@ -290,6 +292,7 @@ async function fetchProducts() {
   loading.value = true
   try {
     const params: Record<string, unknown> = { limit: 200 }
+    if (search.value.trim()) params.q = search.value.trim()
     if (statusFilter.value) params.status = statusFilter.value
     const res = await listProducts(params) as any
     products.value = Array.isArray(res) ? res : (res?.items ?? [])
@@ -325,8 +328,8 @@ onMounted(async () => {
     listCategories().catch(() => []),
     listBrands().catch(() => []),
   ])
-  categories.value = (cats as any[]) || []
-  brands.value = (brs as any[]) || []
+  categories.value = Array.isArray(cats) ? cats : ((cats as any)?.items || [])
+  brands.value = Array.isArray(brs) ? brs : ((brs as any)?.items || [])
   await fetchProducts()
 })
 </script>
