@@ -2405,3 +2405,28 @@ textarea:focus {
   0%   { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+
+/* ─── Global Print Reset (Hide Layout Chrome & Eliminate Blank Sheets) ──── */
+@media print {
+  .admin-sidebar,
+  .admin-topbar,
+  .pos-sidebar,
+  .pos-header,
+  .no-print {
+    display: none !important;
+  }
+
+  .admin-shell,
+  .admin-main,
+  .admin-main.is-sidebar-collapsed,
+  .admin-content {
+    margin: 0 !important;
+    padding: 0 !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-width: none !important;
+    width: 100% !important;
+    background: #ffffff !important;
+    display: block !important;
+  }
+}

@@ -339,26 +339,18 @@
 
                 <!-- Barcode / QR Zone -->
                 <div class="flex flex-col items-center justify-end pt-0.5">
-                  <template v-if="previewVariantId">
-                    <img
-                      v-if="form.code_type === 'QR'"
-                      :src="getQrUrl(previewVariantId, 'svg')"
-                      alt="Sample QR"
-                      style="width: 9.5mm; height: 9.5mm; object-fit: contain;"
-                    />
-                    <img
-                      v-else
-                      :src="getBarcodeUrl(previewVariantId, 'svg', false)"
-                      alt="Sample Barcode"
-                      style="width: 94%; height: 7.5mm; object-fit: contain;"
-                    />
-                  </template>
-                  <template v-else>
-                    <UIcon
-                      :name="form.code_type === 'QR' ? 'i-heroicons-qr-code' : 'i-heroicons-bars-3-bottom-left'"
-                      class="w-6 h-6 text-gray-800"
-                    />
-                  </template>
+                  <img
+                    v-if="form.code_type === 'QR'"
+                    :src="generateQrSvgDataUri(sampleItem.barcode || sampleItem.sku)"
+                    alt="Sample QR"
+                    style="width: 9.5mm; height: 9.5mm; object-fit: contain;"
+                  />
+                  <img
+                    v-else
+                    :src="generateBarcodeSvgDataUri(sampleItem.barcode || sampleItem.sku)"
+                    alt="Sample Barcode"
+                    style="width: 94%; height: 7.5mm; object-fit: contain;"
+                  />
                   <div
                     class="font-mono font-bold text-gray-900 tracking-wider text-center leading-none mt-0.5"
                     :style="{ fontSize: isCompactSize ? '5pt' : '5.5pt' }"
@@ -470,20 +462,18 @@
           </div>
         </div>
         <div class="flex flex-col items-center justify-end pt-0.5">
-          <template v-if="previewVariantId">
-            <img
-              v-if="form.code_type === 'QR'"
-              :src="getQrUrl(previewVariantId, 'svg')"
-              alt="Sample QR"
-              style="width: 9.5mm; height: 9.5mm; object-fit: contain;"
-            />
-            <img
-              v-else
-              :src="getBarcodeUrl(previewVariantId, 'svg', false)"
-              alt="Sample Barcode"
-              style="width: 94%; height: 7.5mm; object-fit: contain;"
-            />
-          </template>
+          <img
+            v-if="form.code_type === 'QR'"
+            :src="generateQrSvgDataUri(sampleItem.barcode || sampleItem.sku)"
+            alt="Sample QR"
+            style="width: 9.5mm; height: 9.5mm; object-fit: contain;"
+          />
+          <img
+            v-else
+            :src="generateBarcodeSvgDataUri(sampleItem.barcode || sampleItem.sku)"
+            alt="Sample Barcode"
+            style="width: 94%; height: 7.5mm; object-fit: contain;"
+          />
           <div
             class="font-mono font-bold text-gray-900 tracking-wider text-center leading-none mt-0.5"
             :style="{ fontSize: isCompactSize ? '5pt' : '5.5pt' }"
@@ -500,13 +490,14 @@
 import type { ProductVariant } from '~/types'
 import { DEFAULT_STICKER_TEMPLATE, type StickerTemplateConfig } from '~/composables/useStickerTemplate'
 import { printWithKhmerFonts } from '~/composables/useKhmerPrint'
+import { generateBarcodeSvgDataUri, generateQrSvgDataUri } from '~/utils/labelSvg'
 
 definePageMeta({ middleware: ['auth'] })
 
 const toast = useAppToast()
 const { displayName, displayNameKh, loadBrand } = useBrand()
 const { stickerPresets, loadStickerTemplate, saveStickerTemplate } = useStickerTemplate()
-const { listVariants, getQrUrl, getBarcodeUrl } = useVariantApi()
+const { listVariants } = useVariantApi()
 
 const saving = ref(false)
 const previewVariantId = ref<string>('')
@@ -588,7 +579,12 @@ async function handleSaveTemplate() {
 }
 
 async function handleTestPrint() {
-  await printWithKhmerFonts()
+  await printWithKhmerFonts({
+    printContainerId: 'template-test-print-sticker',
+    pageWidthMm: Number(form.label_width_mm) || 50,
+    pageHeightMm: Number(form.label_height_mm) || 30,
+    isA4Sheet: form.paper_size === 'A4',
+  })
 }
 
 onMounted(async () => {

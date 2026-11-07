@@ -188,7 +188,7 @@ const id = route.params.id as string
 useHead({ title: 'Product Variants — Clothing Store Admin' })
 
 const { getProduct } = useProductApi()
-const { listVariants, createVariant, updateVariant, deleteVariant, getBarcodeUrl } = useVariantApi()
+const { listVariants, createVariant, updateVariant, deleteVariant } = useVariantApi()
 const { listColors, listSizes } = useCatalogApi()
 const { addToast } = useAppToast()
 
@@ -252,10 +252,6 @@ const filteredVariants = computed(() => {
     [v.sku, v.barcode, v.qr_reference, v.color?.name, v.size?.name].filter(Boolean).join(' ').toLowerCase().includes(q),
   )
 })
-
-const barcodeUrl = computed(() =>
-  qrVariant.value ? getBarcodeUrl(qrVariant.value.id, 'svg', false) : '',
-)
 
 function openCreate() {
   editTarget.value = null

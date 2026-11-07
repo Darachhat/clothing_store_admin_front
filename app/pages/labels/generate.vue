@@ -234,7 +234,7 @@
 
                 <div v-if="settings.code_type === 'BARCODE'" class="kh-sticker__barcode-zone">
                   <div class="kh-sticker__barcode-wrap">
-                    <img :src="getBarcodeUrl(v.id, 'svg', false)" :alt="v.barcode || v.sku" class="kh-sticker__barcode-img" />
+                    <img :src="generateBarcodeSvgDataUri(v.barcode || v.sku)" :alt="v.barcode || v.sku" class="kh-sticker__barcode-img" />
                   </div>
                   <div class="kh-sticker__barcode-text">
                     {{ v.barcode || v.sku }}
@@ -242,7 +242,7 @@
                 </div>
 
                 <div v-else class="kh-sticker__qr-zone">
-                  <img :src="getQrUrl(v.id, 'svg')" :alt="v.sku" class="kh-sticker__qr-img" />
+                  <img :src="generateQrSvgDataUri(v.qr_reference || v.barcode || v.sku)" :alt="v.sku" class="kh-sticker__qr-img" />
                   <div class="kh-sticker__barcode-text">
                     {{ v.barcode || v.sku }}
                   </div>
@@ -298,7 +298,7 @@
 
         <div v-if="settings.code_type === 'BARCODE'" class="kh-sticker__barcode-zone">
           <div class="kh-sticker__barcode-wrap">
-            <img :src="getBarcodeUrl(v.id, 'svg', false)" :alt="v.barcode || v.sku" class="kh-sticker__barcode-img" />
+            <img :src="generateBarcodeSvgDataUri(v.barcode || v.sku)" :alt="v.barcode || v.sku" class="kh-sticker__barcode-img" />
           </div>
           <div class="kh-sticker__barcode-text">
             {{ v.barcode || v.sku }}
@@ -306,7 +306,7 @@
         </div>
 
         <div v-else class="kh-sticker__qr-zone">
-          <img :src="getQrUrl(v.id, 'svg')" :alt="v.sku" class="kh-sticker__qr-img" />
+          <img :src="generateQrSvgDataUri(v.qr_reference || v.barcode || v.sku)" :alt="v.sku" class="kh-sticker__qr-img" />
           <div class="kh-sticker__barcode-text">
             {{ v.barcode || v.sku }}
           </div>
@@ -319,12 +319,13 @@
 <script setup lang="ts">
 import type { ProductVariant } from '~/types'
 import { printWithKhmerFonts } from '~/composables/useKhmerPrint'
+import { generateBarcodeSvgDataUri, generateQrSvgDataUri } from '~/utils/labelSvg'
 
 definePageMeta({ middleware: ['auth'] })
 useHead({ title: 'Generate Product Stickers — Clothing Store' })
 
 const route = useRoute()
-const { listVariants, getQrUrl, getBarcodeUrl } = useVariantApi()
+const { listVariants } = useVariantApi()
 const { generateLabels } = useLabelApi()
 const { brand, loadBrand } = useBrand()
 const { stickerTemplate, loadStickerTemplate } = useStickerTemplate()
@@ -528,7 +529,12 @@ onMounted(async () => {
 })
 
 async function printStickersBrowser() {
-  await printWithKhmerFonts()
+  await printWithKhmerFonts({
+    printContainerId: 'admin-printable-stickers',
+    pageWidthMm: Number(settings.label_width_mm) || 50,
+    pageHeightMm: Number(settings.label_height_mm) || 30,
+    isA4Sheet: settings.paper_size === 'A4',
+  })
 }
 
 async function generateLabelsPdf() {
@@ -844,6 +850,11 @@ async function generateLabelsPdf() {
     margin: 0 !important;
     page-break-after: always !important;
     break-after: page !important;
+  }
+
+  #admin-printable-stickers.is-thermal-print .kh-product-sticker:last-child {
+    page-break-after: auto !important;
+    break-after: auto !important;
   }
 
   #admin-printable-stickers.is-sheet-print {

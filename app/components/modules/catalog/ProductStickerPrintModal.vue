@@ -128,7 +128,7 @@
           <div v-if="codeType === 'BARCODE'" class="kh-sticker__barcode-zone">
             <div class="kh-sticker__barcode-wrap">
               <img
-                :src="getBarcodeUrl(variant.id, 'svg', false)"
+                :src="generateBarcodeSvgDataUri(variant.barcode || variant.sku)"
                 :alt="variant.barcode || variant.sku"
                 class="kh-sticker__barcode-img"
               />
@@ -140,7 +140,7 @@
 
           <div v-else class="kh-sticker__qr-zone">
             <img
-              :src="getQrUrl(variant.id, 'svg')"
+              :src="generateQrSvgDataUri(variant.qr_reference || variant.barcode || variant.sku)"
               :alt="variant.qr_reference"
               class="kh-sticker__qr-img"
             />
@@ -244,7 +244,7 @@
           <div v-if="codeType === 'BARCODE'" class="kh-sticker__barcode-zone">
             <div class="kh-sticker__barcode-wrap">
               <img
-                :src="getBarcodeUrl(variant.id, 'svg', false)"
+                :src="generateBarcodeSvgDataUri(variant.barcode || variant.sku)"
                 :alt="variant.barcode || variant.sku"
                 class="kh-sticker__barcode-img"
               />
@@ -256,7 +256,7 @@
 
           <div v-else class="kh-sticker__qr-zone">
             <img
-              :src="getQrUrl(variant.id, 'svg')"
+              :src="generateQrSvgDataUri(variant.qr_reference || variant.barcode || variant.sku)"
               :alt="variant.qr_reference"
               class="kh-sticker__qr-img"
             />
@@ -273,6 +273,7 @@
 <script setup lang="ts">
 import type { ProductVariant } from '~/types'
 import { printWithKhmerFonts } from '~/composables/useKhmerPrint'
+import { generateBarcodeSvgDataUri, generateQrSvgDataUri } from '~/utils/labelSvg'
 
 const props = withDefaults(
   defineProps<{
@@ -293,7 +294,6 @@ const emit = defineEmits<{
   'update:modelValue': [val: boolean]
 }>()
 
-const { getQrUrl, getBarcodeUrl } = useVariantApi()
 const { generateLabels } = useLabelApi()
 const { brand, loadBrand } = useBrand()
 const { stickerTemplate, loadStickerTemplate } = useStickerTemplate()
@@ -354,7 +354,12 @@ watch(
 )
 
 async function handleInstantPrint() {
-  await printWithKhmerFonts()
+  await printWithKhmerFonts({
+    printContainerId: 'admin-instant-print-stickers',
+    pageWidthMm: Number(labelWidthMm.value) || 50,
+    pageHeightMm: Number(labelHeightMm.value) || 30,
+    isA4Sheet: preset.value === 'A4',
+  })
 }
 
 async function handleDownloadPdf() {
@@ -611,6 +616,11 @@ function openInBatchStudio() {
     margin: 0 !important;
     page-break-after: always !important;
     break-after: page !important;
+  }
+
+  #admin-instant-print-stickers.is-thermal-print .kh-product-sticker:last-child {
+    page-break-after: auto !important;
+    break-after: auto !important;
   }
 
   #admin-instant-print-stickers.is-sheet-print {
