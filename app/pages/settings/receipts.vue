@@ -260,6 +260,7 @@
           >
             <!-- Double Rule Top Header -->
             <div class="kh-receipt-double-rule py-2 text-center flex flex-col items-center gap-0.5">
+              <img v-if="form.logo_url" :src="form.logo_url" alt="Store Logo" class="max-h-12 max-w-[160px] object-contain mb-1" />
               <div class="kh-receipt-store-kh">{{ form.store_name_kh || form.store_name || 'គឹម វណ្ណាក់ ហាងលក់សម្លៀកបំពាក់' }}</div>
               <div v-if="form.store_name && form.store_name_kh" class="text-[11px] font-bold tracking-wider text-gray-800 uppercase">{{ form.store_name }}</div>
               <div v-if="form.tagline" class="text-[10px] text-gray-600 font-normal leading-tight">{{ form.tagline }}</div>

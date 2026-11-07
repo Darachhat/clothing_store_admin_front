@@ -49,7 +49,7 @@ export function useApi() {
 }
 
 export function useProductApi() {
-  const { apiFetch } = useApi()
+  const { apiFetch, baseURL } = useApi()
 
   return {
     listProducts: (params?: Record<string, unknown>) =>
@@ -65,9 +65,9 @@ export function useProductApi() {
     getVariants: (productId: string) =>
       apiFetch<ProductVariant[]>(API_ENDPOINTS.products.variants(productId)),
     getVariantQr: (variantId: string, format: 'png' | 'svg' = 'svg') =>
-      `${useRuntimeConfig().public.apiBase}${API_ENDPOINTS.products.qr(variantId, format)}`,
+      `${baseURL}${API_ENDPOINTS.products.qr(variantId, format)}`,
     getVariantBarcode: (variantId: string, format: 'png' | 'svg' = 'svg', writeText = false) =>
-      `${useRuntimeConfig().public.apiBase}${API_ENDPOINTS.products.barcode(variantId, format, writeText)}`,
+      `${baseURL}${API_ENDPOINTS.products.barcode(variantId, format, writeText)}`,
     searchByQr: (ref: string) =>
       apiFetch<ProductVariant>(API_ENDPOINTS.products.byQr(ref)),
     searchByBarcode: (barcode: string) =>
@@ -185,7 +185,7 @@ export function useCatalogApi() {
 }
 
 export function useVariantApi() {
-  const { apiFetch } = useApi()
+  const { apiFetch, baseURL } = useApi()
 
   return {
     listVariants: (params?: Record<string, unknown>) =>
@@ -199,9 +199,9 @@ export function useVariantApi() {
     deleteVariant: (id: string) =>
       apiFetch(API_ENDPOINTS.products.variantDetail(id), { method: 'DELETE' }),
     getQrUrl: (id: string, format: 'png' | 'svg' = 'svg') =>
-      `${useRuntimeConfig().public.apiBase}${API_ENDPOINTS.products.qr(id, format)}`,
+      `${baseURL}${API_ENDPOINTS.products.qr(id, format)}`,
     getBarcodeUrl: (id: string, format: 'png' | 'svg' = 'svg', writeText = false) =>
-      `${useRuntimeConfig().public.apiBase}${API_ENDPOINTS.products.barcode(id, format, writeText)}`,
+      `${baseURL}${API_ENDPOINTS.products.barcode(id, format, writeText)}`,
   }
 }
 
@@ -507,6 +507,20 @@ export function useSystemSettingsApi() {
       apiFetch<Record<string, any>>(API_ENDPOINTS.settings.receipt, {
         method: 'PUT',
         body: settings,
+      }),
+    getBrandSettings: () =>
+      apiFetch<Record<string, any>>(API_ENDPOINTS.settings.brand),
+    getPublicBrandSettings: () =>
+      apiFetch<Record<string, any>>(API_ENDPOINTS.settings.brandPublic),
+    updateBrandSettings: (settings: Record<string, any>) =>
+      apiFetch<Record<string, any>>(API_ENDPOINTS.settings.brand, {
+        method: 'PUT',
+        body: settings,
+      }),
+    uploadBrandLogo: (formData: FormData) =>
+      apiFetch<Record<string, any>>(API_ENDPOINTS.settings.uploadLogo, {
+        method: 'POST',
+        body: formData,
       }),
   }
 }

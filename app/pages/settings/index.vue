@@ -50,12 +50,21 @@
       </div>
     </DataCard>
 
-    <!-- Store Information -->
+    <!-- Store Information & Brand Management -->
     <DataCard>
       <template #header>
-        <div class="flex items-center gap-2">
-          <UIcon name="i-heroicons-building-office-2" class="w-4 h-4 text-gray-500" />
-          <h3 class="font-semibold text-gray-900 dark:text-white text-sm">Store Information</h3>
+        <div class="flex items-center justify-between w-full">
+          <div class="flex items-center gap-2">
+            <UIcon name="i-heroicons-building-office-2" class="w-4 h-4 text-gray-500" />
+            <h3 class="font-semibold text-gray-900 dark:text-white text-sm">Store Information &amp; Brand Profile</h3>
+          </div>
+          <NuxtLink
+            to="/settings/brand"
+            class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md border border-gray-900 dark:border-white bg-gray-900 text-white dark:bg-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors shadow-2xs"
+          >
+            <UIcon name="i-heroicons-sparkles" class="w-3.5 h-3.5" />
+            <span>Manage Logo &amp; Brand (One Stop)</span>
+          </NuxtLink>
         </div>
       </template>
       <form class="space-y-4" @submit.prevent="saveStoreInfo">

@@ -4,10 +4,16 @@
     <div class="login-brand">
       <div class="login-brand__inner">
         <div class="login-brand__logo">
-          <UIcon name="i-heroicons-shield-check" class="w-6 h-6 text-white" />
+          <img
+            v-if="brand.logo_url || brand.logo_dark_url"
+            :src="brand.logo_dark_url || brand.logo_url"
+            :alt="displayName"
+            class="max-w-full max-h-full object-contain p-1"
+          />
+          <UIcon v-else name="i-heroicons-shield-check" class="w-6 h-6 text-white" />
         </div>
-        <div class="login-brand__name">{{ config.public.appName }}</div>
-        <p class="login-brand__tagline">Admin &amp; Manager portal. Full access to inventory, reports, purchasing, and user management.</p>
+        <div class="login-brand__name">{{ displayName }}</div>
+        <p class="login-brand__tagline">{{ brand.tagline || 'Admin & Manager portal. Full access to inventory, reports, purchasing, and user management.' }}</p>
         <div class="login-brand__features">
           <div v-for="feat in features" :key="feat" class="login-brand__feature">
             <UIcon name="i-heroicons-check" class="w-3.5 h-3.5 text-white stroke-[2.5]" />
@@ -134,6 +140,11 @@ useHead({ title: 'Admin Sign In — Clothing Store' })
 const config = useRuntimeConfig()
 const authStore = useAuthStore()
 const router = useRouter()
+const { brand, displayName, loadBrand } = useBrand()
+
+onMounted(() => {
+  loadBrand()
+})
 
 const form = reactive({ username: '', password: '' })
 const loading = ref(false)

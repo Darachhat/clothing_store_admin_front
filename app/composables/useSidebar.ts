@@ -106,6 +106,7 @@ export const APP_NAV_SECTIONS: NavSection[] = [
       { label: 'Audit Logs', to: '/audit-logs', icon: 'i-heroicons-clipboard-document-check', permission: 'settings.manage' },
       { label: 'Integrations', to: '/settings/integrations', icon: 'i-heroicons-cpu-chip', exact: true, permission: 'settings.manage' },
       { label: 'Translations CMS', to: '/settings/translations', icon: 'i-heroicons-language', exact: true, permission: 'settings.manage' },
+      { label: 'Brand & Identity', to: '/settings/brand', icon: 'i-heroicons-sparkles', exact: true, permission: 'settings.manage' },
       { label: 'Settings', to: '/settings', icon: 'i-heroicons-cog-6-tooth', exact: true, permission: 'settings.manage' },
     ],
   },
@@ -140,6 +141,7 @@ const ROUTE_TRANSLATION_MAP: Record<string, string> = {
   '/audit-logs': 'nav.audit_logs',
   '/settings/integrations': 'nav.integrations',
   '/settings/translations': 'nav.translations',
+  '/settings/brand': 'nav.brand_identity',
   '/settings': 'nav.settings',
 }
 

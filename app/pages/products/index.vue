@@ -291,7 +291,7 @@ function statusColor(s: string) {
 async function fetchProducts() {
   loading.value = true
   try {
-    const params: Record<string, unknown> = { limit: 200 }
+    const params: Record<string, unknown> = { limit: 200, include_stock: true }
     if (search.value.trim()) params.q = search.value.trim()
     if (statusFilter.value) params.status = statusFilter.value
     const res = await listProducts(params) as any

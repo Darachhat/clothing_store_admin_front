@@ -28,11 +28,17 @@
           @click="closeMobileSidebar"
         >
           <div class="sidebar-brand-mark app-sidebar__logo-mark">
-            <UIcon name="i-heroicons-building-storefront" class="w-4 h-4 text-white" />
+            <img
+              v-if="brand.logo_url"
+              :src="brand.logo_url"
+              :alt="displayName"
+              class="w-full h-full object-contain p-0.5 rounded"
+            />
+            <UIcon v-else name="i-heroicons-building-storefront" class="w-4 h-4 text-white" />
           </div>
           <div v-if="!effectiveRail" class="app-sidebar__brand-meta min-w-0">
-            <span class="sidebar-brand-name app-sidebar__brand-name block truncate">
-              {{ config.public.appName || 'Clothing Store' }}
+            <span class="sidebar-brand-name app-sidebar__brand-name block truncate font-khmer">
+              {{ displayName }}
             </span>
             <span v-if="branchName" class="app-sidebar__brand-branch block truncate">
               {{ branchName }}
@@ -170,6 +176,11 @@ const emit = defineEmits<{
 
 const config = useRuntimeConfig()
 const authStore = useAuthStore()
+const { brand, displayName, loadBrand } = useBrand()
+
+onMounted(() => {
+  loadBrand()
+})
 const route = useRoute()
 const router = useRouter()
 const { t } = useAppTranslation()

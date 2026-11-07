@@ -1,11 +1,28 @@
 <template>
-  <span class="app-logo" aria-label="Clothing Store Admin">
+  <span class="app-logo" :aria-label="displayName">
     <span class="app-logo__mark">
-      <UIcon name="i-heroicons-building-storefront" class="w-4 h-4" />
+      <img
+        v-if="brand.logo_url"
+        :src="brand.logo_url"
+        :alt="displayName"
+        class="w-full h-full object-contain p-0.5 rounded"
+      />
+      <UIcon v-else name="i-heroicons-building-storefront" class="w-4 h-4 text-white" />
     </span>
-    <span class="app-logo__text">Clothing Store</span>
+    <span class="app-logo__text">{{ displayName }}</span>
   </span>
 </template>
+
+<script setup lang="ts">
+import { onMounted } from 'vue'
+import { useBrand } from '~/composables/useBrand'
+
+const { brand, displayName, loadBrand } = useBrand()
+
+onMounted(() => {
+  loadBrand()
+})
+</script>
 
 <style scoped>
 .app-logo {
