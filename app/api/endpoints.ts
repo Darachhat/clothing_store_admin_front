@@ -111,6 +111,7 @@ export const API_ENDPOINTS = {
     base: '/api/admin/v1/settings',
     category: (cat: string) => `/api/admin/v1/settings/${cat}`,
     store: '/api/admin/v1/settings/store',
+    receipt: '/api/admin/v1/settings/receipt',
   },
   labels: {
     generate: '/api/admin/v1/labels/generate',

@@ -83,15 +83,27 @@
           <div class="space-y-3.5">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Store Name *</label>
+                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Store Name (Khmer) *</label>
+                <input
+                  v-model="form.store_name_kh"
+                  type="text"
+                  placeholder="e.g. គឹម វណ្ណាក់ ហាងលក់សម្លៀកបំពាក់"
+                  class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm font-medium"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Store Name (English) *</label>
                 <input
                   v-model="form.store_name"
                   type="text"
                   required
-                  placeholder="e.g. VANNAK CLOTHING"
+                  placeholder="e.g. KIM VANNAK CLOTHING"
                   class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm font-medium"
                 />
               </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Tagline / Slogan</label>
                 <input
@@ -101,9 +113,6 @@
                   class="w-full rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
                 />
               </div>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Phone Number</label>
                 <input
@@ -246,134 +255,142 @@
           <!-- Physical Thermal Paper Simulation -->
           <div
             id="thermal-receipt-preview"
-            class="bg-white text-gray-900 shadow-xl border border-gray-200 p-4 transition-all duration-300 font-mono select-none overflow-x-auto"
-            :class="form.paper_width === '80mm' ? 'w-full max-w-[320px] text-[11px]' : 'w-full max-w-[260px] text-[10px]'"
-            style="font-family: 'Courier New', Courier, monospace;"
+            class="khmer-print-surface bg-white text-gray-900 shadow-xl border border-gray-200 p-4 transition-all duration-300 rounded-lg select-none"
+            :class="form.paper_width === '58mm' ? 'w-[248px] text-[10px]' : 'w-[336px] text-[11px]'"
           >
-            <!-- Receipt Header -->
-            <div class="text-center space-y-1 pb-3 border-b border-dashed border-gray-400">
-              <h1 class="text-sm font-black tracking-wider uppercase leading-tight">{{ form.store_name || 'STORE NAME' }}</h1>
-              <p v-if="form.tagline" class="text-[10px] text-gray-600 leading-tight">{{ form.tagline }}</p>
-              <p v-if="form.address" class="text-[10px] text-gray-600 leading-tight mt-1">{{ form.address }}</p>
-              <p v-if="form.phone" class="text-[10px] text-gray-600">Tel: {{ form.phone }}</p>
-              <p v-if="form.tax_id" class="text-[10px] text-gray-600">VAT TIN: {{ form.tax_id }}</p>
+            <!-- Double Rule Top Header -->
+            <div class="kh-receipt-double-rule py-2 text-center flex flex-col items-center gap-0.5">
+              <div class="kh-receipt-store-kh">{{ form.store_name_kh || form.store_name || 'គឹម វណ្ណាក់ ហាងលក់សម្លៀកបំពាក់' }}</div>
+              <div v-if="form.store_name && form.store_name_kh" class="text-[11px] font-bold tracking-wider text-gray-800 uppercase">{{ form.store_name }}</div>
+              <div v-if="form.tagline" class="text-[10px] text-gray-600 font-normal leading-tight">{{ form.tagline }}</div>
+              <div class="kh-receipt-branch">សាខា មេមត់</div>
+              <div v-if="form.address" class="text-[9.5px] text-gray-500 font-normal leading-tight mt-0.5">{{ form.address }}</div>
+              <div v-if="form.phone" class="text-[9.5px] text-gray-500 font-mono">Tel: {{ form.phone }}</div>
+              <div v-if="form.tax_id" class="text-[9px] text-gray-500 font-mono">VAT TIN: {{ form.tax_id }}</div>
             </div>
 
-            <!-- Invoice & Metadata Strip -->
-            <div class="py-2.5 border-b border-dashed border-gray-400 space-y-0.5 text-[10px]">
-              <div class="flex justify-between">
-                <span>INVOICE:</span>
-                <span class="font-bold">INV-2026-0089</span>
+            <!-- Receipt Metadata -->
+            <div class="py-2.5 flex flex-col gap-1 text-[11px]">
+              <div class="flex justify-between gap-2">
+                <span class="text-gray-600">វិក្កយបត្រ:</span>
+                <strong class="font-mono font-bold text-gray-900">INV-2026-0089</strong>
               </div>
-              <div class="flex justify-between">
-                <span>DATE:</span>
-                <span>{{ new Date().toLocaleDateString() }} {{ new Date().toLocaleTimeString() }}</span>
+              <div class="flex justify-between gap-2">
+                <span class="text-gray-600">កាលបរិច្ឆេទ:</span>
+                <span class="font-mono text-gray-900">{{ formatReceiptCompactDate(new Date()) }}</span>
               </div>
-              <div v-if="form.show_cashier_name" class="flex justify-between">
-                <span>CASHIER:</span>
-                <span>Sophea N. (POS-01)</span>
+              <div v-if="form.show_cashier_name" class="flex justify-between gap-2">
+                <span class="text-gray-600">អ្នកគិតលុយ:</span>
+                <span class="text-gray-900 text-right">Sophea N. (POS-01)</span>
               </div>
-              <div v-if="form.show_customer_info" class="flex justify-between text-gray-700">
-                <span>CUSTOMER:</span>
-                <span>Vannak K. (Gold Tier)</span>
+              <div v-if="form.show_customer_info" class="flex justify-between gap-2">
+                <span class="text-gray-600">អតិថិជន:</span>
+                <span class="text-gray-900 text-right">គឹម វណ្ណាក់ (Gold Tier)</span>
               </div>
             </div>
 
-            <!-- Line Items -->
-            <div class="py-2.5 border-b border-dashed border-gray-400 space-y-2">
-              <div class="flex justify-between font-bold border-b border-gray-300 pb-1">
-                <span>ITEM</span>
-                <span>QTY x PRICE</span>
-                <span>TOTAL</span>
-              </div>
-
+            <!-- Line Items (Dashed Rule) -->
+            <div class="kh-receipt-dashed-rule py-2.5 flex flex-col gap-2.5">
               <!-- Item 1 -->
-              <div>
-                <div class="flex justify-between">
-                  <span class="font-bold">Classic Linen Shirt</span>
-                  <span>1 x $28.00</span>
-                  <span class="font-bold">$28.00</span>
+              <div class="flex flex-col gap-0.5">
+                <div class="kh-receipt-item-title">
+                  <span>អាវសាច់ក្រណាត់កប្បាស Classic Linen Shirt</span>
+                  <span v-if="form.show_variant_attrs" class="text-gray-700 font-normal">
+                    (White / L)
+                  </span>
                 </div>
-                <div v-if="form.show_variant_attrs" class="text-[9px] text-gray-600">
-                  Size: L | Color: White
+                <div class="flex items-baseline justify-between pl-3 text-[11px] font-mono">
+                  <span class="text-gray-600">1 x $28.00</span>
+                  <strong class="font-bold text-gray-900">$28.00</strong>
                 </div>
-                <div v-if="form.show_item_sku" class="text-[9px] text-gray-500 font-mono">
+                <div v-if="form.show_item_sku" class="pl-3 text-[9.5px] text-gray-500 font-mono">
                   SKU: CLS-WHT-L
                 </div>
               </div>
 
               <!-- Item 2 -->
-              <div>
-                <div class="flex justify-between">
-                  <span class="font-bold">Slim Chino Trouser</span>
-                  <span>1 x $38.00</span>
-                  <span class="font-bold">$38.00</span>
+              <div class="flex flex-col gap-0.5">
+                <div class="kh-receipt-item-title">
+                  <span>ខោស្លីមជីនូ Slim Chino Trouser</span>
+                  <span v-if="form.show_variant_attrs" class="text-gray-700 font-normal">
+                    (Navy / 32)
+                  </span>
                 </div>
-                <div v-if="form.show_variant_attrs" class="text-[9px] text-gray-600">
-                  Size: 32 | Color: Navy
+                <div class="flex items-baseline justify-between pl-3 text-[11px] font-mono">
+                  <span class="text-gray-600">1 x $38.00</span>
+                  <strong class="font-bold text-gray-900">$38.00</strong>
                 </div>
-                <div v-if="form.show_item_sku" class="text-[9px] text-gray-500 font-mono">
+                <div v-if="form.show_item_sku" class="pl-3 text-[9.5px] text-gray-500 font-mono">
                   SKU: SCP-NVY-32
                 </div>
               </div>
             </div>
 
             <!-- Financial Breakdown -->
-            <div class="py-2.5 border-b border-dashed border-gray-400 space-y-1">
+            <div class="py-2 flex flex-col gap-1 text-[11px]">
               <div class="flex justify-between">
-                <span>SUBTOTAL (2 items):</span>
-                <span>$66.00</span>
+                <span class="text-gray-700">សរុបរង:</span>
+                <span class="font-mono font-semibold">$66.00</span>
               </div>
-              <div v-if="form.show_tax_breakdown" class="flex justify-between text-gray-700">
-                <span>VAT (10%):</span>
-                <span>$6.60</span>
+              <div class="flex justify-between">
+                <span class="text-gray-700">បញ្ចុះតម្លៃ:</span>
+                <span class="font-mono font-semibold">-$0.00</span>
               </div>
-              <div class="flex justify-between text-xs font-black pt-1 border-t border-gray-300">
-                <span>TOTAL DUE:</span>
-                <span>$72.60</span>
-              </div>
-              <div v-if="form.show_khr_conversion" class="flex justify-between text-[10px] text-gray-700">
-                <span>TOTAL (KHR):</span>
-                <span class="font-bold">297,660 Riel</span>
+              <div v-if="form.show_tax_breakdown" class="flex justify-between">
+                <span class="text-gray-700">ពន្ធ (10%):</span>
+                <span class="font-mono font-semibold">$6.60</span>
               </div>
             </div>
 
-            <!-- Tender & Payment Method -->
-            <div class="py-2.5 border-b border-dashed border-gray-400 space-y-1 text-[10px]">
-              <div class="flex justify-between">
-                <span>PAYMENT METHOD:</span>
-                <span class="font-bold">ABA KHQR</span>
+            <!-- Grand Total inside Double Rule -->
+            <div class="kh-receipt-double-rule py-2 flex flex-col gap-1">
+              <div class="flex justify-between items-baseline">
+                <span class="text-xs font-bold text-gray-900">សរុបត្រូវបង់:</span>
+                <span class="text-base font-extrabold font-mono text-gray-900">$72.60</span>
               </div>
-              <div class="flex justify-between">
-                <span>PAID AMOUNT:</span>
-                <span>$72.60</span>
+              <div v-if="form.show_khr_conversion" class="flex justify-between items-baseline text-[10.5px] text-gray-600">
+                <span>សរុបជាប្រាក់រៀល (KHR):</span>
+                <span class="font-mono font-semibold text-gray-800">297,660 ៛</span>
               </div>
-              <div class="flex justify-between">
-                <span>CHANGE:</span>
-                <span>$0.00</span>
+            </div>
+
+            <!-- Payment Method & Status -->
+            <div class="py-2.5 flex flex-col gap-1 text-[11px]">
+              <div class="flex justify-between gap-2">
+                <span class="text-gray-600">វិធីទូទាត់:</span>
+                <span class="font-semibold text-gray-900 text-right">ABA KHQR</span>
+              </div>
+              <div class="flex justify-between gap-2">
+                <span class="text-gray-600">ស្ថានភាព:</span>
+                <strong class="font-bold text-gray-900">បានទូទាត់រួច</strong>
+              </div>
+              <div class="flex justify-between gap-2">
+                <span class="text-gray-600">ប្រាក់បានបង់:</span>
+                <span class="font-mono">$72.60</span>
+              </div>
+              <div class="flex justify-between gap-2">
+                <span class="text-gray-600">ប្រាក់អាប់:</span>
+                <span class="font-mono">$0.00</span>
               </div>
               <div v-if="form.show_customer_info" class="flex justify-between text-gray-700 pt-1 border-t border-gray-200">
-                <span>POINTS EARNED / BAL:</span>
+                <span>ពិន្ទុសន្សំ:</span>
                 <span>+72 / 450 pts</span>
               </div>
             </div>
 
             <!-- Footer Message & Policies -->
-            <div class="pt-3 text-center space-y-1.5 text-[9px] leading-tight">
-              <p class="font-bold uppercase text-[10px]">{{ form.footer_message || 'Thank you for shopping!' }}</p>
-              <p v-if="form.return_policy" class="text-gray-600">{{ form.return_policy }}</p>
-              <p v-if="form.wifi_info" class="font-bold text-gray-700 pt-1">{{ form.wifi_info }}</p>
+            <div class="pt-2 border-t border-dashed border-gray-300 text-center flex flex-col items-center gap-1">
+              <p class="text-xs font-bold text-gray-900">សូមអរគុណ!</p>
+              <p class="text-[11px] font-medium text-gray-700 leading-tight">{{ form.footer_message || 'សូមអរគុណដែលបានគាំទ្រហាងរបស់យើង!' }}</p>
+              <p v-if="form.return_policy" class="text-[9.5px] text-gray-500 mt-0.5 leading-snug">{{ form.return_policy }}</p>
+              <p v-if="form.wifi_info" class="text-[9.5px] font-mono text-gray-600 mt-0.5">{{ form.wifi_info }}</p>
 
               <!-- QR Code Mock for Feedback / Social -->
               <div v-if="form.qr_content" class="flex flex-col items-center justify-center pt-2">
-                <div class="w-16 h-16 border border-gray-400 p-1 flex items-center justify-center bg-gray-50">
+                <div class="w-16 h-16 border border-gray-300 rounded p-1 flex items-center justify-center bg-gray-50">
                   <UIcon name="i-heroicons-qr-code" class="w-12 h-12 text-gray-800" />
                 </div>
-                <span class="text-[8px] text-gray-500 mt-1">Scan for Digital Receipt / Offers</span>
-              </div>
-
-              <div class="pt-2 text-[8px] text-gray-400">
-                *** END OF RECEIPT ***
+                <span class="text-[8px] text-gray-500 mt-1 font-sans">ស្កេនមើលវិក្កយបត្រ / Scan QR</span>
               </div>
             </div>
           </div>
@@ -394,6 +411,9 @@
 </template>
 
 <script setup lang="ts">
+import { formatReceiptCompactDate, printWithKhmerFonts } from '~/composables/useKhmerPrint'
+import { DEFAULT_RECEIPT_TEMPLATE } from '~/composables/useReceiptTemplate'
+
 definePageMeta({ middleware: ['auth'] })
 useHead({ title: 'Receipt Templates — Clothing Store' })
 
@@ -403,44 +423,27 @@ const toast = useAppToast()
 const saving = ref(false)
 const showResetConfirm = ref(false)
 
-const defaultSettings = {
-  paper_width: '80mm',
-  store_name: 'VANNAK CLOTHING BOUTIQUE',
-  tagline: 'Premium Streetwear & Contemporary Fashion',
-  phone: '+855 23 888 999',
-  address: '#123 Preah Norodom Blvd, Daun Penh, Phnom Penh',
-  tax_id: 'K001-902348572',
-  show_item_sku: true,
-  show_variant_attrs: true,
-  show_khr_conversion: true,
-  show_tax_breakdown: true,
-  show_cashier_name: true,
-  show_customer_info: true,
-  footer_message: 'THANK YOU FOR SHOPPING WITH US!',
-  return_policy: 'Exchanges accepted within 7 days with original tag and receipt. Sale items are non-refundable.',
-  wifi_info: 'Guest Wi-Fi: Vannak_Store | Pass: fashion2026',
-  qr_content: 'https://kimvannak.store',
-}
-
-const form = ref({ ...defaultSettings })
+const form = ref({ ...DEFAULT_RECEIPT_TEMPLATE })
 
 async function loadSettings() {
   try {
-    const res = await settingsApi.getCategorySettings('receipt')
+    const res = typeof settingsApi.getReceiptSettings === 'function'
+      ? await settingsApi.getReceiptSettings()
+      : await settingsApi.getCategorySettings('receipt')
     if (res && Object.keys(res).length > 0) {
-      form.value = { ...defaultSettings, ...res }
+      form.value = { ...DEFAULT_RECEIPT_TEMPLATE, ...res }
     } else {
       // Check local storage fallback
       const local = localStorage.getItem('pos_receipt_template')
       if (local) {
-        form.value = { ...defaultSettings, ...JSON.parse(local) }
+        form.value = { ...DEFAULT_RECEIPT_TEMPLATE, ...JSON.parse(local) }
       }
     }
   } catch {
     const local = localStorage.getItem('pos_receipt_template')
     if (local) {
       try {
-        form.value = { ...defaultSettings, ...JSON.parse(local) }
+        form.value = { ...DEFAULT_RECEIPT_TEMPLATE, ...JSON.parse(local) }
       } catch {}
     }
   }
@@ -449,7 +452,11 @@ async function loadSettings() {
 async function saveTemplate() {
   saving.value = true
   try {
-    await settingsApi.updateCategorySettings('receipt', form.value)
+    if (typeof settingsApi.updateReceiptSettings === 'function') {
+      await settingsApi.updateReceiptSettings(form.value)
+    } else {
+      await settingsApi.updateCategorySettings('receipt', form.value)
+    }
     localStorage.setItem('pos_receipt_template', JSON.stringify(form.value))
     toast.success('Receipt Template Saved', 'Updated thermal slip template synchronized to all cashier stations.')
   } catch (err: any) {
@@ -465,7 +472,7 @@ async function saveTemplate() {
 }
 
 function resetToDefaults() {
-  form.value = { ...defaultSettings }
+  form.value = { ...DEFAULT_RECEIPT_TEMPLATE }
   showResetConfirm.value = false
   toast.add({
     title: 'Defaults Restored',
@@ -474,8 +481,9 @@ function resetToDefaults() {
   })
 }
 
-function handleTestPrint() {
-  window.print()
+async function handleTestPrint() {
+  await nextTick()
+  await printWithKhmerFonts()
 }
 
 onMounted(() => {
@@ -484,6 +492,43 @@ onMounted(() => {
 </script>
 
 <style>
+.khmer-print-surface {
+  font-family: var(--font-khmer, 'Kantumruy Pro', 'Battambang', 'Noto Sans Khmer', 'Battambang Local', 'Inter', sans-serif);
+  line-height: 1.6;
+}
+
+.kh-receipt-store-kh {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.65;
+}
+
+.kh-receipt-branch {
+  font-size: 11px;
+  font-weight: 600;
+  color: #374151;
+  line-height: 1.5;
+}
+
+.kh-receipt-double-rule {
+  border-top: 3px double #111827;
+  border-bottom: 3px double #111827;
+}
+
+.kh-receipt-dashed-rule {
+  border-top: 1px dashed #9ca3af;
+  border-bottom: 1px dashed #9ca3af;
+}
+
+.kh-receipt-item-title {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #111827;
+  line-height: 1.65;
+  word-break: break-word;
+}
+
 @media print {
   body * {
     visibility: hidden;
@@ -496,7 +541,7 @@ onMounted(() => {
     position: absolute;
     left: 0;
     top: 0;
-    width: 80mm !important;
+    width: 78mm !important;
     box-shadow: none !important;
     border: none !important;
   }

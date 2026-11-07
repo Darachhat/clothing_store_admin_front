@@ -142,13 +142,38 @@
       <AppModal v-model="showPreviewModal" title="មើលវិក្កយបត្រ & បង្កាន់ដៃ (Preview Khmer Invoice / Receipt)" size="lg">
         <div class="preview-modal-body no-print">
           <div class="preview-toolbar">
-            <BaseTabs v-model="printMode" :tabs="printModeTabs" variant="pills" />
+            <div class="flex items-center gap-2 flex-wrap">
+              <BaseTabs v-model="printMode" :tabs="printModeTabs" variant="pills" />
+              <!-- Thermal Width Switcher when in Receipt mode -->
+              <div
+                v-if="printMode === 'THERMAL'"
+                class="inline-flex items-center rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-0.5 text-xs font-semibold"
+              >
+                <button
+                  type="button"
+                  class="px-2 py-1 rounded-md transition-colors cursor-pointer"
+                  :class="activePaperWidth === '80mm' ? 'bg-gray-900 text-white shadow-xs' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
+                  @click="activePaperWidth = '80mm'"
+                >
+                  80mm
+                </button>
+                <button
+                  type="button"
+                  class="px-2 py-1 rounded-md transition-colors cursor-pointer"
+                  :class="activePaperWidth === '58mm' ? 'bg-gray-900 text-white shadow-xs' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
+                  @click="activePaperWidth = '58mm'"
+                >
+                  58mm
+                </button>
+              </div>
+            </div>
+
             <div class="preview-actions">
               <AppButton variant="default" size="sm" @click="printSale('THERMAL')">
                 <template #icon-left>
                   <UIcon name="i-heroicons-printer" class="w-3.5 h-3.5" />
                 </template>
-                <span class="kh-text">បោះពុម្ពបង្កាន់ដៃ (80mm)</span>
+                <span class="kh-text">បោះពុម្ពបង្កាន់ដៃ ({{ activePaperWidth }})</span>
               </AppButton>
               <AppButton variant="primary" size="sm" @click="printSale('A4')">
                 <template #icon-left>
@@ -161,231 +186,308 @@
 
           <!-- Preview Canvas -->
           <div class="preview-canvas">
-            <!-- Template B Preview: 80mm Receipt -->
-            <div v-if="printMode === 'THERMAL'" class="kh-receipt-80mm">
-              <div class="kh-receipt-80mm__header">
-                <div class="kh-receipt-80mm__title-kh">គឹម វណ្ណាក់ ហាងលក់សម្លៀកបំពាក់ </div>
-                <div class="kh-receipt-80mm__title-en">CLOTHING STORE PHNOM PENH</div>
-                <div class="kh-receipt-80mm__meta-center">
-                  សាខា: {{ formatKhmerBranchName((sale as any).branch_name) }}
+            <!-- Template B Preview: Thermal Receipt (80mm / 58mm) -->
+            <div
+              v-if="printMode === 'THERMAL'"
+              :class="activePaperWidth === '58mm' ? 'w-[248px] is-58mm' : 'w-[336px] is-80mm'"
+              class="khmer-print-surface bg-white p-4 rounded-lg border border-gray-200 shadow-xs text-gray-900 transition-all select-none"
+            >
+              <!-- Double Rule Top Header -->
+              <div class="kh-receipt-double-rule py-2 text-center flex flex-col items-center gap-0.5">
+                <div class="kh-receipt-store-kh">{{ resolvedStoreNameKh }}</div>
+                <div v-if="resolvedStoreName && resolvedStoreName !== resolvedStoreNameKh" class="text-[11px] font-bold tracking-wider text-gray-800 uppercase">{{ resolvedStoreName }}</div>
+                <div v-if="receiptTemplate.tagline" class="text-[10px] text-gray-600 font-normal leading-tight">{{ receiptTemplate.tagline }}</div>
+                <div class="kh-receipt-branch">{{ formatKhmerBranchName((sale as any).branch_name) }}</div>
+                <div v-if="receiptTemplate.address" class="text-[9.5px] text-gray-500 font-normal leading-tight mt-0.5">{{ receiptTemplate.address }}</div>
+                <div v-if="receiptTemplate.phone" class="text-[9.5px] text-gray-500 font-mono">Tel: {{ receiptTemplate.phone }}</div>
+                <div v-if="receiptTemplate.tax_id" class="text-[9px] text-gray-500 font-mono">VAT TIN: {{ receiptTemplate.tax_id }}</div>
+              </div>
+
+              <!-- Receipt Metadata -->
+              <div class="py-2.5 flex flex-col gap-1 text-[11px]">
+                <div class="flex justify-between gap-2">
+                  <span class="text-gray-600">វិក្កយបត្រ:</span>
+                  <strong class="font-mono font-bold text-gray-900">{{ sale.invoice_number }}</strong>
                 </div>
-                <div class="kh-receipt-80mm__meta-center">
-                  ទូរស័ព្ទ: 012 345 678
+                <div class="flex justify-between gap-2">
+                  <span class="text-gray-600">កាលបរិច្ឆេទ:</span>
+                  <span class="font-mono text-gray-900">{{ formatReceiptCompactDate(sale.created_at) }}</span>
+                </div>
+                <div v-if="receiptTemplate.show_cashier_name !== false" class="flex justify-between gap-2">
+                  <span class="text-gray-600">អ្នកគិតលុយ:</span>
+                  <span class="text-gray-900 text-right">{{ (sale as any).cashier_name || 'Front Cashier' }}</span>
+                </div>
+                <div v-if="receiptTemplate.show_customer_info !== false" class="flex justify-between gap-2">
+                  <span class="text-gray-600">អតិថិជន:</span>
+                  <span class="text-gray-900 text-right">{{ formatKhmerCustomerName((sale as any).customer_name) }}</span>
                 </div>
               </div>
 
-              <div class="kh-receipt-80mm__divider-double"></div>
-
-              <div class="kh-receipt-80mm__info">
-                <div class="kh-receipt-80mm__info-row">
-                  <span>លេខវិក្កយបត្រ:</span>
-                  <span class="font-mono font-bold">{{ sale.invoice_number }}</span>
-                </div>
-                <div class="kh-receipt-80mm__info-row">
-                  <span>ថ្ងៃទី:</span>
-                  <span class="font-mono">{{ formatReceiptCompactDate(sale.created_at) }}</span>
-                </div>
-                <div class="kh-receipt-80mm__info-row">
-                  <span>អ្នកគិតលុយ:</span>
-                  <span>{{ (sale as any).cashier_name || 'Front Cashier' }}</span>
-                </div>
-                <div class="kh-receipt-80mm__info-row">
-                  <span>អតិថិជន:</span>
-                  <span>{{ formatKhmerCustomerName((sale as any).customer_name) }}</span>
-                </div>
-              </div>
-
-              <div class="kh-receipt-80mm__divider-dashed"></div>
-
-              <div class="kh-receipt-80mm__items">
+              <!-- Line Items (Dashed Rule) -->
+              <div class="kh-receipt-dashed-rule py-2.5 flex flex-col gap-2.5">
                 <div
                   v-for="(it, idx) in sale.items"
                   :key="it.id || idx"
-                  class="kh-receipt-80mm__item"
+                  class="flex flex-col gap-0.5"
                 >
-                  <div class="kh-receipt-80mm__item-title">
-                    {{ (it as any).product_name || 'ទំនិញ' }}
-                    <span v-if="(it as any).color_name || (it as any).size_name" class="kh-receipt-80mm__item-variant">
-                      ({{ [(it as any).color_name, (it as any).size_name].filter(Boolean).join(' / ') }})
+                  <!-- Line 1: Product Name + (Color / Size) -->
+                  <div class="kh-receipt-item-title">
+                    <span>{{ (it as any).product_name || 'ទំនិញ' }}</span>
+                    <span v-if="receiptTemplate.show_variant_attrs !== false && formatVariantSlash((it as any).color_name, (it as any).size_name)" class="text-gray-700 font-normal">
+                      ({{ formatVariantSlash((it as any).color_name, (it as any).size_name) }})
                     </span>
                   </div>
-                  <div class="kh-receipt-80mm__item-calc">
-                    <span class="font-mono">
+                  <!-- Line 2: Indented Qty x Unit Price on left, Line Total on right -->
+                  <div class="flex items-baseline justify-between pl-3 text-[11px] font-mono">
+                    <span class="text-gray-600">
                       {{ it.quantity }} x ${{ Number(it.unit_price).toFixed(2) }}
+                      <template v-if="Number((it as any).discount_amount) > 0">
+                        (&minus;${{ Number((it as any).discount_amount).toFixed(2) }})
+                      </template>
                     </span>
-                    <span class="font-mono font-bold">
-                      ${{ Number(it.subtotal).toFixed(2) }}
-                    </span>
+                    <strong class="font-bold text-gray-900">${{ Number(it.subtotal).toFixed(2) }}</strong>
+                  </div>
+                  <!-- Line 3: Optional SKU/Barcode -->
+                  <div v-if="receiptTemplate.show_item_sku !== false && (it.sku || (it as any).variant_id)" class="pl-3 text-[9.5px] text-gray-500 font-mono">
+                    SKU: {{ it.sku || (it as any).variant_id }}
                   </div>
                 </div>
               </div>
 
-              <div class="kh-receipt-80mm__divider-dashed"></div>
-
-              <div class="kh-receipt-80mm__totals">
-                <div class="kh-receipt-80mm__row">
-                  <span>សរុបរង</span>
-                  <span class="font-mono">${{ Number(sale.subtotal).toFixed(2) }}</span>
+              <!-- Subtotal / Discount / Tax -->
+              <div class="py-2 flex flex-col gap-1 text-[11px]">
+                <div class="flex justify-between">
+                  <span class="text-gray-700">សរុបរង:</span>
+                  <span class="font-mono font-semibold">${{ Number(sale.subtotal).toFixed(2) }}</span>
                 </div>
-                <div class="kh-receipt-80mm__row">
-                  <span>បញ្ចុះតម្លៃ</span>
-                  <span class="font-mono">${{ Number(sale.discount_amount).toFixed(2) }}</span>
+                <div class="flex justify-between">
+                  <span class="text-gray-700">បញ្ចុះតម្លៃ:</span>
+                  <span class="font-mono font-semibold">
+                    {{ Number(sale.discount_amount) > 0 ? `-$${Number(sale.discount_amount).toFixed(2)}` : '$0.00' }}
+                  </span>
                 </div>
-                <div v-if="Number(sale.tax_amount) > 0" class="kh-receipt-80mm__row">
-                  <span>ពន្ធ (Tax)</span>
-                  <span class="font-mono">${{ Number(sale.tax_amount).toFixed(2) }}</span>
-                </div>
-                <div class="kh-receipt-80mm__row kh-receipt-80mm__grand">
-                  <span>សរុបត្រូវបង់</span>
-                  <span class="font-mono">${{ Number(sale.total).toFixed(2) }}</span>
-                </div>
-                <div class="kh-receipt-80mm__row kh-receipt-80mm__khr">
-                  <span>សរុបជាប្រាក់រៀល</span>
-                  <span class="font-mono">{{ formatRiel(Number(sale.total)) }}</span>
+                <div v-if="receiptTemplate.show_tax_breakdown !== false" class="flex justify-between">
+                  <span class="text-gray-700">ពន្ធ:</span>
+                  <span class="font-mono font-semibold">${{ Number(sale.tax_amount).toFixed(2) }}</span>
                 </div>
               </div>
 
-              <div class="kh-receipt-80mm__divider-dashed"></div>
-
-              <div class="kh-receipt-80mm__payment">
-                <div class="kh-receipt-80mm__row">
-                  <span>ការទូទាត់:</span>
-                  <span class="font-semibold">{{ primaryPaymentMethodLabel }}</span>
+              <!-- Grand Total inside Double Rule -->
+              <div class="kh-receipt-double-rule py-2 flex flex-col gap-1">
+                <div class="flex justify-between items-baseline">
+                  <span class="text-xs font-bold text-gray-900">សរុបត្រូវបង់:</span>
+                  <span class="text-base font-extrabold font-mono text-gray-900">
+                    ${{ Number(sale.total).toFixed(2) }}
+                  </span>
                 </div>
-                <div class="kh-receipt-80mm__row">
-                  <span>ស្ថានភាព:</span>
-                  <span class="font-bold">{{ paymentStatusInfo.khmer }}</span>
+                <div v-if="receiptTemplate.show_khr_conversion !== false" class="flex justify-between items-baseline text-[10.5px] text-gray-600">
+                  <span>សរុបជាប្រាក់រៀល (KHR):</span>
+                  <span class="font-mono font-semibold text-gray-800">{{ formatRiel(Number(sale.total)) }}</span>
                 </div>
               </div>
 
-              <div class="kh-receipt-80mm__divider-double"></div>
+              <!-- Payment Method & Status -->
+              <div class="py-2.5 flex flex-col gap-1 text-[11px]">
+                <div class="flex justify-between gap-2">
+                  <span class="text-gray-600">វិធីទូទាត់:</span>
+                  <span class="font-semibold text-gray-900 text-right">{{ primaryPaymentMethodLabel }}</span>
+                </div>
+                <div class="flex justify-between gap-2">
+                  <span class="text-gray-600">ស្ថានភាព:</span>
+                  <strong class="font-bold text-gray-900">{{ paymentStatusInfo.khmer }}</strong>
+                </div>
+                <div
+                  v-if="totalPaidAmount > 0"
+                  class="flex justify-between gap-2"
+                >
+                  <span class="text-gray-600">ប្រាក់បានបង់:</span>
+                  <span class="font-mono">${{ totalPaidAmount.toFixed(2) }}</span>
+                </div>
+                <div v-if="totalPaidAmount > Number(sale.total)" class="flex justify-between gap-2 font-bold text-gray-900">
+                  <span>ប្រាក់អាប់:</span>
+                  <span class="font-mono">${{ (totalPaidAmount - Number(sale.total)).toFixed(2) }} ({{ formatRiel(totalPaidAmount - Number(sale.total)) }})</span>
+                </div>
+              </div>
 
-              <div class="kh-receipt-80mm__footer">
-                <p class="kh-receipt-80mm__thank">សូមអរគុណ! សូមអញ្ជើញមកម្តងទៀត</p>
-                <p class="kh-receipt-80mm__policy">ទំនិញអាចប្តូរបានក្នុងរយៈពេល ៧ ថ្ងៃ ដោយភ្ជាប់មកជាមួយវិក្កយបត្រ។</p>
+              <!-- Khmer Thank You Footer -->
+              <div class="pt-2 border-t border-dashed border-gray-300 text-center flex flex-col items-center gap-1">
+                <p class="text-xs font-bold text-gray-900">សូមអរគុណ!</p>
+                <p class="text-[11px] font-medium text-gray-700 leading-tight">{{ resolvedFooterNote }}</p>
+                <p v-if="receiptTemplate.return_policy" class="text-[9.5px] text-gray-500 mt-0.5 leading-snug">{{ receiptTemplate.return_policy }}</p>
+                <p v-if="receiptTemplate.wifi_info" class="text-[9.5px] font-mono text-gray-600 mt-0.5">{{ receiptTemplate.wifi_info }}</p>
+
+                <!-- QR Code Mock for Feedback / Digital Receipt -->
+                <div v-if="receiptTemplate.qr_content" class="flex flex-col items-center justify-center pt-2">
+                  <div class="w-16 h-16 border border-gray-300 rounded p-1 flex items-center justify-center bg-gray-50">
+                    <UIcon name="i-heroicons-qr-code" class="w-12 h-12 text-gray-800" />
+                  </div>
+                  <span class="text-[8px] text-gray-500 mt-1 font-sans">ស្កេនមើលវិក្កយបត្រ / Scan QR</span>
+                </div>
               </div>
             </div>
 
-            <!-- Template A Preview: Modern Khmer A4 Invoice -->
-            <div v-else class="kh-invoice-a4">
-              <div class="kh-invoice-a4__header">
-                <div class="kh-invoice-a4__brand-group">
-                  <div class="kh-invoice-a4__logo">CS</div>
-                  <div>
-                    <h1 class="kh-invoice-a4__store-kh">គឹម វណ្ណាក់ ហាងលក់សម្លៀកបំពាក់ </h1>
-                    <div class="kh-invoice-a4__store-en">CLOTHING STORE PHNOM PENH</div>
-                    <div class="kh-invoice-a4__branch">
-                      សាខា: {{ formatKhmerBranchName((sale as any).branch_name) }} &bull; ភ្នំពេញ, កម្ពុជា &bull; ទូរស័ព្ទ: 012 345 678
+            <!-- Template A Preview: Modern Khmer A4 Sales Invoice -->
+            <div
+              v-else
+              class="khmer-print-surface kh-a4-sheet bg-white rounded-lg border border-gray-200 shadow-xs text-gray-900"
+            >
+              <!-- 1. A4 Header: Brand Identity Left, Invoice Title Right -->
+              <div class="kh-a4-header">
+                <div class="kh-a4-brand">
+                  <div class="kh-a4-logo">
+                    <UIcon name="i-heroicons-building-storefront" class="w-6 h-6 text-white" />
+                  </div>
+                  <div class="kh-a4-brand-text">
+                    <h1 class="kh-a4-store-kh">{{ resolvedStoreNameKh }}</h1>
+                    <div class="kh-a4-store-en">{{ resolvedStoreName }}</div>
+                    <div v-if="receiptTemplate.tagline" class="text-[11px] text-gray-500 font-normal leading-tight mt-0.5">{{ receiptTemplate.tagline }}</div>
+                    <div class="kh-a4-store-sub">
+                      {{ formatKhmerBranchName((sale as any).branch_name) }} &bull; {{ receiptTemplate.address || 'រាជធានីភ្នំពេញ ប្រទេសកម្ពុជា' }} &bull; ទូរស័ព្ទ: {{ receiptTemplate.phone || '+855 23 888 999' }}<template v-if="receiptTemplate.tax_id"> &bull; VAT TIN: {{ receiptTemplate.tax_id }}</template>
                     </div>
                   </div>
                 </div>
-                <div class="kh-invoice-a4__doc-heading">
-                  <div class="kh-invoice-a4__title-kh">វិក្កយបត្រលក់</div>
-                  <div class="kh-invoice-a4__title-en">SALES INVOICE</div>
+
+                <div class="kh-a4-doc-heading">
+                  <div class="kh-a4-doc-kh">វិក្កយបត្រលក់</div>
+                  <div class="kh-a4-doc-en">SALES INVOICE</div>
                 </div>
               </div>
 
-              <div class="kh-invoice-a4__meta-grid">
-                <div class="kh-invoice-a4__meta-col">
-                  <div class="kh-invoice-a4__meta-line">
-                    <span class="kh-invoice-a4__meta-label">លេខវិក្កយបត្រ:</span>
-                    <span class="kh-invoice-a4__meta-val font-mono font-bold">{{ sale.invoice_number }}</span>
+              <!-- 2. Invoice Information Block -->
+              <div class="kh-a4-meta-grid">
+                <div class="kh-a4-meta-col">
+                  <div class="kh-a4-meta-row">
+                    <span class="kh-a4-meta-label">លេខវិក្កយបត្រ (Invoice No):</span>
+                    <strong class="kh-a4-meta-value font-mono">{{ sale.invoice_number }}</strong>
                   </div>
-                  <div class="kh-invoice-a4__meta-line">
-                    <span class="kh-invoice-a4__meta-label">កាលបរិច្ឆេទ:</span>
-                    <span class="kh-invoice-a4__meta-val">{{ formatKhmerInvoiceDate(sale.created_at) }}</span>
+                  <div class="kh-a4-meta-row">
+                    <span class="kh-a4-meta-label">កាលបរិច្ឆេទ (Date):</span>
+                    <span class="kh-a4-meta-value">{{ formatKhmerInvoiceDate(sale.created_at) }}</span>
                   </div>
-                  <div class="kh-invoice-a4__meta-line">
-                    <span class="kh-invoice-a4__meta-label">សាខា:</span>
-                    <span class="kh-invoice-a4__meta-val">{{ formatKhmerBranchName((sale as any).branch_name) }}</span>
+                  <div class="kh-a4-meta-row">
+                    <span class="kh-a4-meta-label">សាខា (Branch):</span>
+                    <span class="kh-a4-meta-value">{{ formatKhmerBranchName((sale as any).branch_name) }}</span>
                   </div>
                 </div>
-                <div class="kh-invoice-a4__meta-col">
-                  <div class="kh-invoice-a4__meta-line">
-                    <span class="kh-invoice-a4__meta-label">អ្នកគិតលុយ:</span>
-                    <span class="kh-invoice-a4__meta-val">{{ (sale as any).cashier_name || 'Front Cashier' }}</span>
+
+                <div class="kh-a4-meta-col">
+                  <div v-if="receiptTemplate.show_cashier_name !== false" class="kh-a4-meta-row">
+                    <span class="kh-a4-meta-label">អ្នកគិតលុយ (Cashier):</span>
+                    <span class="kh-a4-meta-value">{{ (sale as any).cashier_name || 'Front Cashier' }}</span>
                   </div>
-                  <div class="kh-invoice-a4__meta-line">
-                    <span class="kh-invoice-a4__meta-label">អតិថិជន:</span>
-                    <span class="kh-invoice-a4__meta-val">{{ formatKhmerCustomerName((sale as any).customer_name) }}</span>
+                  <div v-if="receiptTemplate.show_customer_info !== false" class="kh-a4-meta-row">
+                    <span class="kh-a4-meta-label">អតិថិជន (Customer):</span>
+                    <strong class="kh-a4-meta-value">{{ formatKhmerCustomerName((sale as any).customer_name) }}</strong>
+                  </div>
+                  <div class="kh-a4-meta-row">
+                    <span class="kh-a4-meta-label">ស្ថានភាពទូទាត់ (Status):</span>
+                    <span class="kh-a4-status-pill">{{ paymentStatusInfo.khmer }} ({{ paymentStatusInfo.english }})</span>
                   </div>
                 </div>
               </div>
 
-              <table class="kh-invoice-a4__table">
-                <thead>
-                  <tr>
-                    <th class="col-no">ល.រ</th>
-                    <th class="col-desc">បរិយាយទំនិញ</th>
-                    <th class="col-variant">ពណ៌ / ទំហំ</th>
-                    <th class="col-qty">ចំនួន</th>
-                    <th class="col-price">តម្លៃរាយ</th>
-                    <th class="col-total">សរុប</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="(it, idx) in sale.items" :key="it.id || idx">
-                    <td class="col-no">{{ toKhmerNumerals(idx + 1) }}</td>
-                    <td class="col-desc">
-                      <div class="kh-invoice-a4__prod-name">{{ (it as any).product_name || 'ទំនិញ' }}</div>
-                      <div v-if="(it as any).sku" class="kh-invoice-a4__prod-sku">SKU: {{ (it as any).sku }}</div>
-                    </td>
-                    <td class="col-variant">{{ [(it as any).color_name, (it as any).size_name].filter(Boolean).join(' / ') || 'ទូទៅ' }}</td>
-                    <td class="col-qty">{{ toKhmerNumerals(it.quantity) }}</td>
-                    <td class="col-price font-mono">${{ Number(it.unit_price).toFixed(2) }}</td>
-                    <td class="col-total font-mono font-bold">${{ Number(it.subtotal).toFixed(2) }}</td>
-                  </tr>
-                </tbody>
-              </table>
+              <!-- 3. Product Table -->
+              <div class="kh-a4-table-wrap">
+                <table class="kh-a4-table">
+                  <thead>
+                    <tr>
+                      <th class="col-idx">ល.រ</th>
+                      <th class="col-desc">បរិយាយទំនិញ</th>
+                      <th v-if="receiptTemplate.show_variant_attrs !== false" class="col-variant">ពណ៌ / ទំហំ</th>
+                      <th class="col-qty">ចំនួន</th>
+                      <th class="col-price">តម្លៃរាយ</th>
+                      <th class="col-total">សរុប</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(it, idx) in sale.items" :key="it.id || idx">
+                      <td class="col-idx">{{ toKhmerNumerals(idx + 1) }}</td>
+                      <td class="col-desc">
+                        <div class="kh-a4-item-name">{{ (it as any).product_name || 'ទំនិញ' }}</div>
+                        <div v-if="receiptTemplate.show_item_sku !== false && (it.sku || (it as any).variant_id)" class="kh-a4-item-sku">
+                          SKU: {{ it.sku || (it as any).variant_id }}
+                        </div>
+                      </td>
+                      <td v-if="receiptTemplate.show_variant_attrs !== false" class="col-variant">
+                        {{ formatVariantSlash((it as any).color_name, (it as any).size_name) || '—' }}
+                      </td>
+                      <td class="col-qty">{{ toKhmerNumerals(it.quantity) }} ({{ it.quantity }})</td>
+                      <td class="col-price font-mono">${{ Number(it.unit_price).toFixed(2) }}</td>
+                      <td class="col-total font-mono">${{ Number(it.subtotal).toFixed(2) }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
 
-              <div class="kh-invoice-a4__bottom-grid">
-                <div class="kh-invoice-a4__payment-box">
-                  <div class="kh-invoice-a4__box-heading">ព័ត៌មានទូទាត់ (Payment Information)</div>
-                  <div class="kh-invoice-a4__pay-line">
+              <!-- 4. Payment Information (Left) & Financial Summary (Right) -->
+              <div class="kh-a4-summary-grid">
+                <!-- Payment Information -->
+                <div class="kh-a4-payment-box">
+                  <div class="kh-a4-box-title">ព័ត៌មានទូទាត់ (Payment Information)</div>
+                  <div class="kh-a4-pay-row">
                     <span>វិធីទូទាត់:</span>
                     <strong>{{ primaryPaymentMethodLabel }}</strong>
                   </div>
-                  <div class="kh-invoice-a4__pay-line">
+                  <div class="kh-a4-pay-row">
                     <span>ស្ថានភាពទូទាត់:</span>
-                    <strong class="kh-invoice-a4__status-pill">{{ paymentStatusInfo.khmer }}</strong>
+                    <strong>{{ paymentStatusInfo.khmer }}</strong>
                   </div>
-                  <div class="kh-invoice-a4__pay-line">
+                  <div class="kh-a4-pay-row">
                     <span>ប្រាក់បានបង់:</span>
                     <strong class="font-mono">${{ totalPaidAmount.toFixed(2) }}</strong>
                   </div>
+                  <div v-if="totalPaidAmount > Number(sale.total)" class="kh-a4-pay-row">
+                    <span>ប្រាក់អាប់ (Change Due):</span>
+                    <strong class="font-mono">${{ (totalPaidAmount - Number(sale.total)).toFixed(2) }} ({{ formatRiel(totalPaidAmount - Number(sale.total)) }})</strong>
+                  </div>
+                  <div
+                    v-for="(pay, pIdx) in sale.payments"
+                    :key="pIdx"
+                    class="kh-a4-pay-sub"
+                  >
+                    <span v-if="(pay as any).reference_number" class="font-mono text-[11px] text-gray-500">
+                      លេខយោង (Ref): #{{ (pay as any).reference_number }}
+                    </span>
+                  </div>
                 </div>
 
-                <div class="kh-invoice-a4__summary-box">
-                  <div class="kh-invoice-a4__sum-row">
+                <!-- Financial Summary -->
+                <div class="kh-a4-totals-box">
+                  <div class="kh-a4-tot-row">
                     <span>សរុបរង (Subtotal)</span>
-                    <span class="font-mono">${{ Number(sale.subtotal).toFixed(2) }}</span>
+                    <span class="font-mono font-semibold">${{ Number(sale.subtotal).toFixed(2) }}</span>
                   </div>
-                  <div class="kh-invoice-a4__sum-row">
+                  <div class="kh-a4-tot-row">
                     <span>បញ្ចុះតម្លៃ (Discount)</span>
-                    <span class="font-mono">-${{ Number(sale.discount_amount).toFixed(2) }}</span>
+                    <span class="font-mono font-semibold">
+                      {{ Number(sale.discount_amount) > 0 ? `-$${Number(sale.discount_amount).toFixed(2)}` : '$0.00' }}
+                    </span>
                   </div>
-                  <div class="kh-invoice-a4__sum-row">
+                  <div v-if="receiptTemplate.show_tax_breakdown !== false" class="kh-a4-tot-row">
                     <span>ពន្ធ (Tax)</span>
-                    <span class="font-mono">${{ Number(sale.tax_amount).toFixed(2) }}</span>
+                    <span class="font-mono font-semibold">${{ Number(sale.tax_amount).toFixed(2) }}</span>
                   </div>
-                  <div class="kh-invoice-a4__sum-total">
-                    <div>
-                      <div class="kh-invoice-a4__sum-total-kh">សរុបត្រូវបង់ (Total Due)</div>
-                      <div class="kh-invoice-a4__sum-total-khr">{{ formatRiel(Number(sale.total)) }}</div>
+                  <div class="kh-a4-tot-grand">
+                    <div class="kh-a4-tot-grand-label">
+                      <span>សរុបត្រូវបង់ (Total Due)</span>
                     </div>
-                    <div class="kh-invoice-a4__sum-total-usd font-mono">
+                    <div class="kh-a4-tot-grand-val font-mono">
                       ${{ Number(sale.total).toFixed(2) }}
                     </div>
+                  </div>
+                  <div v-if="receiptTemplate.show_khr_conversion !== false" class="kh-a4-tot-khr">
+                    <span>សរុបជាប្រាក់រៀល (KHR Equivalent)</span>
+                    <strong class="font-mono">{{ formatRiel(Number(sale.total)) }}</strong>
                   </div>
                 </div>
               </div>
 
-              <div class="kh-invoice-a4__footer">
-                <p class="kh-invoice-a4__thank">
-                  សូមអរគុណដែលបានគាំទ្រហាងរបស់យើង! សូមអញ្ជើញមកទិញម្តងទៀត។
-                </p>
-                <p class="kh-invoice-a4__policy">
-                  ទំនិញដែលទិញរួចអាចប្តូរទំហំ ឬពណ៌បានក្នុងរយៈពេល ៧ ថ្ងៃ ដោយភ្ជាប់មកជាមួយវិក្កយបត្រដើម និងស្លាកទំនិញនៅដដែល។
+              <!-- 5. Khmer Footer -->
+              <div class="kh-a4-footer">
+                <p class="kh-a4-thank-main">សូមអរគុណដែលបានគាំទ្រហាងរបស់យើង!</p>
+                <p class="kh-a4-thank-sub">សូមអញ្ជើញមកទិញម្តងទៀត។</p>
+                <p class="kh-a4-policy">
+                  {{ receiptTemplate.return_policy || 'ទំនិញអាចប្តូរវិញបានក្នុងរយៈពេល ៧ ថ្ងៃ ដោយភ្ជាប់មកជាមួយវិក្កយបត្រ។' }} &bull; {{ resolvedFooterNote }}
                 </p>
               </div>
             </div>
@@ -399,231 +501,310 @@
         class="print-only-invoice"
         :class="printMode === 'THERMAL' ? 'is-thermal-invoice' : 'is-a4-invoice'"
       >
-        <!-- Template B: 80mm Thermal Receipt -->
-        <div v-if="printMode === 'THERMAL'" class="kh-receipt-80mm">
-          <div class="kh-receipt-80mm__header">
-            <div class="kh-receipt-80mm__title-kh">គឹម វណ្ណាក់ ហាងលក់សម្លៀកបំពាក់ </div>
-            <div class="kh-receipt-80mm__title-en">CLOTHING STORE PHNOM PENH</div>
-            <div class="kh-receipt-80mm__meta-center">
-              សាខា: {{ formatKhmerBranchName((sale as any).branch_name) }}
+        <!-- Template B: Thermal Receipt (80mm / 58mm) -->
+        <div
+          v-if="printMode === 'THERMAL'"
+          id="pos-thermal-receipt"
+          :class="activePaperWidth === '58mm' ? 'is-58mm' : 'is-80mm'"
+          class="khmer-print-surface bg-white text-gray-900"
+        >
+          <!-- Double Rule Top Header -->
+          <div class="kh-receipt-double-rule py-2 text-center flex flex-col items-center gap-0.5">
+            <div class="kh-receipt-store-kh">{{ resolvedStoreNameKh }}</div>
+            <div v-if="resolvedStoreName && resolvedStoreName !== resolvedStoreNameKh" class="text-[11px] font-bold tracking-wider text-gray-800 uppercase">{{ resolvedStoreName }}</div>
+            <div v-if="receiptTemplate.tagline" class="text-[10px] text-gray-600 font-normal leading-tight">{{ receiptTemplate.tagline }}</div>
+            <div class="kh-receipt-branch">{{ formatKhmerBranchName((sale as any).branch_name) }}</div>
+            <div v-if="receiptTemplate.address" class="text-[9.5px] text-gray-500 font-normal leading-tight mt-0.5">{{ receiptTemplate.address }}</div>
+            <div v-if="receiptTemplate.phone" class="text-[9.5px] text-gray-500 font-mono">Tel: {{ receiptTemplate.phone }}</div>
+            <div v-if="receiptTemplate.tax_id" class="text-[9px] text-gray-500 font-mono">VAT TIN: {{ receiptTemplate.tax_id }}</div>
+          </div>
+
+          <!-- Receipt Metadata -->
+          <div class="py-2.5 flex flex-col gap-1 text-[11px]">
+            <div class="flex justify-between gap-2">
+              <span class="text-gray-600">វិក្កយបត្រ:</span>
+              <strong class="font-mono font-bold text-gray-900">{{ sale.invoice_number }}</strong>
             </div>
-            <div class="kh-receipt-80mm__meta-center">
-              ទូរស័ព្ទ: 012 345 678
+            <div class="flex justify-between gap-2">
+              <span class="text-gray-600">កាលបរិច្ឆេទ:</span>
+              <span class="font-mono text-gray-900">{{ formatReceiptCompactDate(sale.created_at) }}</span>
+            </div>
+            <div v-if="receiptTemplate.show_cashier_name !== false" class="flex justify-between gap-2">
+              <span class="text-gray-600">អ្នកគិតលុយ:</span>
+              <span class="text-gray-900 text-right">{{ (sale as any).cashier_name || 'Front Cashier' }}</span>
+            </div>
+            <div v-if="receiptTemplate.show_customer_info !== false" class="flex justify-between gap-2">
+              <span class="text-gray-600">អតិថិជន:</span>
+              <span class="text-gray-900 text-right">{{ formatKhmerCustomerName((sale as any).customer_name) }}</span>
             </div>
           </div>
 
-          <div class="kh-receipt-80mm__divider-double"></div>
-
-          <div class="kh-receipt-80mm__info">
-            <div class="kh-receipt-80mm__info-row">
-              <span>លេខវិក្កយបត្រ:</span>
-              <span class="font-mono font-bold">{{ sale.invoice_number }}</span>
-            </div>
-            <div class="kh-receipt-80mm__info-row">
-              <span>ថ្ងៃទី:</span>
-              <span class="font-mono">{{ formatReceiptCompactDate(sale.created_at) }}</span>
-            </div>
-            <div class="kh-receipt-80mm__info-row">
-              <span>អ្នកគិតលុយ:</span>
-              <span>{{ (sale as any).cashier_name || 'Front Cashier' }}</span>
-            </div>
-            <div class="kh-receipt-80mm__info-row">
-              <span>អតិថិជន:</span>
-              <span>{{ formatKhmerCustomerName((sale as any).customer_name) }}</span>
-            </div>
-          </div>
-
-          <div class="kh-receipt-80mm__divider-dashed"></div>
-
-          <div class="kh-receipt-80mm__items">
+          <!-- Line Items (Dashed Rule) -->
+          <div class="kh-receipt-dashed-rule py-2.5 flex flex-col gap-2.5">
             <div
               v-for="(it, idx) in sale.items"
               :key="it.id || idx"
-              class="kh-receipt-80mm__item"
+              class="flex flex-col gap-0.5"
             >
-              <div class="kh-receipt-80mm__item-title">
-                {{ (it as any).product_name || 'ទំនិញ' }}
-                <span v-if="(it as any).color_name || (it as any).size_name" class="kh-receipt-80mm__item-variant">
-                  ({{ [(it as any).color_name, (it as any).size_name].filter(Boolean).join(' / ') }})
+              <!-- Line 1: Product Name + (Color / Size) -->
+              <div class="kh-receipt-item-title">
+                <span>{{ (it as any).product_name || 'ទំនិញ' }}</span>
+                <span v-if="receiptTemplate.show_variant_attrs !== false && formatVariantSlash((it as any).color_name, (it as any).size_name)" class="text-gray-700 font-normal">
+                  ({{ formatVariantSlash((it as any).color_name, (it as any).size_name) }})
                 </span>
               </div>
-              <div class="kh-receipt-80mm__item-calc">
-                <span class="font-mono">
+              <!-- Line 2: Indented Qty x Unit Price on left, Line Total on right -->
+              <div class="flex items-baseline justify-between pl-3 text-[11px] font-mono">
+                <span class="text-gray-600">
                   {{ it.quantity }} x ${{ Number(it.unit_price).toFixed(2) }}
+                  <template v-if="Number((it as any).discount_amount) > 0">
+                    (&minus;${{ Number((it as any).discount_amount).toFixed(2) }})
+                  </template>
                 </span>
-                <span class="font-mono font-bold">
-                  ${{ Number(it.subtotal).toFixed(2) }}
-                </span>
+                <strong class="font-bold text-gray-900">${{ Number(it.subtotal).toFixed(2) }}</strong>
+              </div>
+              <!-- Line 3: Optional SKU/Barcode -->
+              <div v-if="receiptTemplate.show_item_sku !== false && (it.sku || (it as any).variant_id)" class="pl-3 text-[9.5px] text-gray-500 font-mono">
+                SKU: {{ it.sku || (it as any).variant_id }}
               </div>
             </div>
           </div>
 
-          <div class="kh-receipt-80mm__divider-dashed"></div>
-
-          <div class="kh-receipt-80mm__totals">
-            <div class="kh-receipt-80mm__row">
-              <span>សរុបរង</span>
-              <span class="font-mono">${{ Number(sale.subtotal).toFixed(2) }}</span>
+          <!-- Subtotal / Discount / Tax -->
+          <div class="py-2 flex flex-col gap-1 text-[11px]">
+            <div class="flex justify-between">
+              <span class="text-gray-700">សរុបរង:</span>
+              <span class="font-mono font-semibold">${{ Number(sale.subtotal).toFixed(2) }}</span>
             </div>
-            <div class="kh-receipt-80mm__row">
-              <span>បញ្ចុះតម្លៃ</span>
-              <span class="font-mono">${{ Number(sale.discount_amount).toFixed(2) }}</span>
+            <div class="flex justify-between">
+              <span class="text-gray-700">បញ្ចុះតម្លៃ:</span>
+              <span class="font-mono font-semibold">
+                {{ Number(sale.discount_amount) > 0 ? `-$${Number(sale.discount_amount).toFixed(2)}` : '$0.00' }}
+              </span>
             </div>
-            <div v-if="Number(sale.tax_amount) > 0" class="kh-receipt-80mm__row">
-              <span>ពន្ធ (Tax)</span>
-              <span class="font-mono">${{ Number(sale.tax_amount).toFixed(2) }}</span>
-            </div>
-            <div class="kh-receipt-80mm__row kh-receipt-80mm__grand">
-              <span>សរុបត្រូវបង់</span>
-              <span class="font-mono">${{ Number(sale.total).toFixed(2) }}</span>
-            </div>
-            <div class="kh-receipt-80mm__row kh-receipt-80mm__khr">
-              <span>សរុបជាប្រាក់រៀល</span>
-              <span class="font-mono">{{ formatRiel(Number(sale.total)) }}</span>
+            <div v-if="receiptTemplate.show_tax_breakdown !== false" class="flex justify-between">
+              <span class="text-gray-700">ពន្ធ:</span>
+              <span class="font-mono font-semibold">${{ Number(sale.tax_amount).toFixed(2) }}</span>
             </div>
           </div>
 
-          <div class="kh-receipt-80mm__divider-dashed"></div>
-
-          <div class="kh-receipt-80mm__payment">
-            <div class="kh-receipt-80mm__row">
-              <span>ការទូទាត់:</span>
-              <span class="font-semibold">{{ primaryPaymentMethodLabel }}</span>
+          <!-- Grand Total inside Double Rule -->
+          <div class="kh-receipt-double-rule py-2 flex flex-col gap-1">
+            <div class="flex justify-between items-baseline">
+              <span class="text-xs font-bold text-gray-900">សរុបត្រូវបង់:</span>
+              <span class="text-base font-extrabold font-mono text-gray-900">
+                ${{ Number(sale.total).toFixed(2) }}
+              </span>
             </div>
-            <div class="kh-receipt-80mm__row">
-              <span>ស្ថានភាព:</span>
-              <span class="font-bold">{{ paymentStatusInfo.khmer }}</span>
+            <div v-if="receiptTemplate.show_khr_conversion !== false" class="flex justify-between items-baseline text-[10.5px] text-gray-600">
+              <span>សរុបជាប្រាក់រៀល (KHR):</span>
+              <span class="font-mono font-semibold text-gray-800">{{ formatRiel(Number(sale.total)) }}</span>
             </div>
           </div>
 
-          <div class="kh-receipt-80mm__divider-double"></div>
+          <!-- Payment Method & Status -->
+          <div class="py-2.5 flex flex-col gap-1 text-[11px]">
+            <div class="flex justify-between gap-2">
+              <span class="text-gray-600">វិធីទូទាត់:</span>
+              <span class="font-semibold text-gray-900 text-right">{{ primaryPaymentMethodLabel }}</span>
+            </div>
+            <div class="flex justify-between gap-2">
+              <span class="text-gray-600">ស្ថានភាព:</span>
+              <strong class="font-bold text-gray-900">{{ paymentStatusInfo.khmer }}</strong>
+            </div>
+            <div
+              v-if="totalPaidAmount > 0"
+              class="flex justify-between gap-2"
+            >
+              <span class="text-gray-600">ប្រាក់បានបង់:</span>
+              <span class="font-mono">${{ totalPaidAmount.toFixed(2) }}</span>
+            </div>
+            <div v-if="totalPaidAmount > Number(sale.total)" class="flex justify-between gap-2 font-bold text-gray-900">
+              <span>ប្រាក់អាប់:</span>
+              <span class="font-mono">${{ (totalPaidAmount - Number(sale.total)).toFixed(2) }} ({{ formatRiel(totalPaidAmount - Number(sale.total)) }})</span>
+            </div>
+          </div>
 
-          <div class="kh-receipt-80mm__footer">
-            <p class="kh-receipt-80mm__thank">សូមអរគុណ! សូមអញ្ជើញមកម្តងទៀត</p>
-            <p class="kh-receipt-80mm__policy">ទំនិញអាចប្តូរបានក្នុងរយៈពេល ៧ ថ្ងៃ ដោយភ្ជាប់មកជាមួយវិក្កយបត្រ។</p>
+          <!-- Khmer Thank You Footer -->
+          <div class="pt-2 border-t border-dashed border-gray-300 text-center flex flex-col items-center gap-1">
+            <p class="text-xs font-bold text-gray-900">សូមអរគុណ!</p>
+            <p class="text-[11px] font-medium text-gray-700 leading-tight">{{ resolvedFooterNote }}</p>
+            <p v-if="receiptTemplate.return_policy" class="text-[9.5px] text-gray-500 mt-0.5 leading-snug">{{ receiptTemplate.return_policy }}</p>
+            <p v-if="receiptTemplate.wifi_info" class="text-[9.5px] font-mono text-gray-600 mt-0.5">{{ receiptTemplate.wifi_info }}</p>
+
+            <!-- QR Code Mock for Feedback / Digital Receipt -->
+            <div v-if="receiptTemplate.qr_content" class="flex flex-col items-center justify-center pt-2">
+              <div class="w-16 h-16 border border-gray-300 rounded p-1 flex items-center justify-center bg-gray-50">
+                <UIcon name="i-heroicons-qr-code" class="w-12 h-12 text-gray-800" />
+              </div>
+              <span class="text-[8px] text-gray-500 mt-1 font-sans">ស្កេនមើលវិក្កយបត្រ / Scan QR</span>
+            </div>
           </div>
         </div>
 
         <!-- Template A: Modern Khmer A4 Invoice -->
-        <div v-else class="kh-invoice-a4">
-          <div class="kh-invoice-a4__header">
-            <div class="kh-invoice-a4__brand-group">
-              <div class="kh-invoice-a4__logo">CS</div>
-              <div>
-                <h1 class="kh-invoice-a4__store-kh">គឹម វណ្ណាក់ ហាងលក់សម្លៀកបំពាក់ </h1>
-                <div class="kh-invoice-a4__store-en">CLOTHING STORE PHNOM PENH</div>
-                <div class="kh-invoice-a4__branch">
-                  សាខា: {{ formatKhmerBranchName((sale as any).branch_name) }} &bull; ភ្នំពេញ, កម្ពុជា &bull; ទូរស័ព្ទ: 012 345 678
+        <div
+          v-else
+          id="pos-a4-invoice"
+          class="khmer-print-surface kh-a4-sheet bg-white text-gray-900"
+        >
+          <!-- 1. A4 Header: Brand Identity Left, Invoice Title Right -->
+          <div class="kh-a4-header">
+            <div class="kh-a4-brand">
+              <div class="kh-a4-logo">
+                <UIcon name="i-heroicons-building-storefront" class="w-6 h-6 text-white" />
+              </div>
+              <div class="kh-a4-brand-text">
+                <h1 class="kh-a4-store-kh">{{ resolvedStoreNameKh }}</h1>
+                <div class="kh-a4-store-en">{{ resolvedStoreName }}</div>
+                <div v-if="receiptTemplate.tagline" class="text-[11px] text-gray-500 font-normal leading-tight mt-0.5">{{ receiptTemplate.tagline }}</div>
+                <div class="kh-a4-store-sub">
+                  {{ formatKhmerBranchName((sale as any).branch_name) }} &bull; {{ receiptTemplate.address || 'រាជធានីភ្នំពេញ ប្រទេសកម្ពុជា' }} &bull; ទូរស័ព្ទ: {{ receiptTemplate.phone || '+855 23 888 999' }}<template v-if="receiptTemplate.tax_id"> &bull; VAT TIN: {{ receiptTemplate.tax_id }}</template>
                 </div>
               </div>
             </div>
-            <div class="kh-invoice-a4__doc-heading">
-              <div class="kh-invoice-a4__title-kh">វិក្កយបត្រលក់</div>
-              <div class="kh-invoice-a4__title-en">SALES INVOICE</div>
+
+            <div class="kh-a4-doc-heading">
+              <div class="kh-a4-doc-kh">វិក្កយបត្រលក់</div>
+              <div class="kh-a4-doc-en">SALES INVOICE</div>
             </div>
           </div>
 
-          <div class="kh-invoice-a4__meta-grid">
-            <div class="kh-invoice-a4__meta-col">
-              <div class="kh-invoice-a4__meta-line">
-                <span class="kh-invoice-a4__meta-label">លេខវិក្កយបត្រ:</span>
-                <span class="kh-invoice-a4__meta-val font-mono font-bold">{{ sale.invoice_number }}</span>
+          <!-- 2. Invoice Information Block -->
+          <div class="kh-a4-meta-grid">
+            <div class="kh-a4-meta-col">
+              <div class="kh-a4-meta-row">
+                <span class="kh-a4-meta-label">លេខវិក្កយបត្រ (Invoice No):</span>
+                <strong class="kh-a4-meta-value font-mono">{{ sale.invoice_number }}</strong>
               </div>
-              <div class="kh-invoice-a4__meta-line">
-                <span class="kh-invoice-a4__meta-label">កាលបរិច្ឆេទ:</span>
-                <span class="kh-invoice-a4__meta-val">{{ formatKhmerInvoiceDate(sale.created_at) }}</span>
+              <div class="kh-a4-meta-row">
+                <span class="kh-a4-meta-label">កាលបរិច្ឆេទ (Date):</span>
+                <span class="kh-a4-meta-value">{{ formatKhmerInvoiceDate(sale.created_at) }}</span>
               </div>
-              <div class="kh-invoice-a4__meta-line">
-                <span class="kh-invoice-a4__meta-label">សាខា:</span>
-                <span class="kh-invoice-a4__meta-val">{{ formatKhmerBranchName((sale as any).branch_name) }}</span>
+              <div class="kh-a4-meta-row">
+                <span class="kh-a4-meta-label">សាខា (Branch):</span>
+                <span class="kh-a4-meta-value">{{ formatKhmerBranchName((sale as any).branch_name) }}</span>
               </div>
             </div>
-            <div class="kh-invoice-a4__meta-col">
-              <div class="kh-invoice-a4__meta-line">
-                <span class="kh-invoice-a4__meta-label">អ្នកគិតលុយ:</span>
-                <span class="kh-invoice-a4__meta-val">{{ (sale as any).cashier_name || 'Front Cashier' }}</span>
+
+            <div class="kh-a4-meta-col">
+              <div v-if="receiptTemplate.show_cashier_name !== false" class="kh-a4-meta-row">
+                <span class="kh-a4-meta-label">អ្នកគិតលុយ (Cashier):</span>
+                <span class="kh-a4-meta-value">{{ (sale as any).cashier_name || 'Front Cashier' }}</span>
               </div>
-              <div class="kh-invoice-a4__meta-line">
-                <span class="kh-invoice-a4__meta-label">អតិថិជន:</span>
-                <span class="kh-invoice-a4__meta-val">{{ formatKhmerCustomerName((sale as any).customer_name) }}</span>
+              <div v-if="receiptTemplate.show_customer_info !== false" class="kh-a4-meta-row">
+                <span class="kh-a4-meta-label">អតិថិជន (Customer):</span>
+                <strong class="kh-a4-meta-value">{{ formatKhmerCustomerName((sale as any).customer_name) }}</strong>
+              </div>
+              <div class="kh-a4-meta-row">
+                <span class="kh-a4-meta-label">ស្ថានភាពទូទាត់ (Status):</span>
+                <span class="kh-a4-status-pill">{{ paymentStatusInfo.khmer }} ({{ paymentStatusInfo.english }})</span>
               </div>
             </div>
           </div>
 
-          <table class="kh-invoice-a4__table">
-            <thead>
-              <tr>
-                <th class="col-no">ល.រ</th>
-                <th class="col-desc">បរិយាយទំនិញ</th>
-                <th class="col-variant">ពណ៌ / ទំហំ</th>
-                <th class="col-qty">ចំនួន</th>
-                <th class="col-price">តម្លៃរាយ</th>
-                <th class="col-total">សរុប</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(it, idx) in sale.items" :key="it.id || idx">
-                <td class="col-no">{{ toKhmerNumerals(idx + 1) }}</td>
-                <td class="col-desc">
-                  <div class="kh-invoice-a4__prod-name">{{ (it as any).product_name || 'ទំនិញ' }}</div>
-                  <div v-if="(it as any).sku" class="kh-invoice-a4__prod-sku">SKU: {{ (it as any).sku }}</div>
-                </td>
-                <td class="col-variant">{{ [(it as any).color_name, (it as any).size_name].filter(Boolean).join(' / ') || 'ទូទៅ' }}</td>
-                <td class="col-qty">{{ toKhmerNumerals(it.quantity) }}</td>
-                <td class="col-price font-mono">${{ Number(it.unit_price).toFixed(2) }}</td>
-                <td class="col-total font-mono font-bold">${{ Number(it.subtotal).toFixed(2) }}</td>
-              </tr>
-            </tbody>
-          </table>
+          <!-- 3. Product Table -->
+          <div class="kh-a4-table-wrap">
+            <table class="kh-a4-table">
+              <thead>
+                <tr>
+                  <th class="col-idx">ល.រ</th>
+                  <th class="col-desc">បរិយាយទំនិញ</th>
+                  <th v-if="receiptTemplate.show_variant_attrs !== false" class="col-variant">ពណ៌ / ទំហំ</th>
+                  <th class="col-qty">ចំនួន</th>
+                  <th class="col-price">តម្លៃរាយ</th>
+                  <th class="col-total">សរុប</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(it, idx) in sale.items" :key="it.id || idx">
+                  <td class="col-idx">{{ toKhmerNumerals(idx + 1) }}</td>
+                  <td class="col-desc">
+                    <div class="kh-a4-item-name">{{ (it as any).product_name || 'ទំនិញ' }}</div>
+                    <div v-if="receiptTemplate.show_item_sku !== false && (it.sku || (it as any).variant_id)" class="kh-a4-item-sku">
+                      SKU: {{ it.sku || (it as any).variant_id }}
+                    </div>
+                  </td>
+                  <td v-if="receiptTemplate.show_variant_attrs !== false" class="col-variant">
+                    {{ formatVariantSlash((it as any).color_name, (it as any).size_name) || '—' }}
+                  </td>
+                  <td class="col-qty">{{ toKhmerNumerals(it.quantity) }} ({{ it.quantity }})</td>
+                  <td class="col-price font-mono">${{ Number(it.unit_price).toFixed(2) }}</td>
+                  <td class="col-total font-mono">${{ Number(it.subtotal).toFixed(2) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
-          <div class="kh-invoice-a4__bottom-grid">
-            <div class="kh-invoice-a4__payment-box">
-              <div class="kh-invoice-a4__box-heading">ព័ត៌មានទូទាត់ (Payment Information)</div>
-              <div class="kh-invoice-a4__pay-line">
+          <!-- 4. Payment Information (Left) & Financial Summary (Right) -->
+          <div class="kh-a4-summary-grid">
+            <!-- Payment Information -->
+            <div class="kh-a4-payment-box">
+              <div class="kh-a4-box-title">ព័ត៌មានទូទាត់ (Payment Information)</div>
+              <div class="kh-a4-pay-row">
                 <span>វិធីទូទាត់:</span>
                 <strong>{{ primaryPaymentMethodLabel }}</strong>
               </div>
-              <div class="kh-invoice-a4__pay-line">
+              <div class="kh-a4-pay-row">
                 <span>ស្ថានភាពទូទាត់:</span>
-                <strong class="kh-invoice-a4__status-pill">{{ paymentStatusInfo.khmer }}</strong>
+                <strong>{{ paymentStatusInfo.khmer }}</strong>
               </div>
-              <div class="kh-invoice-a4__pay-line">
+              <div class="kh-a4-pay-row">
                 <span>ប្រាក់បានបង់:</span>
                 <strong class="font-mono">${{ totalPaidAmount.toFixed(2) }}</strong>
               </div>
+              <div v-if="totalPaidAmount > Number(sale.total)" class="kh-a4-pay-row">
+                <span>ប្រាក់អាប់ (Change Due):</span>
+                <strong class="font-mono">${{ (totalPaidAmount - Number(sale.total)).toFixed(2) }} ({{ formatRiel(totalPaidAmount - Number(sale.total)) }})</strong>
+              </div>
+              <div
+                v-for="(pay, pIdx) in sale.payments"
+                :key="pIdx"
+                class="kh-a4-pay-sub"
+              >
+                <span v-if="(pay as any).reference_number" class="font-mono text-[11px] text-gray-500">
+                  លេខយោង (Ref): #{{ (pay as any).reference_number }}
+                </span>
+              </div>
             </div>
 
-            <div class="kh-invoice-a4__summary-box">
-              <div class="kh-invoice-a4__sum-row">
+            <!-- Financial Summary -->
+            <div class="kh-a4-totals-box">
+              <div class="kh-a4-tot-row">
                 <span>សរុបរង (Subtotal)</span>
-                <span class="font-mono">${{ Number(sale.subtotal).toFixed(2) }}</span>
+                <span class="font-mono font-semibold">${{ Number(sale.subtotal).toFixed(2) }}</span>
               </div>
-              <div class="kh-invoice-a4__sum-row">
+              <div class="kh-a4-tot-row">
                 <span>បញ្ចុះតម្លៃ (Discount)</span>
-                <span class="font-mono">-${{ Number(sale.discount_amount).toFixed(2) }}</span>
+                <span class="font-mono font-semibold">
+                  {{ Number(sale.discount_amount) > 0 ? `-$${Number(sale.discount_amount).toFixed(2)}` : '$0.00' }}
+                </span>
               </div>
-              <div class="kh-invoice-a4__sum-row">
+              <div v-if="receiptTemplate.show_tax_breakdown !== false" class="kh-a4-tot-row">
                 <span>ពន្ធ (Tax)</span>
-                <span class="font-mono">${{ Number(sale.tax_amount).toFixed(2) }}</span>
+                <span class="font-mono font-semibold">${{ Number(sale.tax_amount).toFixed(2) }}</span>
               </div>
-              <div class="kh-invoice-a4__sum-total">
-                <div>
-                  <div class="kh-invoice-a4__sum-total-kh">សរុបត្រូវបង់ (Total Due)</div>
-                  <div class="kh-invoice-a4__sum-total-khr">{{ formatRiel(Number(sale.total)) }}</div>
+              <div class="kh-a4-tot-grand">
+                <div class="kh-a4-tot-grand-label">
+                  <span>សរុបត្រូវបង់ (Total Due)</span>
                 </div>
-                <div class="kh-invoice-a4__sum-total-usd font-mono">
+                <div class="kh-a4-tot-grand-val font-mono">
                   ${{ Number(sale.total).toFixed(2) }}
                 </div>
+              </div>
+              <div v-if="receiptTemplate.show_khr_conversion !== false" class="kh-a4-tot-khr">
+                <span>សរុបជាប្រាក់រៀល (KHR Equivalent)</span>
+                <strong class="font-mono">{{ formatRiel(Number(sale.total)) }}</strong>
               </div>
             </div>
           </div>
 
-          <div class="kh-invoice-a4__footer">
-            <p class="kh-invoice-a4__thank">
-              សូមអរគុណដែលបានគាំទ្រហាងរបស់យើង! សូមអញ្ជើញមកទិញម្តងទៀត។
-            </p>
-            <p class="kh-invoice-a4__policy">
-              ទំនិញដែលទិញរួចអាចប្តូរទំហំ ឬពណ៌បានក្នុងរយៈពេល ៧ ថ្ងៃ ដោយភ្ជាប់មកជាមួយវិក្កយបត្រដើម និងស្លាកទំនិញនៅដដែល។
+          <!-- 5. Khmer Footer -->
+          <div class="kh-a4-footer">
+            <p class="kh-a4-thank-main">សូមអរគុណដែលបានគាំទ្រហាងរបស់យើង!</p>
+            <p class="kh-a4-thank-sub">សូមអញ្ជើញមកទិញម្តងទៀត។</p>
+            <p class="kh-a4-policy">
+              {{ receiptTemplate.return_policy || 'ទំនិញអាចប្តូរវិញបានក្នុងរយៈពេល ៧ ថ្ងៃ ដោយភ្ជាប់មកជាមួយវិក្កយបត្រ។' }} &bull; {{ resolvedFooterNote }}
             </p>
           </div>
         </div>
@@ -657,7 +838,10 @@ import {
   formatKhmerCustomerName,
   formatKhmerBranchName,
   printWithKhmerFonts,
+  KHMER_STORE_NAME,
+  ENGLISH_STORE_NAME,
 } from '~/composables/useKhmerPrint'
+import { useReceiptTemplate } from '~/composables/useReceiptTemplate'
 
 definePageMeta({ middleware: ['auth'] })
 
@@ -667,13 +851,16 @@ useHead({ title: 'Sale Detail — Clothing Store' })
 
 const { getSale, cancelSale } = useSaleApi()
 const { addToast } = useAppToast()
+const { template: receiptTemplate, loadTemplate } = useReceiptTemplate()
 
 const sale = ref<Sale | null>(null)
 const loading = ref(true)
 const printMode = ref<'THERMAL' | 'A4'>('A4')
+const activePaperWidth = ref<'80mm' | '58mm'>('80mm')
+
 const printModeTabs = [
   { key: 'A4', label: 'វិក្កយបត្រ A4 (Sales Invoice)' },
-  { key: 'THERMAL', label: 'បង្កាន់ដៃ 80mm (Thermal Receipt)' },
+  { key: 'THERMAL', label: 'បង្កាន់ដៃ (Thermal Receipt)' },
 ]
 const showPreviewModal = ref(false)
 const showCancelConfirm = ref(false)
@@ -694,6 +881,18 @@ const paymentCols = [
   { key: 'reference_number', label: 'Reference' },
 ]
 
+const resolvedStoreName = computed(
+  () => receiptTemplate.value?.store_name?.trim() || ENGLISH_STORE_NAME,
+)
+
+const resolvedStoreNameKh = computed(
+  () => receiptTemplate.value?.store_name_kh?.trim() || KHMER_STORE_NAME,
+)
+
+const resolvedFooterNote = computed(
+  () => receiptTemplate.value?.footer_message?.trim() || 'សូមអរគុណដែលបានគាំទ្រហាងរបស់យើង! សូមអញ្ជើញមកទិញម្តងទៀត។',
+)
+
 const paymentStatusInfo = computed(() =>
   formatKhmerPaymentStatus(sale.value?.payment_status, sale.value?.sale_status),
 )
@@ -712,6 +911,10 @@ const totalPaidAmount = computed(() => {
   }
   return paymentStatusInfo.value.isPaid ? Number(sale.value?.total) || 0 : 0
 })
+
+function formatVariantSlash(color?: string | null, size?: string | null): string {
+  return [color, size].filter(Boolean).join(' / ') || ''
+}
 
 function formatRiel(usd: number): string {
   return `${Math.round(usd * 4100).toLocaleString()} ៛`
@@ -753,7 +956,16 @@ async function confirmCancelSale() {
   }
 }
 
+watch(
+  () => receiptTemplate.value?.paper_width,
+  (w) => {
+    if (w) activePaperWidth.value = w
+  },
+  { immediate: true },
+)
+
 onMounted(async () => {
+  loadTemplate()
   try {
     sale.value = await getSale(id) as Sale
   } finally {
@@ -821,31 +1033,10 @@ onMounted(async () => {
   padding-bottom: 10px;
   border-bottom: 1px solid var(--border-subtle);
 }
-.mode-tabs {
-  display: flex;
-  gap: 4px;
-  background: var(--surface-inset);
-  padding: 3px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-subtle);
-}
-.mode-tab {
-  padding: 6px 12px;
-  font-size: 12px;
-  font-weight: 600;
-  border-radius: 6px;
-  border: none;
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-.mode-tab.active {
-  background: #111827;
-  color: #ffffff;
-}
 .preview-actions {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
 }
 .preview-canvas {
   background: #f1f5f9;
@@ -863,102 +1054,316 @@ onMounted(async () => {
     padding: 12px;
     justify-content: flex-start;
   }
-  .preview-canvas :deep(.kh-invoice-a4) {
-    min-width: 620px;
-  }
 }
 
 .print-only-invoice { display: none; }
 </style>
 
 <style>
-/* Shared Khmer Receipt & A4 Invoice Styles for Admin */
-.kh-receipt-80mm {
-  font-family: 'Kantumruy Pro', 'Battambang', 'Battambang Local', 'Noto Sans Khmer', sans-serif;
-  width: 78mm;
-  max-width: 100%;
-  background: #ffffff;
-  color: #111827;
-  padding: 4mm 3.5mm;
-  font-size: 11px;
-  line-height: 1.55;
-  border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  box-sizing: border-box;
-}
-.kh-receipt-80mm__header { text-align: center; padding-bottom: 4px; }
-.kh-receipt-80mm__title-kh { font-size: 13.5px; font-weight: 700; color: #111827; line-height: 1.5; }
-.kh-receipt-80mm__title-en { font-size: 10px; font-weight: 700; letter-spacing: 0.06em; color: #374151; margin-top: 1px; }
-.kh-receipt-80mm__meta-center { font-size: 10.5px; color: #374151; line-height: 1.45; }
-.kh-receipt-80mm__divider-double { border-top: 2px double #111827; margin: 6px 0; }
-.kh-receipt-80mm__divider-dashed { border-top: 1px dashed #6b7280; margin: 6px 0; }
-.kh-receipt-80mm__info { display: flex; flex-direction: column; gap: 2px; font-size: 10.5px; }
-.kh-receipt-80mm__info-row { display: flex; justify-content: space-between; gap: 6px; }
-.kh-receipt-80mm__items { display: flex; flex-direction: column; gap: 5px; }
-.kh-receipt-80mm__item { display: flex; flex-direction: column; }
-.kh-receipt-80mm__item-title { font-size: 11px; font-weight: 600; color: #111827; line-height: 1.45; word-break: break-word; }
-.kh-receipt-80mm__item-variant { font-weight: 400; color: #374151; font-size: 10.5px; }
-.kh-receipt-80mm__item-calc { display: flex; justify-content: space-between; align-items: baseline; padding-left: 8px; font-size: 10.5px; color: #1f2937; }
-.kh-receipt-80mm__totals, .kh-receipt-80mm__payment { display: flex; flex-direction: column; gap: 2.5px; font-size: 11px; }
-.kh-receipt-80mm__row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
-.kh-receipt-80mm__grand { font-size: 13px; font-weight: 700; color: #111827; padding-top: 3px; border-top: 1px solid #d1d5db; margin-top: 2px; }
-.kh-receipt-80mm__khr { font-size: 10.5px; color: #374151; font-weight: 600; }
-.kh-receipt-80mm__footer { text-align: center; padding-top: 4px; }
-.kh-receipt-80mm__thank { font-size: 11px; font-weight: 700; color: #111827; line-height: 1.5; margin: 0; }
-.kh-receipt-80mm__policy { font-size: 9.5px; color: #4b5563; line-height: 1.45; margin-top: 2px; }
-
-.kh-invoice-a4 {
-  font-family: 'Kantumruy Pro', 'Battambang', 'Battambang Local', 'Noto Sans Khmer', sans-serif;
-  width: 100%;
-  max-width: 195mm;
-  background: #ffffff;
-  color: #111827;
-  padding: 10mm;
-  font-size: 12.5px;
+/* Shared Unified Khmer Receipt & A4 Invoice Styles */
+.khmer-print-surface {
+  font-family: var(--font-khmer, 'Kantumruy Pro', 'Battambang', 'Noto Sans Khmer', 'Battambang Local', 'Inter', sans-serif);
   line-height: 1.6;
+}
+
+.kh-receipt-store-kh {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.65;
+}
+
+.kh-receipt-branch {
+  font-size: 11px;
+  font-weight: 600;
+  color: #374151;
+  line-height: 1.5;
+}
+
+.kh-receipt-double-rule {
+  border-top: 3px double #111827;
+  border-bottom: 3px double #111827;
+}
+
+.kh-receipt-dashed-rule {
+  border-top: 1px dashed #9ca3af;
+  border-bottom: 1px dashed #9ca3af;
+}
+
+.kh-receipt-item-title {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #111827;
+  line-height: 1.65;
+  word-break: break-word;
+}
+
+/* Template A: A4 Styles */
+.kh-a4-sheet {
+  width: 100%;
+  max-width: 210mm;
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.kh-a4-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #111827;
+}
+
+.kh-a4-brand {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.kh-a4-logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: #111827;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.kh-a4-store-kh {
+  font-size: 22px;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.kh-a4-store-en {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #374151;
+  text-transform: uppercase;
+}
+
+.kh-a4-store-sub {
+  font-size: 11.5px;
+  color: #6b7280;
+  margin-top: 2px;
+  line-height: 1.5;
+}
+
+.kh-a4-doc-heading {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.kh-a4-doc-kh {
+  font-size: 22px;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.45;
+}
+
+.kh-a4-doc-en {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: #4b5563;
+}
+
+.kh-a4-meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  padding: 12px 16px;
+  background: #f9fafb;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
-  box-sizing: border-box;
 }
-.kh-invoice-a4__header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; padding-bottom: 14px; border-bottom: 2px solid #111827; }
-.kh-invoice-a4__brand-group { display: flex; align-items: flex-start; gap: 12px; }
-.kh-invoice-a4__logo { width: 42px; height: 42px; border-radius: 8px; background: #111827; color: #ffffff; font-weight: 800; font-size: 15px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.kh-invoice-a4__store-kh { font-size: 20px; font-weight: 700; color: #111827; line-height: 1.4; margin: 0; }
-.kh-invoice-a4__store-en { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #374151; }
-.kh-invoice-a4__branch { font-size: 11.5px; color: #4b5563; margin-top: 2px; }
-.kh-invoice-a4__doc-heading { text-align: right; flex-shrink: 0; }
-.kh-invoice-a4__title-kh { font-size: 22px; font-weight: 700; color: #111827; line-height: 1.35; }
-.kh-invoice-a4__title-en { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; color: #4b5563; }
-.kh-invoice-a4__meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 12px 0; border-bottom: 1px solid #e5e7eb; margin-bottom: 14px; }
-.kh-invoice-a4__meta-col { display: flex; flex-direction: column; gap: 4px; }
-.kh-invoice-a4__meta-line { display: flex; align-items: baseline; gap: 8px; font-size: 12.5px; }
-.kh-invoice-a4__meta-label { color: #4b5563; min-width: 110px; font-weight: 500; }
-.kh-invoice-a4__meta-val { color: #111827; font-weight: 600; }
-.kh-invoice-a4__table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
-.kh-invoice-a4__table thead th { background: #f9fafb; color: #111827; font-weight: 700; font-size: 12px; padding: 8px 10px; border-top: 1px solid #d1d5db; border-bottom: 1px solid #d1d5db; line-height: 1.5; }
-.kh-invoice-a4__table tbody td { padding: 9px 10px; border-bottom: 1px solid #e5e7eb; vertical-align: top; font-size: 12.5px; line-height: 1.5; }
-.kh-invoice-a4__table .col-no { width: 44px; text-align: center; }
-.kh-invoice-a4__table .col-desc { text-align: left; }
-.kh-invoice-a4__table .col-variant { width: 120px; text-align: left; }
-.kh-invoice-a4__table .col-qty { width: 64px; text-align: center; }
-.kh-invoice-a4__table .col-price { width: 95px; text-align: right; }
-.kh-invoice-a4__table .col-total { width: 105px; text-align: right; }
-.kh-invoice-a4__prod-name { font-weight: 600; color: #111827; word-break: break-word; }
-.kh-invoice-a4__prod-sku { font-size: 10.5px; color: #6b7280; font-family: monospace; }
-.kh-invoice-a4__bottom-grid { display: grid; grid-template-columns: 1fr 290px; gap: 20px; align-items: start; padding-top: 4px; }
-.kh-invoice-a4__payment-box { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; padding: 10px 14px; display: flex; flex-direction: column; gap: 5px; font-size: 12px; }
-.kh-invoice-a4__box-heading { font-weight: 700; font-size: 12px; color: #111827; padding-bottom: 4px; border-bottom: 1px solid #e5e7eb; margin-bottom: 2px; }
-.kh-invoice-a4__pay-line { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
-.kh-invoice-a4__status-pill { padding: 1px 8px; background: #ffffff; border: 1px solid #d1d5db; border-radius: 4px; font-size: 11.5px; }
-.kh-invoice-a4__summary-box { display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; }
-.kh-invoice-a4__sum-row { display: flex; justify-content: space-between; align-items: baseline; color: #374151; }
-.kh-invoice-a4__sum-total { display: flex; justify-content: space-between; align-items: center; padding-top: 8px; margin-top: 4px; border-top: 2px solid #111827; }
-.kh-invoice-a4__sum-total-kh { font-size: 13.5px; font-weight: 700; color: #111827; }
-.kh-invoice-a4__sum-total-khr { font-size: 11.5px; font-weight: 600; color: #4b5563; }
-.kh-invoice-a4__sum-total-usd { font-size: 24px; font-weight: 800; color: #111827; line-height: 1.1; }
-.kh-invoice-a4__footer { margin-top: 22px; padding-top: 12px; border-top: 1px solid #e5e7eb; text-align: center; }
-.kh-invoice-a4__thank { font-size: 13px; font-weight: 700; color: #111827; margin: 0; }
-.kh-invoice-a4__policy { font-size: 11px; color: #4b5563; margin-top: 4px; }
+
+.kh-a4-meta-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.kh-a4-meta-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+
+.kh-a4-meta-label {
+  color: #4b5563;
+}
+
+.kh-a4-meta-value {
+  color: #111827;
+  text-align: right;
+}
+
+.kh-a4-status-pill {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 4px;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.kh-a4-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.kh-a4-table thead tr {
+  border-bottom: 2px solid #111827;
+  background: #f9fafb;
+}
+
+.kh-a4-table th {
+  padding: 9px 10px;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.6;
+}
+
+.kh-a4-table td {
+  padding: 10px;
+  border-bottom: 1px solid #e5e7eb;
+  vertical-align: top;
+  line-height: 1.6;
+}
+
+.kh-a4-table .col-idx { width: 44px; text-align: center; }
+.kh-a4-table .col-desc { text-align: left; }
+.kh-a4-table .col-variant { width: 130px; text-align: left; }
+.kh-a4-table .col-qty { width: 80px; text-align: right; }
+.kh-a4-table .col-price { width: 100px; text-align: right; }
+.kh-a4-table .col-total { width: 110px; text-align: right; font-weight: 700; }
+
+.kh-a4-item-name {
+  font-weight: 600;
+  color: #111827;
+}
+
+.kh-a4-item-sku {
+  font-size: 11px;
+  font-family: monospace;
+  color: #6b7280;
+}
+
+.kh-a4-summary-grid {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 24px;
+  align-items: start;
+}
+
+.kh-a4-payment-box {
+  padding: 12px 16px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12.5px;
+}
+
+.kh-a4-box-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 4px;
+  margin-bottom: 2px;
+}
+
+.kh-a4-pay-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.kh-a4-totals-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.kh-a4-tot-row {
+  display: flex;
+  justify-content: space-between;
+  color: #374151;
+}
+
+.kh-a4-tot-grand {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-top: 10px;
+  border-top: 2px solid #111827;
+}
+
+.kh-a4-tot-grand-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.kh-a4-tot-grand-val {
+  font-size: 24px;
+  font-weight: 800;
+  color: #111827;
+}
+
+.kh-a4-tot-khr {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: #4b5563;
+  padding-top: 2px;
+}
+
+.kh-a4-footer {
+  padding-top: 14px;
+  border-top: 1px solid #e5e7eb;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.kh-a4-thank-main {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.kh-a4-thank-sub {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.kh-a4-policy {
+  font-size: 11px;
+  color: #6b7280;
+  margin-top: 4px;
+}
 
 @media print {
   @page {
@@ -968,6 +1373,7 @@ onMounted(async () => {
   html,
   body {
     height: auto !important;
+    min-height: 0 !important;
     overflow: visible !important;
     background: #ffffff !important;
     margin: 0 !important;
@@ -984,21 +1390,35 @@ onMounted(async () => {
     background: #ffffff !important;
   }
 
-  #admin-printable-invoice.is-thermal-invoice .kh-receipt-80mm {
-    width: 78mm !important;
+  #admin-printable-invoice #pos-thermal-receipt {
+    position: static !important;
     margin: 0 !important;
-    padding: 3mm 2.5mm !important;
+    padding: 2mm 3mm !important;
     border: none !important;
+    border-radius: 0 !important;
     box-shadow: none !important;
+    color: #000000 !important;
+    background: #ffffff !important;
   }
 
-  #admin-printable-invoice.is-a4-invoice .kh-invoice-a4 {
+  #admin-printable-invoice #pos-thermal-receipt.is-80mm {
+    width: 78mm !important;
+  }
+
+  #admin-printable-invoice #pos-thermal-receipt.is-58mm {
+    width: 54mm !important;
+    font-size: 10px !important;
+    padding: 1.5mm 2mm !important;
+  }
+
+  #admin-printable-invoice #pos-a4-invoice {
     width: 190mm !important;
     max-width: 190mm !important;
     margin: 10mm auto !important;
     padding: 0 !important;
     border: none !important;
     box-shadow: none !important;
+    background: #ffffff !important;
   }
 }
 </style>

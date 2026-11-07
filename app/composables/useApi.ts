@@ -501,6 +501,13 @@ export function useSystemSettingsApi() {
         method: 'PUT',
         body: settings,
       }),
+    getReceiptSettings: () =>
+      apiFetch<Record<string, any>>(API_ENDPOINTS.settings.receipt),
+    updateReceiptSettings: (settings: Record<string, any>) =>
+      apiFetch<Record<string, any>>(API_ENDPOINTS.settings.receipt, {
+        method: 'PUT',
+        body: settings,
+      }),
   }
 }
 
