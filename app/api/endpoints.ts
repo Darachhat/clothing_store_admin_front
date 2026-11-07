@@ -112,12 +112,14 @@ export const API_ENDPOINTS = {
     category: (cat: string) => `/api/admin/v1/settings/${cat}`,
     store: '/api/admin/v1/settings/store',
     receipt: '/api/admin/v1/settings/receipt',
+    sticker: '/api/admin/v1/settings/sticker',
     brand: '/api/admin/v1/settings/brand',
     brandPublic: '/api/admin/v1/brand/public',
     uploadLogo: '/api/admin/v1/settings/brand/upload-logo',
   },
   labels: {
     generate: '/api/admin/v1/labels/generate',
+    template: '/api/admin/v1/labels/template',
   },
   users: {
     base: '/api/admin/v1/users',

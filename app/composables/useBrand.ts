@@ -71,11 +71,10 @@ export function useBrand() {
       let data: any = null
 
       try {
-        data = await settingsApi.getBrandSettings()
+        data = await settingsApi.getPublicBrandSettings()
       } catch {
-        // Fallback to public brand endpoint if unauthenticated
         try {
-          data = await settingsApi.getPublicBrandSettings()
+          data = await settingsApi.getBrandSettings()
         } catch {
           // ignore
         }

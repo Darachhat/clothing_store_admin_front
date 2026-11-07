@@ -5,14 +5,19 @@
       <div class="login-brand__inner">
         <div class="login-brand__logo">
           <img
-            v-if="brand.logo_url || brand.logo_dark_url"
+            v-if="brand.logo_dark_url || brand.logo_url"
             :src="brand.logo_dark_url || brand.logo_url"
             :alt="displayName"
             class="max-w-full max-h-full object-contain p-1"
           />
           <UIcon v-else name="i-heroicons-shield-check" class="w-6 h-6 text-white" />
         </div>
-        <div class="login-brand__name">{{ displayName }}</div>
+        <div>
+          <div class="login-brand__name font-khmer">{{ displayNameKh || displayName }}</div>
+          <div v-if="displayNameKh && displayName !== displayNameKh" class="login-brand__subname">
+            {{ displayName }}
+          </div>
+        </div>
         <p class="login-brand__tagline">{{ brand.tagline || 'Admin & Manager portal. Full access to inventory, reports, purchasing, and user management.' }}</p>
         <div class="login-brand__features">
           <div v-for="feat in features" :key="feat" class="login-brand__feature">
@@ -26,6 +31,23 @@
     <!-- Right panel: form -->
     <div class="login-form-panel">
       <div class="login-form-wrap">
+        <!-- Mobile Brand Header (visible below 768px) -->
+        <div class="login-mobile-brand">
+          <div class="login-mobile-brand__logo">
+            <img
+              v-if="brand.logo_url || brand.logo_dark_url"
+              :src="brand.logo_url || brand.logo_dark_url"
+              :alt="displayName"
+              class="max-w-full max-h-full object-contain p-1"
+            />
+            <UIcon v-else name="i-heroicons-shield-check" class="w-5 h-5 text-white" />
+          </div>
+          <div class="min-w-0">
+            <div class="login-mobile-brand__name font-khmer truncate">{{ displayNameKh || displayName }}</div>
+            <div class="login-mobile-brand__sub truncate">{{ displayName }} • Admin Portal</div>
+          </div>
+        </div>
+
         <div class="login-form-header">
           <h1 class="login-form-title">Admin Sign In</h1>
           <p class="login-form-subtitle">Sign in with your username, verified phone, or linked Telegram account.</p>
@@ -85,7 +107,6 @@
         </div>
 
         <div class="telegram-login-section">
-          <div ref="telegramWidgetContainer" class="telegram-widget-box" />
           <button
             type="button"
             class="login-tg-btn"
@@ -135,15 +156,13 @@
 
 <script setup lang="ts">
 definePageMeta({ layout: false, middleware: ['guest'] })
-useHead({ title: 'Admin Sign In — Clothing Store' })
 
-const config = useRuntimeConfig()
 const authStore = useAuthStore()
 const router = useRouter()
-const { brand, displayName, loadBrand } = useBrand()
+const { brand, displayName, displayNameKh, loadBrand } = useBrand()
 
-onMounted(() => {
-  loadBrand()
+useHead({
+  title: computed(() => `Admin Sign In — ${displayName.value || 'Clothing Store'}`),
 })
 
 const form = reactive({ username: '', password: '' })
@@ -151,9 +170,6 @@ const loading = ref(false)
 const showPassword = ref(false)
 const errorMsg = ref('')
 
-const telegramBotUsername = ref<string | null>('clothing_store_kvm_bot')
-const telegramBotId = ref<string>('8453886789')
-const telegramWidgetContainer = ref<HTMLElement | null>(null)
 const appChallengeActive = ref(false)
 const appChallengeMessage = ref('')
 const appChallengeWebUrl = ref('')
@@ -300,31 +316,12 @@ onBeforeUnmount(() => {
 })
 
 onMounted(async () => {
+  loadBrand()
   if (typeof window !== 'undefined') {
-    ;(window as any).onTelegramAuthAdmin = (user: Record<string, unknown>) => {
-      handleTelegramAuthCallback(user)
-    }
     const redirectedPayload = extractTelegramRedirectPayload()
     if (redirectedPayload) {
       await handleTelegramAuthCallback(redirectedPayload)
-      return
     }
-  }
-  const tgConfig = await authStore.getTelegramConfig()
-  const cleanBotUsername = (tgConfig.bot_username || 'clothing_store_kvm_bot').replace(/^@/, '')
-  telegramBotUsername.value = cleanBotUsername
-  if (tgConfig.bot_id) {
-    telegramBotId.value = tgConfig.bot_id
-  }
-  if (telegramWidgetContainer.value && cleanBotUsername) {
-    const script = document.createElement('script')
-    script.async = true
-    script.src = 'https://telegram.org/js/telegram-widget.js?22'
-    script.setAttribute('data-telegram-login', cleanBotUsername)
-    script.setAttribute('data-size', 'large')
-    script.setAttribute('data-auth-url', `${window.location.origin}${window.location.pathname}`)
-    script.setAttribute('data-request-access', 'write')
-    telegramWidgetContainer.value.appendChild(script)
   }
 })
 </script>
@@ -361,9 +358,40 @@ onMounted(async () => {
 .login-brand__inner { display: flex; flex-direction: column; gap: var(--space-3, 24px); }
 .login-brand__logo { width: 48px; height: 48px; background: rgba(255,255,255,0.1); border-radius: var(--radius-lg, 12px); display: flex; align-items: center; justify-content: center; }
 .login-brand__name { font-size: 22px; font-weight: 700; color: white; letter-spacing: -0.02em; margin-top: 4px; }
+.login-brand__subname { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.65); margin-top: 2px; }
 .login-brand__tagline { font-size: 14px; color: rgba(255,255,255,0.6); line-height: 1.6; max-width: 52ch; }
 .login-brand__features { display: flex; flex-direction: column; gap: 10px; margin-top: var(--space-1, 8px); }
 .login-brand__feature { display: flex; align-items: center; gap: 10px; font-size: 13px; color: rgba(255,255,255,0.75); }
+
+.login-mobile-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-subtle, #e5e7eb);
+}
+@media (min-width: 768px) {
+  .login-mobile-brand { display: none; }
+}
+.login-mobile-brand__logo {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md, 8px);
+  background: var(--brand-900, #111827);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.login-mobile-brand__name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.login-mobile-brand__sub {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
 
 .login-form-panel { flex: 1; display: flex; align-items: center; justify-content: center; padding: var(--space-4, 32px) var(--space-2, 16px); }
 .login-form-wrap { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: var(--space-3, 24px); }
@@ -380,7 +408,7 @@ onMounted(async () => {
 .login-pw-toggle { position: absolute; right: 10px; bottom: 10px; color: var(--text-tertiary); background: none; border: none; cursor: pointer; padding: 0; display: flex; }
 .login-pw-toggle:hover { color: var(--text-primary); }
 
-.login-error { display: flex; align-items: center; gap: 6px; padding: 8px 12px; background: var(--status-red-bg); border-radius: var(--radius-md, 8px); font-size: 13px; color: var(--status-red); }
+.login-error { display: flex; align-items: center; gap: 6px; padding: 8px 12px; background: var(--status-red-bg); border: 1px solid var(--border-subtle, #e5e7eb); border-radius: var(--radius-md, 8px); font-size: 13px; color: var(--status-red); }
 
 .login-btn { height: 40px; width: 100%; background: var(--accent, #111827); color: var(--accent-fg, #ffffff); border: none; border-radius: var(--radius-md, 8px); font-family: var(--font-body); font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 4px; }
 .login-btn:hover:not(:disabled) { opacity: 0.88; }
@@ -391,13 +419,10 @@ onMounted(async () => {
 .login-divider::before, .login-divider::after { content: ''; flex: 1; height: 1px; background: var(--border-subtle, #e5e7eb); }
 
 .telegram-login-section { display: flex; flex-direction: column; gap: 8px; }
-.telegram-widget-box { display: flex; justify-content: center; }
 .login-tg-btn { height: 38px; width: 100%; background: var(--surface-card); color: var(--text-primary); border: 1px solid var(--border-subtle, #e5e7eb); border-radius: var(--radius-md, 8px); font-family: var(--font-body); font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
 .login-tg-btn:hover:not(:disabled) { background: var(--surface-subtle, #f8fafc); }
 
 .telegram-payload-card { padding: 10px; border: 1px solid var(--border-subtle, #e5e7eb); border-radius: var(--radius-md, 8px); background: var(--surface-card); display: flex; flex-direction: column; gap: 8px; }
-.telegram-payload-hint { font-size: 11px; color: var(--text-secondary); line-height: 1.4; }
-.telegram-payload-textarea { width: 100%; border: 1px solid var(--border-subtle, #e5e7eb); border-radius: var(--radius-md, 8px); padding: 8px; font-family: var(--font-mono, monospace); font-size: 11px; color: var(--text-primary); background: var(--surface-bg); outline: none; resize: vertical; }
 
 @keyframes spin { to { transform: rotate(360deg); } }
 .login-footer-note { font-size: 12px; color: var(--text-tertiary); text-align: center; max-width: none; }

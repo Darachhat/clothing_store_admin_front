@@ -58,13 +58,29 @@
             <UIcon name="i-heroicons-building-office-2" class="w-4 h-4 text-gray-500" />
             <h3 class="font-semibold text-gray-900 dark:text-white text-sm">Store Information &amp; Brand Profile</h3>
           </div>
-          <NuxtLink
-            to="/settings/brand"
-            class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md border border-gray-900 dark:border-white bg-gray-900 text-white dark:bg-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors shadow-2xs"
-          >
-            <UIcon name="i-heroicons-sparkles" class="w-3.5 h-3.5" />
-            <span>Manage Logo &amp; Brand (One Stop)</span>
-          </NuxtLink>
+          <div class="flex flex-wrap items-center gap-2">
+            <NuxtLink
+              to="/labels"
+              class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            >
+              <UIcon name="i-heroicons-qr-code" class="w-3.5 h-3.5" />
+              <span>Sticker Templates</span>
+            </NuxtLink>
+            <NuxtLink
+              to="/settings/receipts"
+              class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            >
+              <UIcon name="i-heroicons-printer" class="w-3.5 h-3.5" />
+              <span>Receipt Templates</span>
+            </NuxtLink>
+            <NuxtLink
+              to="/settings/brand"
+              class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md border border-gray-900 dark:border-white bg-gray-900 text-white dark:bg-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors shadow-2xs"
+            >
+              <UIcon name="i-heroicons-sparkles" class="w-3.5 h-3.5" />
+              <span>Manage Logo &amp; Brand (One Stop)</span>
+            </NuxtLink>
+          </div>
         </div>
       </template>
       <form class="space-y-4" @submit.prevent="saveStoreInfo">

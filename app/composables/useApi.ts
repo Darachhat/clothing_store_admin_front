@@ -508,6 +508,13 @@ export function useSystemSettingsApi() {
         method: 'PUT',
         body: settings,
       }),
+    getStickerSettings: () =>
+      apiFetch<Record<string, any>>(API_ENDPOINTS.settings.sticker),
+    updateStickerSettings: (settings: Record<string, any>) =>
+      apiFetch<Record<string, any>>(API_ENDPOINTS.settings.sticker, {
+        method: 'PUT',
+        body: settings,
+      }),
     getBrandSettings: () =>
       apiFetch<Record<string, any>>(API_ENDPOINTS.settings.brand),
     getPublicBrandSettings: () =>

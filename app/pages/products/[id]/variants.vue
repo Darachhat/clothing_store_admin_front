@@ -81,7 +81,7 @@
 
     <!-- Create / Edit Modal -->
     <AppModal v-model="showForm" :title="editTarget ? 'Edit Variant' : 'Add Variant'" size="lg">
-      <form class="form-grid" @submit.prevent="saveVariant">
+      <form class="form-grid" @submit.prevent="saveVariant(false)">
         <div class="form-row">
           <div class="form-field">
             <label class="field-label">Color</label>
@@ -110,9 +110,9 @@
             <input v-model.number="form.wholesale_price" type="number" step="0.01" min="0" class="field-input" />
           </div>
           <div class="form-field">
-            <label class="field-label">Barcode</label>
+            <label class="field-label">Barcode (Auto-generated if blank)</label>
             <div class="flex gap-1.5">
-              <input v-model="form.barcode" class="field-input flex-1 mono" placeholder="Optional" />
+              <input v-model="form.barcode" class="field-input flex-1 mono" placeholder="Auto 10-digit Code-128" />
               <AppButton
                 type="button"
                 variant="default"
@@ -125,13 +125,29 @@
           </div>
         </div>
 
-        <div class="form-field">
-          <label class="field-label">Status</label>
-          <AppSelect v-model="form.status" :options="statusOptions" />
+        <div class="form-row">
+          <div v-if="!editTarget" class="form-field">
+            <label class="field-label">Opening Stock Quantity (Units)</label>
+            <input v-model.number="form.initial_stock" type="number" step="1" min="0" class="field-input mono" />
+          </div>
+          <div class="form-field">
+            <label class="field-label">Status</label>
+            <AppSelect v-model="form.status" :options="statusOptions" />
+          </div>
         </div>
 
         <div class="modal-actions">
           <AppButton type="button" variant="ghost" @click="showForm = false">Cancel</AppButton>
+          <AppButton
+            v-if="!editTarget"
+            type="button"
+            variant="secondary"
+            icon="i-heroicons-printer"
+            :loading="saving"
+            @click="saveVariant(true)"
+          >
+            Create &amp; Print Sticker
+          </AppButton>
           <AppButton type="submit" variant="primary" :loading="saving">
             {{ editTarget ? 'Save Changes' : 'Create Variant' }}
           </AppButton>
@@ -139,63 +155,15 @@
       </form>
     </AppModal>
 
-    <!-- Sticker & Barcode Modal (Template C: Modern Khmer Product Sticker 50x30mm) -->
-    <AppModal v-model="showQr" title="ស្លាកទំនិញ • Modern Khmer Product Sticker (50 × 30mm)" size="md">
-      <div v-if="qrVariant" class="sticker-modal-wrap">
-        <!-- Live 50x30mm Khmer Sticker Card Preview -->
-        <div class="sticker-preview-stage">
-          <div class="kh-product-sticker" style="--sticker-w: 50mm; --sticker-h: 30mm;">
-            <div class="kh-sticker__store">
-              គឹម វណ្ណាក់ ហាងលក់សម្លៀកបំពាក់
-            </div>
-            <div class="kh-sticker__product-name">
-              {{ product?.name || qrVariant.sku }}
-            </div>
-            <div class="kh-sticker__info-row">
-              <div class="kh-sticker__meta">
-                <div class="kh-sticker__sku-line">
-                  SKU: <span class="mono font-bold">{{ qrVariant.sku }}</span>
-                </div>
-                <div class="kh-sticker__variant-line">
-                  <span>ពណ៌: <strong>{{ qrVariant.color?.name || 'ទូទៅ' }}</strong></span>
-                  <span class="kh-sticker__var-sep">ទំហំ: <strong>{{ qrVariant.size?.name || 'Free' }}</strong></span>
-                </div>
-              </div>
-              <div class="kh-sticker__price-box">
-                <div class="kh-sticker__price-usd">${{ Number(qrVariant.selling_price).toFixed(2) }}</div>
-              </div>
-            </div>
-            <div class="kh-sticker__barcode-zone">
-              <div class="kh-sticker__barcode-wrap">
-                <img :src="barcodeUrl" :alt="qrVariant.barcode || qrVariant.sku" class="kh-sticker__barcode-img" />
-              </div>
-              <div class="kh-sticker__barcode-text">
-                {{ qrVariant.barcode || qrVariant.sku }}
-              </div>
-            </div>
-          </div>
-        </div>
+    <!-- Instant Thermal Sticker Print Modal -->
+    <ProductStickerPrintModal
+      v-model="showQr"
+      :variant="qrVariant"
+      :product-name="product?.name"
+      :initial-copies="stickerInitialCopies"
+    />
 
-        <div class="qr-actions">
-          <a :href="barcodeUrl" :download="`${qrVariant.sku}-barcode.svg`" target="_blank">
-            <AppButton variant="default" size="sm">
-              <template #icon-left>
-                <UIcon name="i-heroicons-arrow-down-tray" class="w-3.5 h-3.5" />
-              </template>
-              Download Barcode SVG
-            </AppButton>
-          </a>
-          <AppButton variant="primary" size="sm" :to="`/labels/generate?variant_id=${qrVariant.id}`">
-            <template #icon-left>
-              <UIcon name="i-heroicons-printer" class="w-3.5 h-3.5" />
-            </template>
-            <span class="kh-text">បោះពុម្ពស្លាកទំនិញ (Print Product Label)</span>
-          </AppButton>
-        </div>
-      </div>
-    </AppModal>
-
-    <BarcodeScannerModal v-model="showScanner" @scanned="(code) => { form.barcode = code; showScanner = false }" />
+    <BarcodeScannerModal v-model="showScanner" :auto-close-on-scan="true" @scanned="(code) => { form.barcode = code; showScanner = false }" />
 
     <AppConfirmDialog
       v-model="showDeleteConfirm"
@@ -235,6 +203,7 @@ const searchQuery = ref('')
 
 const showForm = ref(false)
 const showQr = ref(false)
+const stickerInitialCopies = ref(1)
 const showScanner = ref(false)
 const editTarget = ref<ProductVariant | null>(null)
 const qrVariant = ref<ProductVariant | null>(null)
@@ -248,6 +217,7 @@ const form = reactive({
   selling_price: 0,
   wholesale_price: null as number | null,
   barcode: '',
+  initial_stock: 10,
   status: 'ACTIVE',
 })
 
@@ -296,6 +266,7 @@ function openCreate() {
     selling_price: 0,
     wholesale_price: null,
     barcode: '',
+    initial_stock: 10,
     status: 'ACTIVE',
   })
   showForm.value = true
@@ -310,20 +281,22 @@ function openEdit(v: ProductVariant) {
     selling_price: Number(v.selling_price || 0),
     wholesale_price: v.wholesale_price != null ? Number(v.wholesale_price) : null,
     barcode: v.barcode ?? '',
+    initial_stock: 0,
     status: v.status_code || v.status || 'ACTIVE',
   })
   showForm.value = true
 }
 
-function openQr(v: ProductVariant) {
+function openQr(v: ProductVariant, copies = 1) {
   qrVariant.value = v
+  stickerInitialCopies.value = copies
   showQr.value = true
 }
 
-async function saveVariant() {
+async function saveVariant(shouldPrintAfterSave = false) {
   saving.value = true
   try {
-    const payload = {
+    const payload: Record<string, any> = {
       product_id: id,
       color_id: form.color_id || null,
       size_id: form.size_id || null,
@@ -334,15 +307,21 @@ async function saveVariant() {
       status_code: form.status,
       status: form.status,
     }
+    let createdOrUpdated: ProductVariant | null = null
     if (editTarget.value) {
-      await updateVariant(editTarget.value.id, payload)
+      createdOrUpdated = (await updateVariant(editTarget.value.id, payload)) as ProductVariant
       addToast({ type: 'success', title: 'Variant updated' })
     } else {
-      await createVariant(payload)
+      payload.initial_stock = Math.max(0, Number(form.initial_stock) || 0)
+      createdOrUpdated = (await createVariant(payload)) as ProductVariant
       addToast({ type: 'success', title: 'Variant created' })
     }
     showForm.value = false
     await loadVariants()
+    if (shouldPrintAfterSave && createdOrUpdated) {
+      const target = variants.value.find(v => v.id === createdOrUpdated?.id) || createdOrUpdated
+      openQr(target, Math.max(1, Number(form.initial_stock) || 1))
+    }
   } catch (e: any) {
     addToast({ type: 'error', title: 'Error', message: e?.data?.detail ?? String(e) })
   } finally {
@@ -386,6 +365,15 @@ onMounted(async () => {
     colors.value = Array.isArray(c) ? (c as Color[]) : ((c as any)?.items ?? [])
     sizes.value = Array.isArray(s) ? (s as Size[]) : ((s as any)?.items ?? [])
     await loadVariants()
+
+    const printVariantId = typeof route.query.print_variant === 'string' ? route.query.print_variant : ''
+    const qCopies = Number(route.query.copies) || 1
+    if (printVariantId) {
+      const target = variants.value.find(v => v.id === printVariantId) || variants.value[0]
+      if (target) {
+        openQr(target, Math.max(1, qCopies))
+      }
+    }
   } finally {
     loading.value = false
   }

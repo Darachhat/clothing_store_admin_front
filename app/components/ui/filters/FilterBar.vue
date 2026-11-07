@@ -5,11 +5,13 @@
       <div v-if="searchable" class="app-filter-search">
         <SearchBar
           :model-value="search"
-          :placeholder="searchPlaceholder || 'Search...'"
+          :placeholder="searchPlaceholder || 'Search or scan barcode / QR...'"
           :debounce="searchDebounce"
           :loading="searchLoading"
+          :scannable="scannable"
           @update:model-value="$emit('update:search', $event)"
           @search="$emit('submit')"
+          @scan="$emit('scan', $event); $emit('submit')"
           @clear="$emit('update:search', ''); $emit('submit')"
         />
       </div>
@@ -65,6 +67,7 @@ export type { FilterChipItem }
 const props = withDefaults(defineProps<{
   search?: string
   searchable?: boolean
+  scannable?: boolean
   searchPlaceholder?: string
   searchDebounce?: number
   searchLoading?: boolean
@@ -76,6 +79,7 @@ const props = withDefaults(defineProps<{
   resultLabel?: string
 }>(), {
   searchable: true,
+  scannable: true,
   searchDebounce: 0,
   searchLoading: false,
 })
@@ -83,6 +87,7 @@ const props = withDefaults(defineProps<{
 defineEmits<{
   'update:search': [value: string]
   'submit': []
+  'scan': [value: string]
   'remove-chip': [key: string]
   'clear-all': []
 }>()

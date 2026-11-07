@@ -15,7 +15,22 @@
         </AppBadge>
       </template>
       <template v-if="product" #actions>
-        <AppButton variant="default" size="sm" icon="i-heroicons-tag" label="Print Product Label" :to="`/labels/generate?product_id=${id}`" />
+        <AppButton
+          v-if="variants.length === 1"
+          variant="default"
+          size="sm"
+          icon="i-heroicons-printer"
+          label="Print Sticker"
+          @click="openStickerFor(variants[0]!)"
+        />
+        <AppButton
+          v-else
+          variant="default"
+          size="sm"
+          icon="i-heroicons-tag"
+          label="Print Product Labels"
+          :to="`/labels/generate?product_id=${id}`"
+        />
         <AppButton variant="default" size="sm" icon="i-heroicons-pencil-square" label="Edit Product" :to="`/products/${id}/edit`" />
         <AppButton variant="primary" size="sm" icon="i-heroicons-squares-plus" label="Manage Variants" :to="`/products/${id}/variants`" />
       </template>
@@ -111,10 +126,27 @@
                   {{ row.status_code || row.status || 'ACTIVE' }}
                 </AppBadge>
               </template>
+              <template #actions="{ row }">
+                <div class="flex justify-end">
+                  <AppButton
+                    variant="default"
+                    size="xs"
+                    icon="i-heroicons-printer"
+                    label="Print Sticker"
+                    @click="openStickerFor(row)"
+                  />
+                </div>
+              </template>
             </AppTable>
           </AppCard>
         </div>
       </div>
+
+      <ProductStickerPrintModal
+        v-model="showStickerModal"
+        :variant="selectedVariant"
+        :product-name="product?.name"
+      />
     </template>
 
     <AppErrorState
@@ -141,6 +173,13 @@ const { listVariants } = useVariantApi()
 const product = ref<Product | null>(null)
 const variants = ref<ProductVariant[]>([])
 const loading = ref(true)
+const showStickerModal = ref(false)
+const selectedVariant = ref<ProductVariant | null>(null)
+
+function openStickerFor(v: ProductVariant) {
+  selectedVariant.value = v
+  showStickerModal.value = true
+}
 
 const variantCols = [
   { key: 'sku', label: 'SKU', sortable: true },

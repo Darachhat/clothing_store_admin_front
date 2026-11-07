@@ -105,7 +105,11 @@
         <AppCard title="2. ជ្រើសរើសទំនិញ & ចំនួនស្លាក (Select Variants & Quantities)">
           <div class="selector-toolbar">
             <div class="search-wrap">
-              <SearchBar v-model="productSearch" placeholder="ស្វែងរកឈ្មោះទំនិញ, SKU, barcode, ពណ៌, ទំហំ..." />
+              <SearchBar
+                v-model="productSearch"
+                placeholder="ស្វែងរក ឬ ស្កេនកូដទំនិញ (Search or scan SKU, barcode, QR)..."
+                @scan="handleScanSelectVariant"
+              />
             </div>
             <div class="toolbar-btns">
               <AppButton size="sm" variant="ghost" @click="selectAllFiltered">Select Visible</AppButton>
@@ -204,7 +208,7 @@
                 :class="`size-${settings.label_width_mm}x${settings.label_height_mm}`"
               >
                 <div class="kh-sticker__store">
-                  {{ settings.store_name_override.trim() || 'គឹម វណ្ណាក់ ហាងលក់សម្លៀកបំពាក់ ' }}
+                  {{ settings.store_name_override.trim() || defaultBrandHeader }}
                 </div>
 
                 <div class="kh-sticker__product-name">
@@ -322,7 +326,17 @@ useHead({ title: 'Generate Product Stickers — Clothing Store' })
 const route = useRoute()
 const { listVariants, getQrUrl, getBarcodeUrl } = useVariantApi()
 const { generateLabels } = useLabelApi()
+const { brand, loadBrand } = useBrand()
+const { stickerTemplate, loadStickerTemplate } = useStickerTemplate()
 const { addToast } = useAppToast()
+
+const defaultBrandHeader = computed(
+  () =>
+    stickerTemplate.value.store_header?.trim() ||
+    brand.value.store_name_kh?.trim() ||
+    brand.value.store_name?.trim() ||
+    'គឹម វណ្ណាក់ ហាងលក់សម្លៀកបំពាក់',
+)
 
 const productSearch = ref('')
 const allVariants = ref<ProductVariant[]>([])
@@ -346,7 +360,7 @@ const settings = reactive({
   columns: 1,
   code_type: 'BARCODE',
   show_khr: false,
-  store_name_override: 'គឹម វណ្ណាក់ ហាងលក់សម្លៀកបំពាក់ ',
+  store_name_override: '',
 })
 
 const isThermalRollMode = computed(() =>
@@ -385,10 +399,36 @@ const filteredVariants = computed(() => {
       v.product?.name?.toLowerCase().includes(q) ||
       v.sku?.toLowerCase().includes(q) ||
       v.barcode?.toLowerCase().includes(q) ||
+      v.qr_reference?.toLowerCase().includes(q) ||
       v.color?.name?.toLowerCase().includes(q) ||
       v.size?.name?.toLowerCase().includes(q),
   )
 })
+
+function handleScanSelectVariant(scannedCode: string) {
+  const clean = scannedCode.trim().toLowerCase()
+  if (!clean) return
+  const exact = allVariants.value.find(
+    v =>
+      v.barcode?.toLowerCase() === clean ||
+      v.sku?.toLowerCase() === clean ||
+      v.qr_reference?.toLowerCase() === clean,
+  )
+  if (exact) {
+    if (!selectedIds.value.includes(exact.id)) {
+      selectedIds.value.push(exact.id)
+      quantities[exact.id] = Math.max(1, quantities[exact.id] || 1)
+    } else {
+      quantities[exact.id] = Math.min(500, (quantities[exact.id] || 1) + 1)
+    }
+    productSearch.value = ''
+    addToast({
+      type: 'success',
+      title: 'Variant Queued for Sticker Print',
+      message: `${exact.product?.name || exact.sku} (${exact.sku}) — ${quantities[exact.id]}x`,
+    })
+  }
+}
 
 const totalLabels = computed(() =>
   selectedIds.value.reduce((sum, id) => sum + Math.max(1, quantities[id] || 1), 0),
@@ -440,10 +480,23 @@ function selectAllFiltered() {
 }
 
 function formatRiel(usd: number): string {
-  return `${Math.round(usd * 4100).toLocaleString()} ៛`
+  const rate = Number(stickerTemplate.value.khr_exchange_rate) || 4100
+  return `${Math.round(usd * rate).toLocaleString()} ៛`
 }
 
 onMounted(async () => {
+  loadBrand().catch(() => {})
+  const tpl = await loadStickerTemplate()
+  if (tpl) {
+    settings.paper_size = tpl.paper_size || 'THERMAL_50x30'
+    settings.label_width_mm = Number(tpl.label_width_mm) || 50
+    settings.label_height_mm = Number(tpl.label_height_mm) || 30
+    settings.columns = Number(tpl.columns) || 1
+    settings.code_type = tpl.code_type || 'BARCODE'
+    settings.show_khr = tpl.show_khr ?? true
+    settings.store_name_override = tpl.store_header || defaultBrandHeader.value
+  }
+
   const qPreset = typeof route.query.preset === 'string' ? route.query.preset : ''
   if (qPreset) {
     settings.paper_size = qPreset
@@ -453,8 +506,9 @@ onMounted(async () => {
   try {
     const variants = (await listVariants({ limit: 300 })) as ProductVariant[]
     allVariants.value = variants || []
+    const defaultQty = Math.max(1, Number(tpl?.default_copies) || 1)
     for (const v of allVariants.value) {
-      quantities[v.id] = 1
+      quantities[v.id] = defaultQty
     }
 
     const qVariantId = typeof route.query.variant_id === 'string' ? route.query.variant_id : ''
