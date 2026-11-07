@@ -385,12 +385,17 @@
               <p v-if="form.return_policy" class="text-[9.5px] text-gray-500 mt-0.5 leading-snug">{{ form.return_policy }}</p>
               <p v-if="form.wifi_info" class="text-[9.5px] font-mono text-gray-600 mt-0.5">{{ form.wifi_info }}</p>
 
-              <!-- QR Code Mock for Feedback / Social -->
-              <div v-if="form.qr_content" class="flex flex-col items-center justify-center pt-2">
-                <div class="w-16 h-16 border border-gray-300 rounded p-1 flex items-center justify-center bg-gray-50">
-                  <UIcon name="i-heroicons-qr-code" class="w-12 h-12 text-gray-800" />
+              <!-- Real Scannable Vector QR Code -->
+              <div v-if="form.qr_content" class="flex flex-col items-center justify-center pt-2.5">
+                <div class="w-[88px] h-[88px] p-1.5 bg-white border border-gray-300 rounded flex items-center justify-center shadow-2xs">
+                  <div
+                    v-if="previewQrSvg"
+                    class="w-full h-full flex items-center justify-center [&>svg]:w-full [&>svg]:h-full [&>svg]:block"
+                    v-html="previewQrSvg"
+                  />
+                  <UIcon v-else name="i-heroicons-qr-code" class="w-12 h-12 text-gray-800" />
                 </div>
-                <span class="text-[8px] text-gray-500 mt-1 font-sans">ស្កេនមើលវិក្កយបត្រ / Scan QR</span>
+                <span class="text-[9px] text-gray-600 mt-1 font-khmer">ស្កេនមើលវិក្កយបត្រ / Scan QR</span>
               </div>
             </div>
           </div>
@@ -411,6 +416,8 @@
 </template>
 
 <script setup lang="ts">
+import { computed, nextTick, onMounted, ref } from 'vue'
+import { renderSVG } from 'uqr'
 import { formatReceiptCompactDate, printWithKhmerFonts } from '~/composables/useKhmerPrint'
 import { DEFAULT_RECEIPT_TEMPLATE } from '~/composables/useReceiptTemplate'
 
@@ -424,6 +431,16 @@ const saving = ref(false)
 const showResetConfirm = ref(false)
 
 const form = ref({ ...DEFAULT_RECEIPT_TEMPLATE })
+
+const previewQrSvg = computed(() => {
+  const content = form.value.qr_content?.trim() || 'https://kimvannak.store'
+  try {
+    return renderSVG(content, { ecc: 'M', border: 1 })
+  } catch {
+    return ''
+  }
+})
+
 
 async function loadSettings() {
   try {
@@ -492,9 +509,24 @@ onMounted(() => {
 </script>
 
 <style>
+.khmer-ui,
 .khmer-print-surface {
   font-family: var(--font-khmer, 'Kantumruy Pro', 'Battambang', 'Noto Sans Khmer', 'Battambang Local', 'Inter', sans-serif);
   line-height: 1.6;
+  font-feature-settings: 'liga' 1, 'calt' 1, 'clig' 1, 'kern' 1;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.khmer-ui,
+.khmer-print-surface,
+.font-khmer,
+.kh-receipt-store-kh,
+.kh-receipt-branch,
+.kh-receipt-item-title {
+  letter-spacing: normal !important;
 }
 
 .kh-receipt-store-kh {
