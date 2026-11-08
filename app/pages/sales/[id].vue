@@ -986,7 +986,15 @@ function openPreviewModal(mode: 'THERMAL' | 'A4') {
 async function printSale(mode: 'THERMAL' | 'A4') {
   printMode.value = mode
   await nextTick()
-  await printWithKhmerFonts()
+  const isThermal = mode === 'THERMAL'
+  const is58 = (receiptTemplate.value as any)?.paper_width === '58mm'
+  await printWithKhmerFonts({
+    printContainerId: isThermal ? 'pos-thermal-receipt' : 'pos-a4-invoice',
+    isReceipt: isThermal,
+    isA4Sheet: mode === 'A4',
+    paperWidth: (receiptTemplate.value as any)?.paper_width || '80mm',
+    pageWidthMm: is58 ? 58 : 80,
+  })
 }
 
 function handleCancel() {

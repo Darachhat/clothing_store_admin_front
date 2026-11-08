@@ -501,7 +501,13 @@ function resetToDefaults() {
 
 async function handleTestPrint() {
   await nextTick()
-  await printWithKhmerFonts()
+  const is58 = form.value.paper_width === '58mm'
+  await printWithKhmerFonts({
+    printContainerId: 'thermal-receipt-preview',
+    isReceipt: true,
+    paperWidth: form.value.paper_width,
+    pageWidthMm: is58 ? 58 : 80,
+  })
 }
 
 onMounted(() => {
@@ -563,20 +569,11 @@ onMounted(() => {
 }
 
 @media print {
-  body * {
-    visibility: hidden;
+  @page {
+    margin: 0;
   }
-  #thermal-receipt-preview,
-  #thermal-receipt-preview * {
-    visibility: visible;
-  }
-  #thermal-receipt-preview {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 78mm !important;
-    box-shadow: none !important;
-    border: none !important;
+  .no-print {
+    display: none !important;
   }
 }
 </style>
