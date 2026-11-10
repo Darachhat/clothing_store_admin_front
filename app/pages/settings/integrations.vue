@@ -347,7 +347,7 @@ const showPublicKey = ref(false)
 const showRsaKeys = ref(false)
 const testResult = ref<any>(null)
 
-const paywayForm = reactive({
+const paywayForm = ref({
   system_code: 'payway',
   name: 'ABA PayWay',
   status_code: 'active',
@@ -367,7 +367,7 @@ async function loadPaywayConfig() {
     const res = await gatewayApi.getConfig()
     const data = res?.data || res
     if (data) {
-      Object.assign(paywayForm, data)
+      Object.assign(paywayForm.value, data)
     }
   } catch (err: any) {
     toast.add({ title: 'Error', description: err.message || 'Failed to load PayWay configuration', color: 'red' })
@@ -379,7 +379,7 @@ async function loadPaywayConfig() {
 async function savePaywayConfig() {
   savingPayway.value = true
   try {
-    await gatewayApi.updateConfig(paywayForm)
+    await gatewayApi.updateConfig(paywayForm.value)
     toast.add({ title: 'Success', description: 'PayWay configuration updated successfully', color: 'green' })
     await loadPaywayConfig()
   } catch (err: any) {
@@ -420,7 +420,7 @@ const testTelegramMessage = ref('Operational status test: Systems online and ver
 const editBotModalOpen = ref(false)
 const savingBot = ref(false)
 const selectedBotId = ref('')
-const selectedBotForm = reactive({
+const selectedBotForm = ref({
   name: '',
   username: '',
   token: '',
@@ -432,7 +432,7 @@ const chatModalOpen = ref(false)
 const isEditingChat = ref(false)
 const savingChat = ref(false)
 const selectedChatId = ref('')
-const chatForm = reactive({
+const chatForm = ref({
   code: '',
   name: '',
   telegram_bot_code: 'clothing_store_bot',
@@ -462,17 +462,17 @@ async function loadTelegramData() {
 
 function openEditBotModal(bot: any) {
   selectedBotId.value = bot.id
-  selectedBotForm.name = bot.name || ''
-  selectedBotForm.username = bot.username || ''
-  selectedBotForm.token = bot.token || ''
-  selectedBotForm.status_code = bot.status_code || 'active'
+  selectedBotForm.value.name = bot.name || ''
+  selectedBotForm.value.username = bot.username || ''
+  selectedBotForm.value.token = bot.token || ''
+  selectedBotForm.value.status_code = bot.status_code || 'active'
   editBotModalOpen.value = true
 }
 
 async function handleSaveBot() {
   savingBot.value = true
   try {
-    await tgApi.updateBot(selectedBotId.value, selectedBotForm)
+    await tgApi.updateBot(selectedBotId.value, selectedBotForm.value)
     toast.add({ title: 'Success', description: 'Bot configuration updated', color: 'green' })
     editBotModalOpen.value = false
     await loadTelegramData()
@@ -486,24 +486,24 @@ async function handleSaveBot() {
 function openCreateChatModal() {
   isEditingChat.value = false
   selectedChatId.value = ''
-  chatForm.code = ''
-  chatForm.name = ''
-  chatForm.telegram_bot_code = telegramBots.value[0]?.code || 'clothing_store_bot'
-  chatForm.chat_id = ''
-  chatForm.thread_id = ''
-  chatForm.status_code = 'active'
+  chatForm.value.code = ''
+  chatForm.value.name = ''
+  chatForm.value.telegram_bot_code = telegramBots.value[0]?.code || 'clothing_store_bot'
+  chatForm.value.chat_id = ''
+  chatForm.value.thread_id = ''
+  chatForm.value.status_code = 'active'
   chatModalOpen.value = true
 }
 
 function openEditChatModal(chat: any) {
   isEditingChat.value = true
   selectedChatId.value = chat.id
-  chatForm.code = chat.code
-  chatForm.name = chat.name
-  chatForm.telegram_bot_code = chat.telegram_bot_code
-  chatForm.chat_id = chat.chat_id
-  chatForm.thread_id = chat.thread_id || ''
-  chatForm.status_code = chat.status_code || 'active'
+  chatForm.value.code = chat.code
+  chatForm.value.name = chat.name
+  chatForm.value.telegram_bot_code = chat.telegram_bot_code
+  chatForm.value.chat_id = chat.chat_id
+  chatForm.value.thread_id = chat.thread_id || ''
+  chatForm.value.status_code = chat.status_code || 'active'
   chatModalOpen.value = true
 }
 
@@ -511,10 +511,10 @@ async function handleSaveChat() {
   savingChat.value = true
   try {
     if (isEditingChat.value) {
-      await tgApi.updateChat(selectedChatId.value, chatForm)
+      await tgApi.updateChat(selectedChatId.value, chatForm.value)
       toast.add({ title: 'Success', description: 'Alert channel updated', color: 'green' })
     } else {
-      await tgApi.createChat(chatForm)
+      await tgApi.createChat(chatForm.value)
       toast.add({ title: 'Success', description: 'Alert channel created', color: 'green' })
     }
     chatModalOpen.value = false

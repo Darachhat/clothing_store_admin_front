@@ -12,8 +12,21 @@
       <slot />
     </div>
 
-    <p v-if="error" class="app-form-field__error">{{ error }}</p>
-    <p v-else-if="hint" class="app-form-field__hint">{{ hint }}</p>
+    <p
+      v-if="error"
+      :id="htmlFor ? `${htmlFor}-error` : undefined"
+      class="app-form-field__error"
+      role="alert"
+    >
+      {{ error }}
+    </p>
+    <p
+      v-else-if="hint"
+      :id="htmlFor ? `${htmlFor}-hint` : undefined"
+      class="app-form-field__hint"
+    >
+      {{ hint }}
+    </p>
   </div>
 </template>
 

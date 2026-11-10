@@ -216,6 +216,17 @@ const hasActiveSearch = computed(() => Boolean(props.search && props.search.trim
   cursor: pointer;
   padding: 2px 6px;
   text-decoration: underline;
+  border-radius: 4px;
+  transition: color 0.15s ease;
+}
+
+.app-filter-chips__clear-all:hover {
+  color: var(--text-primary, #0f172a);
+}
+
+.app-filter-chips__clear-all:focus-visible {
+  outline: 2px solid #111827;
+  outline-offset: 2px;
 }
 
 .app-filter-chips__clear-all:hover {

@@ -156,8 +156,8 @@ const tabs = [
   { key: 'three', label: 'History' },
 ]
 const chips = ref<FilterChipItem[]>([
-  { key: 'status', label: 'Status: Active' },
-  { key: 'cat', label: 'Category: Shirts' },
+  { key: 'status', label: 'Status: Active', value: 'Active' },
+  { key: 'cat', label: 'Category: Shirts', value: 'Shirts' },
 ])
 const menuItems = [
   { label: 'Edit', icon: 'i-heroicons-pencil-square' },

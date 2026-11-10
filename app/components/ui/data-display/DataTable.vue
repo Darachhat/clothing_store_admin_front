@@ -635,12 +635,22 @@ const sortedRows = computed<any[]>(() => {
   font-size: 13px;
 }
 
+.app-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
 .app-table thead tr {
   border-bottom: 1px solid var(--border-subtle, #e5e7eb);
   background: var(--surface-inset, #f8fafc);
 }
 
 .app-table th {
+  position: sticky;
+  top: 0;
+  background: var(--surface-inset, #f8fafc);
+  box-shadow: inset 0 -1px 0 var(--border-subtle, #e5e7eb);
   padding: 10px 16px;
   text-align: left;
   font-size: 11px;

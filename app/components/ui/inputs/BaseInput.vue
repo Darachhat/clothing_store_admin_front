@@ -34,6 +34,8 @@
         :minlength="minlength"
         :maxlength="maxlength"
         :autocomplete="autocomplete"
+        :aria-invalid="!!error"
+        :aria-describedby="error && id ? `${id}-error` : hint && id ? `${id}-hint` : undefined"
         class="app-input"
         :class="{
           'font-mono': mono,
@@ -57,8 +59,8 @@
       </div>
     </div>
 
-    <p v-if="error" class="app-input-error">{{ error }}</p>
-    <p v-else-if="hint" class="app-input-hint">{{ hint }}</p>
+    <p v-if="error" :id="id ? `${id}-error` : undefined" class="app-input-error" role="alert">{{ error }}</p>
+    <p v-else-if="hint" :id="id ? `${id}-hint` : undefined" class="app-input-hint">{{ hint }}</p>
   </div>
 </template>
 
