@@ -120,7 +120,7 @@
           <div v-if="appChallengeActive" class="p-2.5 border border-border-subtle rounded-lg bg-surface-card flex flex-col gap-2">
             <div class="flex items-center gap-2 text-xs font-medium text-ink">
               <UIcon name="i-heroicons-arrow-path" class="w-4 h-4 animate-spin" />
-              <span>{{ appChallengeMessage || 'Confirm login in your Telegram App (@clothing_store_kvm_bot)...' }}</span>
+              <span>{{ appChallengeMessage || 'Confirm login in your Telegram App...' }}</span>
             </div>
             <div class="flex items-center gap-2 pt-1">
               <a

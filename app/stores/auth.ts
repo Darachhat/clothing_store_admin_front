@@ -11,9 +11,11 @@ interface AuthState {
   user: AuthUser | null
   accessToken: string | null
   refreshToken: string | null
+  refreshRejected: boolean
 }
 
 let cachedApiBase: string | null = null
+let refreshInFlight: Promise<boolean> | null = null
 
 function getApiBase(): string {
   if (cachedApiBase) return cachedApiBase
@@ -28,6 +30,7 @@ export const useAuthStore = defineStore('auth', {
     user: null,
     accessToken: null,
     refreshToken: null,
+    refreshRejected: false,
   }),
 
   getters: {
@@ -156,11 +159,11 @@ export const useAuthStore = defineStore('auth', {
         )
         return {
           enabled: res.enabled,
-          bot_username: res.bot_username ? res.bot_username.replace(/^@/, '') : 'clothing_store_kvm_bot',
-          bot_id: res.bot_id || '8453886789',
+          bot_username: res.bot_username ? res.bot_username.replace(/^@/, '') : null,
+          bot_id: res.bot_id || null,
         }
       } catch {
-        return { enabled: true, bot_username: 'clothing_store_kvm_bot', bot_id: '8453886789' }
+        return { enabled: false, bot_username: null, bot_id: null }
       }
     },
 
@@ -254,12 +257,24 @@ export const useAuthStore = defineStore('auth', {
       return updated
     },
 
-    async refreshSession(): Promise<boolean> {
-      const currentRefresh =
-        this.$state.refreshToken ||
-        (typeof window !== 'undefined'
+    /**
+     * Refresh tokens are single-use (rotated). Concurrent callers share one in-flight request,
+     * and a failure caused by another tab having already rotated the token is recovered from storage.
+     */
+    refreshSession(): Promise<boolean> {
+      if (refreshInFlight) return refreshInFlight
+      refreshInFlight = this._doRefresh().finally(() => {
+        refreshInFlight = null
+      })
+      return refreshInFlight
+    },
+
+    async _doRefresh(): Promise<boolean> {
+      const readStored = () =>
+        typeof window !== 'undefined'
           ? localStorage.getItem('admin_refresh_token') || localStorage.getItem('refresh_token')
-          : null)
+          : null
+      const currentRefresh = readStored() || this.$state.refreshToken
       if (!currentRefresh) return false
       try {
         const data = await $fetch<{
@@ -277,8 +292,23 @@ export const useAuthStore = defineStore('auth', {
           localStorage.setItem('admin_access_token', data.access_token)
           localStorage.setItem('admin_refresh_token', data.refresh_token)
         }
+        this.refreshRejected = false
         return true
-      } catch {
+      } catch (err: any) {
+        const status = err?.status || err?.statusCode || err?.response?.status
+        // Another tab may have rotated the token first: adopt its tokens.
+        const latest = readStored()
+        if (latest && latest !== currentRefresh && typeof window !== 'undefined') {
+          const access = localStorage.getItem('admin_access_token')
+          if (access) {
+            this.accessToken = access
+            this.$state.refreshToken = latest
+            this.refreshRejected = false
+            return true
+          }
+        }
+        // Only an explicit auth rejection means the session is truly dead (not network/5xx).
+        this.refreshRejected = status === 400 || status === 401 || status === 403
         return false
       }
     },
