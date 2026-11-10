@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="page-root">
     <!-- Header -->
     <PageHeader
@@ -47,16 +47,16 @@
     <LoadingSkeleton v-if="loading" variant="lines" class="no-print" />
 
     <template v-else-if="sale">
-      <div class="detail-grid no-print">
+      <div class="grid grid-cols-1 md:grid-cols-[1fr_340px] gap-4 items-start no-print">
         <!-- Left: Items + Payments -->
-        <div class="detail-col">
+        <div class="flex flex-col gap-4">
           <!-- Line Items -->
           <AppCard title="Items (បរិយាយទំនិញ)">
             <AppTable :columns="itemCols" :rows="sale.items || []" :loading="false" empty-text="No items.">
               <template #cell-product="{ row }">
-                <div class="item-cell">
-                  <span class="item-name kh-text">{{ row.product_name || 'ទំនិញ' }}</span>
-                  <span class="item-sku mono">{{ row.sku || row.variant_id }}</span>
+                <div class="flex flex-col gap-0.5">
+                  <span class="text-[13px] font-semibold text-ink kh-text">{{ row.product_name || 'ទំនិញ' }}</span>
+                  <span class="text-[11px] text-ink-tertiary mono">{{ row.sku || row.variant_id }}</span>
                 </div>
               </template>
               <template #cell-variant="{ row }">
@@ -80,7 +80,7 @@
         </div>
 
         <!-- Right: Summary -->
-        <div class="detail-col">
+        <div class="flex flex-col gap-4">
           <AppCard title="Sale Summary (សង្ខេបវិក្កយបត្រ)">
             <dl class="detail-list">
               <div class="detail-row">
@@ -140,8 +140,8 @@
 
       <!-- Interactive Preview Modal (no-print) -->
       <AppModal v-model="showPreviewModal" title="មើលវិក្កយបត្រ & បង្កាន់ដៃ (Preview Khmer Invoice / Receipt)" size="lg">
-        <div class="preview-modal-body no-print">
-          <div class="preview-toolbar">
+        <div class="flex flex-col gap-3.5 no-print">
+          <div class="flex items-center justify-between flex-wrap gap-2 pb-2.5 border-b border-border-subtle">
             <div class="flex items-center gap-2 flex-wrap">
               <BaseTabs v-model="printMode" :tabs="printModeTabs" variant="pills" />
               <!-- Thermal Width Switcher when in Receipt mode -->
@@ -168,7 +168,7 @@
               </div>
             </div>
 
-            <div class="preview-actions">
+            <div class="flex gap-2 flex-wrap">
               <AppButton variant="default" size="sm" @click="printSale('THERMAL')">
                 <template #icon-left>
                   <UIcon name="i-heroicons-printer" class="w-3.5 h-3.5" />
@@ -185,7 +185,7 @@
           </div>
 
           <!-- Preview Canvas -->
-          <div class="preview-canvas">
+          <div class="bg-slate-100 border border-border-subtle rounded-md p-3 sm:p-5 max-h-[68vh] overflow-auto flex justify-start sm:justify-center">
             <!-- Template B Preview: Thermal Receipt (80mm / 58mm) -->
             <div
               v-if="printMode === 'THERMAL'"
@@ -1033,90 +1033,6 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped>
-.kh-text {
-  font-family: 'Kantumruy Pro', 'Battambang', 'Battambang Local', 'Noto Sans Khmer', sans-serif;
-}
-
-.page-root { display: flex; flex-direction: column; gap: 16px; }
-
-.page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-.page-header__left { display: flex; flex-direction: column; gap: 2px; }
-.page-header__actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-
-.back-link {
-  display: inline-flex; align-items: center; gap: 4px;
-  font-size: 12px; color: var(--text-tertiary); text-decoration: none; margin-bottom: 4px;
-}
-.back-link:hover { color: var(--text-primary); }
-.page-title { font-size: 16px; font-weight: 600; color: var(--text-primary); letter-spacing: -0.01em; }
-.page-subtitle { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
-
-.state-card {
-  display: flex; align-items: center; justify-content: center;
-  padding: 48px; background: var(--surface-card); border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg); color: var(--text-tertiary); font-size: 13px;
-}
-
-.detail-grid { display: grid; grid-template-columns: 1fr 340px; gap: 16px; align-items: start; }
-@media (max-width: 768px) { .detail-grid { grid-template-columns: 1fr; } }
-.detail-col { display: flex; flex-direction: column; gap: 16px; }
-
-.item-cell { display: flex; flex-direction: column; gap: 2px; }
-.item-name { font-size: 13px; font-weight: 600; color: var(--text-primary); }
-.item-sku { font-size: 11px; color: var(--text-tertiary); }
-
-.detail-list { display: flex; flex-direction: column; }
-.detail-row {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 8px 0; border-bottom: 1px solid var(--border-subtle); font-size: 13px;
-}
-.detail-row:last-child { border-bottom: none; }
-.detail-row.separator { border-bottom: 2px solid var(--border-subtle); padding: 0; height: 0; }
-.detail-row dt { color: var(--text-tertiary); font-family: 'Kantumruy Pro', 'Battambang', 'Battambang Local', sans-serif; }
-.detail-row dd { color: var(--text-primary); font-weight: 500; }
-.total-row dt, .total-row dd { font-weight: 700; font-size: 14px; }
-.mono { font-family: monospace; font-size: 12px; }
-
-.preview-modal-body {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-.preview-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--border-subtle);
-}
-.preview-actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.preview-canvas {
-  background: #f1f5f9;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: 20px;
-  max-height: 68vh;
-  overflow-y: auto;
-  overflow-x: auto;
-  display: flex;
-  justify-content: center;
-}
-@media (max-width: 820px) {
-  .preview-canvas {
-    padding: 12px;
-    justify-content: flex-start;
-  }
-}
-
-.print-only-invoice { display: none; }
-</style>
 
 <style>
 /* Shared Unified Khmer Receipt & A4 Invoice Styles */

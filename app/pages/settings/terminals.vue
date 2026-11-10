@@ -13,20 +13,20 @@
       @primary-click="openCreateModal"
     >
       <template #secondary>
-        <div class="refresh-toolbar">
-          <span v-if="lastRefreshedAt" class="refresh-timestamp" title="Last successful data refresh">
+        <div class="flex items-center gap-2 flex-wrap w-full sm:w-auto justify-start sm:justify-end">
+          <span v-if="lastRefreshedAt" class="inline-flex items-center gap-1 text-[11.5px] text-ink-tertiary px-1 w-full sm:w-auto pb-0.5 sm:pb-0" title="Last successful data refresh">
             <UIcon name="i-heroicons-clock" class="w-3.5 h-3.5" />
             <span>Updated {{ lastRefreshedAt }}</span>
           </span>
 
           <button
             type="button"
-            class="auto-refresh-toggle"
-            :class="{ 'is-active': autoRefresh }"
+            class="inline-flex items-center gap-1.5 h-7.5 px-2.5 rounded-md border border-border-subtle text-xs font-medium cursor-pointer transition-colors"
+            :class="autoRefresh ? 'bg-surface-inset text-ink' : 'bg-surface-card text-ink-secondary hover:bg-surface-hover'"
             title="Toggle 15-second live workstation heartbeat polling"
             @click="toggleAutoRefresh"
           >
-            <span class="auto-refresh-dot" :class="{ 'is-pulsing': autoRefresh && !loading }" />
+            <span class="w-1.5 h-1.5 rounded-full" :class="[autoRefresh ? 'bg-status-green' : 'bg-slate-400', { 'animate-pulse': autoRefresh && !loading }]" />
             <span>Auto-refresh (15s)</span>
           </button>
 
@@ -88,9 +88,9 @@
     <!-- Operational Consistency Note when Open Shifts > Online Workstations -->
     <div
       v-if="!initialLoading && openShiftsCount > onlineCount"
-      class="consistency-banner"
+      class="bg-status-amber-bg border border-border-subtle rounded-lg p-2.5 sm:p-3.5 text-xs leading-snug"
     >
-      <div class="consistency-banner__left">
+      <div class="flex items-start gap-2">
         <UIcon name="i-heroicons-information-circle" class="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
         <div>
           <span class="font-semibold text-gray-900">
@@ -173,17 +173,17 @@
       >
         <!-- 1. Register (Name + Code + Hardware summary) -->
         <template #cell-code="{ row }">
-          <div class="register-cell">
-            <div class="register-cell__top">
-              <span class="register-name">{{ row.name }}</span>
-              <span class="register-code">{{ row.code }}</span>
+          <div class="flex flex-col gap-0.5">
+            <div class="flex items-center gap-1.5">
+              <span class="font-semibold text-ink text-[13px]">{{ row.name }}</span>
+              <span class="font-mono text-[11px] font-semibold px-1.5 py-px rounded bg-surface-inset border border-border-subtle text-ink-secondary">{{ row.code }}</span>
             </div>
-            <div class="register-meta">
+            <div class="flex items-center gap-1.5 text-[11.5px] text-ink-tertiary">
               <span v-if="row.device_identifier" class="truncate max-w-[200px]" :title="row.device_identifier">
                 {{ row.device_identifier }}
               </span>
               <span v-else class="text-gray-400">Standard Web POS</span>
-              <span v-if="row.receipt_prefix" class="register-prefix">
+              <span v-if="row.receipt_prefix" class="font-mono text-[10.5px] text-ink-secondary">
                 Prefix: {{ row.receipt_prefix }}
               </span>
             </div>
@@ -192,30 +192,30 @@
 
         <!-- 2. Branch -->
         <template #cell-branch_display="{ row }">
-          <div class="location-cell">
-            <span class="location-cell__name">{{ row.branch_display }}</span>
-            <span v-if="row.branch_code" class="location-cell__code">{{ row.branch_code }}</span>
+          <div class="flex flex-col gap-px">
+            <span class="font-medium text-ink text-[12.5px]">{{ row.branch_display }}</span>
+            <span v-if="row.branch_code" class="font-mono text-[11px] text-ink-tertiary">{{ row.branch_code }}</span>
           </div>
         </template>
 
         <!-- 3. Warehouse -->
         <template #cell-warehouse_display="{ row }">
-          <div class="location-cell">
-            <span class="location-cell__name">{{ row.warehouse_display }}</span>
-            <span v-if="row.warehouse_is_default" class="location-cell__sub">Default Fulfilment</span>
+          <div class="flex flex-col gap-px">
+            <span class="font-medium text-ink text-[12.5px]">{{ row.warehouse_display }}</span>
+            <span v-if="row.warehouse_is_default" class="text-[10.5px] text-ink-tertiary">Default Fulfilment</span>
           </div>
         </template>
 
         <!-- 4. Connection (Heartbeat status + Last seen) -->
         <template #cell-connection="{ row }">
-          <div class="connection-cell">
+          <div class="flex flex-col items-start gap-1">
             <AppBadge
               :color="row.connection_state === 'ONLINE' ? 'green' : row.connection_state === 'IDLE' ? 'yellow' : 'default'"
               size="sm"
             >
               {{ row.connection_label }}
             </AppBadge>
-            <span class="connection-cell__seen" :title="row.last_active_at ? new Date(row.last_active_at).toLocaleString() : 'Never connected'">
+            <span class="text-[11px] text-ink-tertiary" :title="row.last_active_at ? new Date(row.last_active_at).toLocaleString() : 'Never connected'">
               {{ formatLastSeen(row.last_active_at) }}
             </span>
           </div>
@@ -223,14 +223,14 @@
 
         <!-- 5. Active Shift (Status, Start time, Opening float) -->
         <template #cell-active_shift="{ row }">
-          <div v-if="row.active_shift" class="shift-cell">
-            <div class="shift-cell__top">
+          <div v-if="row.active_shift" class="flex flex-col gap-0.5">
+            <div class="flex items-center gap-1.5">
               <AppBadge color="blue" size="sm">OPEN</AppBadge>
-              <span class="shift-cell__float">
+              <span class="font-mono text-[11.5px] font-semibold text-ink">
                 Float: ${{ Number(row.active_shift.opening_cash_usd || 0).toFixed(2) }}
               </span>
             </div>
-            <div class="shift-cell__meta">
+            <div class="text-[11px] text-ink-tertiary">
               Started {{ formatShiftTime(row.active_shift.opened_at) }}
               <template v-if="Number(row.active_shift.opening_cash_khr || 0) > 0">
                 · ៛{{ Number(row.active_shift.opening_cash_khr).toLocaleString() }}
@@ -242,13 +242,13 @@
 
         <!-- 6. Cashier -->
         <template #cell-cashier_display="{ row }">
-          <div v-if="row.active_shift" class="cashier-cell">
-            <span class="cashier-avatar">
+          <div v-if="row.active_shift" class="flex items-center gap-2">
+            <span class="w-6.5 h-6.5 rounded-full bg-surface-hover border border-border-subtle text-ink flex items-center justify-center text-[11px] font-bold shrink-0">
               {{ (row.cashier_display || 'C').charAt(0).toUpperCase() }}
             </span>
             <div class="min-w-0">
-              <div class="cashier-name truncate">{{ row.cashier_display }}</div>
-              <div class="cashier-sub">Active Drawer</div>
+              <div class="text-[12.5px] font-semibold text-ink truncate">{{ row.cashier_display }}</div>
+              <div class="text-[10.5px] text-ink-tertiary">Active Drawer</div>
             </div>
           </div>
           <span v-else class="text-xs text-gray-400">Unassigned</span>
@@ -266,7 +266,7 @@
 
         <!-- 8. Actions (Inspect, Edit, End Shift, Activate/Deactivate) -->
         <template #cell-actions="{ row }">
-          <div class="register-actions">
+          <div class="flex items-center justify-end gap-1 flex-wrap">
             <AppButton
               size="xs"
               variant="ghost"
@@ -587,7 +587,7 @@
       size="sm"
     >
       <form v-if="targetShiftTerminal?.active_shift" class="form-grid" @submit.prevent="handleForceCloseShift">
-        <div class="shift-warning-box">
+        <div class="p-3 rounded-lg bg-status-amber-bg border border-border-subtle">
           <div class="flex items-start gap-2.5">
             <UIcon name="i-heroicons-exclamation-triangle" class="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
             <div class="text-xs space-y-1">
@@ -1254,241 +1254,3 @@ onBeforeUnmount(() => {
 })
 </script>
 
-<style scoped>
-.refresh-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.refresh-timestamp {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 11.5px;
-  color: var(--text-tertiary, #64748b);
-  padding: 0 4px;
-}
-
-.auto-refresh-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 30px;
-  padding: 0 10px;
-  border-radius: var(--radius-md, 6px);
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  background: var(--surface-card, #ffffff);
-  color: var(--text-secondary, #475569);
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.12s, color 0.12s;
-}
-
-.auto-refresh-toggle:hover {
-  background: var(--surface-hover, #f1f5f9);
-}
-
-.auto-refresh-toggle.is-active {
-  background: var(--surface-inset, #f8fafc);
-  color: var(--text-primary, #0f172a);
-}
-
-.auto-refresh-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--text-muted, #94a3b8);
-}
-
-.auto-refresh-toggle.is-active .auto-refresh-dot {
-  background: var(--status-green, #15803d);
-}
-
-.auto-refresh-dot.is-pulsing {
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
-}
-
-.consistency-banner {
-  background: var(--status-amber-bg, #fffbeb);
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  border-radius: var(--radius-lg, 8px);
-  padding: 10px 14px;
-  font-size: 12px;
-  line-height: 1.45;
-}
-
-.consistency-banner__left {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-}
-
-.register-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.register-cell__top {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-}
-
-.register-name {
-  font-weight: 600;
-  color: var(--text-primary, #0f172a);
-  font-size: 13px;
-}
-
-.register-code {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 600;
-  padding: 1px 6px;
-  border-radius: var(--radius-sm, 4px);
-  background: var(--surface-inset, #f8fafc);
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  color: var(--text-secondary, #475569);
-}
-
-.register-meta {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11.5px;
-  color: var(--text-tertiary, #64748b);
-}
-
-.register-prefix {
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  color: var(--text-secondary, #475569);
-}
-
-.location-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.location-cell__name {
-  font-weight: 500;
-  color: var(--text-primary, #0f172a);
-  font-size: 12.5px;
-}
-
-.location-cell__code {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--text-tertiary, #64748b);
-}
-
-.location-cell__sub {
-  font-size: 10.5px;
-  color: var(--text-tertiary, #64748b);
-}
-
-.connection-cell {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 3px;
-}
-
-.connection-cell__seen {
-  font-size: 11px;
-  color: var(--text-tertiary, #64748b);
-}
-
-.shift-cell {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.shift-cell__top {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.shift-cell__float {
-  font-family: var(--font-mono);
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--text-primary, #0f172a);
-}
-
-.shift-cell__meta {
-  font-size: 11px;
-  color: var(--text-tertiary, #64748b);
-}
-
-.cashier-cell {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.cashier-avatar {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: var(--surface-hover, #f1f5f9);
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  color: var(--text-primary, #0f172a);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: 700;
-  flex-shrink: 0;
-}
-
-.cashier-name {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--text-primary, #0f172a);
-}
-
-.cashier-sub {
-  font-size: 10.5px;
-  color: var(--text-tertiary, #64748b);
-}
-
-.shift-warning-box {
-  padding: 12px;
-  border-radius: var(--radius-lg, 8px);
-  background: var(--status-amber-bg, #fffbeb);
-  border: 1px solid var(--border-subtle, #e5e7eb);
-}
-
-.register-actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 4px;
-  flex-wrap: wrap;
-}
-
-@media (max-width: 639px) {
-  .refresh-toolbar {
-    width: 100%;
-    justify-content: flex-start;
-  }
-
-  .refresh-timestamp {
-    width: 100%;
-    padding: 0 0 2px;
-  }
-}
-</style>

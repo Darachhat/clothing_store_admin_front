@@ -1,5 +1,5 @@
 <template>
-  <div class="page-stack">
+  <div class="flex flex-col gap-4">
     <PageHeader
       title="Component Showcase"
       description="Development-only gallery of every shared UI component."
@@ -7,10 +7,10 @@
     />
 
     <DataCard title="Buttons">
-      <div class="showcase-row">
+      <div class="flex flex-wrap items-center gap-2 mb-2.5">
         <BaseButton v-for="v in variants" :key="v" :variant="v" :label="v" />
       </div>
-      <div class="showcase-row">
+      <div class="flex flex-wrap items-center gap-2 mb-2.5">
         <BaseButton v-for="s in sizes" :key="s" :size="s" :label="`Size ${s}`" icon="i-heroicons-plus" />
         <BaseButton label="Loading" loading />
         <BaseButton label="Disabled" disabled />
@@ -19,7 +19,7 @@
     </DataCard>
 
     <DataCard title="Inputs">
-      <div class="showcase-grid">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         <SearchBar v-model="search" placeholder="Search products..." />
         <FormField label="Name" required hint="Helper text">
           <BaseInput v-model="text" placeholder="Text input" />
@@ -42,10 +42,10 @@
     </DataCard>
 
     <DataCard title="Status badges & stat cards">
-      <div class="showcase-row">
+      <div class="flex flex-wrap items-center gap-2 mb-2.5">
         <StatusBadge v-for="s in statuses" :key="s" :status="s" :label="s" />
       </div>
-      <div class="showcase-kpi">
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <StatCard label="Revenue" value="$12,480" icon="i-heroicons-banknotes" tone="success" />
         <StatCard label="Orders" value="342" icon="i-heroicons-shopping-bag" tone="info" />
         <StatCard label="Low stock" value="18" icon="i-heroicons-exclamation-triangle" tone="warning" />
@@ -178,31 +178,4 @@ const rows = [
 ]
 </script>
 
-<style scoped>
-.page-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.showcase-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-
-.showcase-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 12px;
-}
-
-.showcase-kpi {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 12px;
-}
-</style>
 

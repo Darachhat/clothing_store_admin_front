@@ -42,11 +42,11 @@
     </div>
 
     <template v-else-if="product">
-      <div class="detail-grid">
+      <div class="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4 items-start">
         <div class="space-y-4">
           <AppCard>
-            <div class="product-detail-image-wrap">
-              <img v-if="product.image_url" :src="product.image_url" :alt="product.name" class="product-detail-image" />
+            <div class="rounded-lg border border-border-subtle bg-surface-inset overflow-hidden flex items-center justify-center max-h-60">
+              <img v-if="product.image_url" :src="product.image_url" :alt="product.name" class="w-full max-h-60 object-contain" />
               <div v-else class="py-10 flex items-center justify-center text-gray-400">
                 <UIcon name="i-heroicons-photo" class="w-10 h-10" />
               </div>
@@ -216,34 +216,3 @@ async function loadData() {
 onMounted(loadData)
 </script>
 
-<style scoped>
-.detail-grid {
-  display: grid;
-  grid-template-columns: 320px 1fr;
-  gap: 16px;
-  align-items: start;
-}
-
-@media (max-width: 900px) {
-  .detail-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.product-detail-image-wrap {
-  border-radius: var(--radius-lg, 8px);
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  background: var(--surface-inset, #f8fafc);
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  max-height: 240px;
-}
-
-.product-detail-image {
-  width: 100%;
-  max-height: 240px;
-  object-fit: contain;
-}
-</style>

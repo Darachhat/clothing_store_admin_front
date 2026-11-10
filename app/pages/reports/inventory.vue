@@ -81,13 +81,13 @@
         empty-icon="i-heroicons-clipboard-document-list"
       >
         <template #cell-sku="{ row }">
-          <span class="sku-code">{{ row.sku || '—' }}</span>
+          <span class="font-mono text-xs font-semibold text-ink">{{ row.sku || '—' }}</span>
         </template>
 
         <template #cell-quantity="{ row }">
           <span
-            class="qty-val"
-            :class="row.quantity <= 0 ? 'qty-val--out' : row.quantity <= (row.reorder_level || 5) ? 'qty-val--low' : 'qty-val--ok'"
+            class="font-bold tabular-nums"
+            :class="row.quantity <= 0 ? 'text-status-red' : row.quantity <= (row.reorder_level || 5) ? 'text-status-amber' : 'text-status-green'"
           >
             {{ row.quantity }}
           </span>
@@ -196,28 +196,3 @@ function exportCsv() {
 onMounted(fetchStocks)
 </script>
 
-<style scoped>
-.sku-code {
-  font-family: var(--font-mono, monospace);
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.qty-val {
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-
-.qty-val--out {
-  color: var(--status-danger-text);
-}
-
-.qty-val--low {
-  color: var(--status-warning-text);
-}
-
-.qty-val--ok {
-  color: var(--status-success-text);
-}
-</style>

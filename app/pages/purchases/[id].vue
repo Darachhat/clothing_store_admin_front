@@ -45,7 +45,7 @@
     <div v-if="loading" class="state-card">Loading purchase order…</div>
 
     <template v-else-if="po">
-      <div class="detail-grid">
+      <div class="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-4 items-start">
         <div class="space-y-4">
           <AppCard title="Line Items" :no-pad="true">
             <AppTable :columns="itemCols" :rows="enrichedItems" :loading="false" empty-text="No line items.">
@@ -344,17 +344,3 @@ async function loadPo() {
 onMounted(loadPo)
 </script>
 
-<style scoped>
-.detail-grid {
-  display: grid;
-  grid-template-columns: 1fr 340px;
-  gap: 16px;
-  align-items: start;
-}
-
-@media (max-width: 860px) {
-  .detail-grid {
-    grid-template-columns: 1fr;
-  }
-}
-</style>

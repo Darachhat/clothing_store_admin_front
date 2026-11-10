@@ -1,10 +1,10 @@
 <template>
-  <div class="redirect-shell">
-    <div class="redirect-card">
-      <div class="sidebar-brand-mark">
+  <div class="min-h-screen flex items-center justify-center bg-surface-bg">
+    <div class="inline-flex items-center gap-2.5 px-4.5 py-3 rounded-lg bg-surface-card border border-border-subtle shadow-sm">
+      <div class="w-8 h-8 rounded-md bg-brand-900 text-white flex items-center justify-center">
         <UIcon name="i-heroicons-building-storefront" class="w-4 h-4" />
       </div>
-      <span class="redirect-text">Loading administration console...</span>
+      <span class="text-[13px] font-medium text-ink-secondary">Loading administration console...</span>
     </div>
   </div>
 </template>
@@ -24,28 +24,3 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped>
-.redirect-shell {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--surface-bg, #f8fafc);
-}
-
-.redirect-card {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 18px;
-  border-radius: var(--radius-lg, 8px);
-  background: var(--surface-card, #ffffff);
-  border: 1px solid var(--border-subtle, #e5e7eb);
-}
-
-.redirect-text {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-secondary, #475569);
-}
-</style>

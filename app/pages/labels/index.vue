@@ -613,20 +613,3 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped>
-.print-only {
-  display: none;
-}
-
-@media print {
-  @page {
-    margin: 0;
-  }
-  .no-print {
-    display: none !important;
-  }
-  .print-only {
-    display: block !important;
-  }
-}
-</style>

@@ -10,7 +10,7 @@
       ]"
     />
 
-    <form class="form-layout" @submit.prevent="submit">
+    <form class="flex flex-col gap-4 max-w-[900px]" @submit.prevent="submit">
       <AppCard title="Order Information">
         <div class="form-grid">
           <div class="form-row">
@@ -36,7 +36,7 @@
         </template>
 
         <div class="space-y-2.5">
-          <div v-for="(item, idx) in items" :key="idx" class="item-row">
+          <div v-for="(item, idx) in items" :key="idx" class="flex flex-col sm:flex-row items-stretch sm:items-start gap-2.5 p-2.5 sm:p-0 rounded-md sm:rounded-none bg-surface-inset sm:bg-transparent border sm:border-0 border-border-subtle">
             <div class="form-field flex-1">
               <label v-if="idx === 0" class="field-label">Product Variant (SKU) <span class="required">*</span></label>
               <select v-model="item.variant_id" class="field-input" required @change="onVariantSelect(item)">
@@ -46,15 +46,15 @@
                 </option>
               </select>
             </div>
-            <div class="form-field w-28">
+            <div class="form-field w-full sm:w-28">
               <label v-if="idx === 0" class="field-label">Qty <span class="required">*</span></label>
               <input v-model="item.quantity" type="number" min="1" class="field-input mono text-right" required />
             </div>
-            <div class="form-field w-32">
+            <div class="form-field w-full sm:w-32">
               <label v-if="idx === 0" class="field-label">Unit Cost ($) <span class="required">*</span></label>
               <input v-model="item.unit_cost" type="number" step="0.01" min="0" class="field-input mono text-right" required />
             </div>
-            <div class="item-remove" :class="{ 'mt-5': idx === 0 }">
+            <div class="flex items-center self-end sm:self-auto" :class="{ 'sm:mt-5': idx === 0 }">
               <AppButton
                 v-if="items.length > 1"
                 type="button"
@@ -67,13 +67,13 @@
           </div>
         </div>
 
-        <div class="items-total">
+        <div class="flex justify-end items-center gap-4 pt-3 mt-3 border-t border-border-subtle text-[13px] text-ink-secondary">
           <span>Order Total</span>
-          <strong class="mono">${{ orderTotal }}</strong>
+          <strong class="mono text-base text-ink">${{ orderTotal }}</strong>
         </div>
       </AppCard>
 
-      <div class="form-actions">
+      <div class="flex justify-end gap-2">
         <AppButton type="button" variant="default" label="Cancel" to="/purchases" />
         <AppButton type="submit" variant="primary" label="Create Purchase Order" icon="i-heroicons-check" :loading="saving" />
       </div>
@@ -183,63 +183,3 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped>
-.form-layout {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  max-width: 900px;
-}
-
-.item-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-@media (max-width: 639px) {
-  .item-row {
-    padding: 10px;
-    border: 1px solid var(--border-subtle, #e5e7eb);
-    border-radius: var(--radius-md, 6px);
-    background: var(--surface-inset, #f8fafc);
-  }
-  .item-row > .flex-1 {
-    flex: 1 1 100%;
-  }
-  .item-row > .w-28,
-  .item-row > .w-32 {
-    flex: 1 1 calc(50% - 8px);
-    width: auto !important;
-  }
-}
-
-.item-remove {
-  display: flex;
-  align-items: center;
-}
-
-.items-total {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 16px;
-  padding-top: 12px;
-  margin-top: 12px;
-  border-top: 1px solid var(--border-subtle, #e5e7eb);
-  font-size: 13px;
-  color: var(--text-secondary, #475569);
-}
-
-.items-total strong {
-  font-size: 16px;
-  color: var(--text-primary, #0f172a);
-}
-
-.form-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
-</style>

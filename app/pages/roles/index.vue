@@ -27,18 +27,18 @@
         empty-icon="i-heroicons-shield-check"
       >
         <template #cell-name="{ row }">
-          <div class="role-name-cell">
-            <span class="role-name">{{ row.name }}</span>
+          <div class="flex items-center gap-2">
+            <span class="font-semibold text-ink">{{ row.name }}</span>
             <AppBadge v-if="row.is_system" color="default" size="sm">System</AppBadge>
           </div>
         </template>
 
         <template #cell-description="{ row }">
-          <span class="role-desc">{{ row.description || 'No description' }}</span>
+          <span class="text-[12.5px] text-ink-secondary">{{ row.description || 'No description' }}</span>
         </template>
 
         <template #cell-permissions="{ row }">
-          <div class="perm-chips">
+          <div class="flex flex-wrap items-center gap-1 max-w-[460px]">
             <AppBadge
               v-for="perm in (row.permissions || []).slice(0, 4)"
               :key="perm.id"
@@ -47,10 +47,10 @@
             >
               {{ perm.code }}
             </AppBadge>
-            <span v-if="(row.permissions || []).length > 4" class="perm-more">
+            <span v-if="(row.permissions || []).length > 4" class="text-[11.5px] text-ink-tertiary ml-1">
               +{{ (row.permissions || []).length - 4 }} more
             </span>
-            <span v-if="!(row.permissions || []).length" class="role-desc">No permissions</span>
+            <span v-if="!(row.permissions || []).length" class="text-[12.5px] text-ink-secondary">No permissions</span>
           </div>
         </template>
 
@@ -97,38 +97,38 @@
         </div>
 
         <div class="form-field">
-          <div class="perm-header-row">
+          <div class="flex items-center justify-between gap-3 mb-1">
             <label class="field-label">Granted Permissions ({{ createForm.permission_ids.length }} selected)</label>
             <input
               v-model="permSearch"
               type="text"
               placeholder="Filter permissions..."
-              class="perm-search-input"
+              class="h-7 px-2 text-xs bg-surface-inset border border-border-subtle rounded text-ink outline-none w-44 focus:border-border-default"
             />
           </div>
-          <div class="perm-checklist">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-60 overflow-y-auto p-2.5 bg-surface-inset border border-border-subtle rounded-md">
             <label
               v-for="perm in filteredPermissions"
               :key="perm.id"
-              class="perm-check-item"
+              class="flex items-start gap-2 p-1.5 rounded hover:bg-surface-hover cursor-pointer transition-colors"
             >
               <input
                 v-model="createForm.permission_ids"
                 type="checkbox"
                 :value="perm.id"
               />
-              <div class="perm-check-text">
-                <span class="perm-check-name">{{ perm.name }}</span>
-                <span class="perm-check-code">{{ perm.code }}</span>
+              <div class="flex flex-col gap-px">
+                <span class="text-xs font-medium text-ink">{{ perm.name }}</span>
+                <span class="text-[11px] font-mono text-ink-tertiary">{{ perm.code }}</span>
               </div>
             </label>
-            <div v-if="!filteredPermissions.length" class="perm-empty">
+            <div v-if="!filteredPermissions.length" class="col-span-full text-center p-4 text-xs text-ink-tertiary">
               No permissions match "{{ permSearch }}"
             </div>
           </div>
         </div>
 
-        <div class="modal-actions">
+        <div class="flex justify-end gap-2 pt-2">
           <AppButton variant="ghost" type="button" label="Cancel" @click="showCreateModal = false" />
           <AppButton type="submit" variant="primary" label="Save Role" :loading="saving" />
         </div>
@@ -244,118 +244,3 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped>
-.role-name-cell {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.role-name {
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.role-desc {
-  font-size: 12.5px;
-  color: var(--text-secondary);
-}
-
-.perm-chips {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px;
-  max-width: 460px;
-}
-
-.perm-more {
-  font-size: 11.5px;
-  color: var(--text-tertiary);
-  margin-left: 4px;
-}
-
-.perm-header-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 4px;
-}
-
-.perm-search-input {
-  height: 28px;
-  padding: 0 8px;
-  font-size: 12px;
-  background: var(--surface-inset);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  outline: none;
-  width: 180px;
-}
-
-.perm-checklist {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px;
-  max-height: 240px;
-  overflow-y: auto;
-  padding: 10px;
-  background: var(--surface-inset);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-}
-
-@media (max-width: 640px) {
-  .perm-checklist {
-    grid-template-columns: 1fr;
-  }
-}
-
-.perm-check-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 6px;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-}
-
-.perm-check-item:hover {
-  background: var(--surface-hover);
-}
-
-.perm-check-text {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
-
-.perm-check-name {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-primary);
-}
-
-.perm-check-code {
-  font-size: 11px;
-  font-family: var(--font-mono, monospace);
-  color: var(--text-tertiary);
-}
-
-.perm-empty {
-  grid-column: 1 / -1;
-  text-align: center;
-  padding: 16px;
-  font-size: 12px;
-  color: var(--text-tertiary);
-}
-
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  padding-top: 8px;
-}
-</style>

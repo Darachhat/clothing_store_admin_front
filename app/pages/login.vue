@@ -1,9 +1,9 @@
 <template>
-  <div class="login-root">
+  <div class="flex min-h-[100dvh] bg-surface-bg">
     <!-- Left panel: branding -->
-    <div class="login-brand">
-      <div class="login-brand__inner">
-        <div class="login-brand__logo">
+    <div class="hidden md:flex flex-col justify-center w-[320px] lg:w-[400px] shrink-0 bg-brand-900 p-8 lg:p-12 text-white">
+      <div class="flex flex-col gap-6">
+        <div class="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center">
           <img
             v-if="brand.logo_dark_url || brand.logo_url"
             :src="brand.logo_dark_url || brand.logo_url"
@@ -13,14 +13,14 @@
           <UIcon v-else name="i-heroicons-shield-check" class="w-6 h-6 text-white" />
         </div>
         <div>
-          <div class="login-brand__name font-khmer">{{ displayNameKh || displayName }}</div>
-          <div v-if="displayNameKh && displayName !== displayNameKh" class="login-brand__subname">
+          <div class="text-[22px] font-bold text-white tracking-tight mt-1 font-khmer">{{ displayNameKh || displayName }}</div>
+          <div v-if="displayNameKh && displayName !== displayNameKh" class="text-[13px] font-semibold text-white/65 mt-0.5">
             {{ displayName }}
           </div>
         </div>
-        <p class="login-brand__tagline">{{ brand.tagline || 'Admin & Manager portal. Full access to inventory, reports, purchasing, and user management.' }}</p>
-        <div class="login-brand__features">
-          <div v-for="feat in features" :key="feat" class="login-brand__feature">
+        <p class="text-sm text-white/60 leading-relaxed max-w-[52ch]">{{ brand.tagline || 'Admin & Manager portal. Full access to inventory, reports, purchasing, and user management.' }}</p>
+        <div class="flex flex-col gap-2.5 mt-2">
+          <div v-for="feat in features" :key="feat" class="flex items-center gap-2.5 text-[13px] text-white/75">
             <UIcon name="i-heroicons-check" class="w-3.5 h-3.5 text-white stroke-[2.5]" />
             {{ feat }}
           </div>
@@ -29,11 +29,11 @@
     </div>
 
     <!-- Right panel: form -->
-    <div class="login-form-panel">
-      <div class="login-form-wrap">
+    <div class="flex-1 flex items-center justify-center p-6 sm:p-8">
+      <div class="w-full max-w-[360px] flex flex-col gap-6">
         <!-- Mobile Brand Header (visible below 768px) -->
-        <div class="login-mobile-brand">
-          <div class="login-mobile-brand__logo">
+        <div class="flex md:hidden items-center gap-3 pb-3 border-b border-border-subtle">
+          <div class="w-10 h-10 rounded-lg bg-brand-900 flex items-center justify-center shrink-0">
             <img
               v-if="brand.logo_url || brand.logo_dark_url"
               :src="brand.logo_url || brand.logo_dark_url"
@@ -43,24 +43,24 @@
             <UIcon v-else name="i-heroicons-shield-check" class="w-5 h-5 text-white" />
           </div>
           <div class="min-w-0">
-            <div class="login-mobile-brand__name font-khmer truncate">{{ displayNameKh || displayName }}</div>
-            <div class="login-mobile-brand__sub truncate">{{ displayName }} • Admin Portal</div>
+            <div class="text-[15px] font-bold text-ink truncate font-khmer">{{ displayNameKh || displayName }}</div>
+            <div class="text-[11px] text-ink-secondary truncate">{{ displayName }} • Admin Portal</div>
           </div>
         </div>
 
-        <div class="login-form-header">
-          <h1 class="login-form-title">Admin Sign In</h1>
-          <p class="login-form-subtitle">Sign in with your username, verified phone, or linked Telegram account.</p>
+        <div class="flex flex-col gap-1">
+          <h1 class="text-[22px] font-bold text-ink tracking-tight">Admin Sign In</h1>
+          <p class="text-[13px] text-ink-secondary">Sign in with your username, verified phone, or linked Telegram account.</p>
         </div>
 
-        <form class="login-form" @submit.prevent="handleLogin">
-          <div class="login-field">
-            <label class="login-label" for="username">Username or Verified Phone</label>
+        <form class="flex flex-col gap-4" @submit.prevent="handleLogin">
+          <div class="flex flex-col gap-1.5 relative">
+            <label class="text-xs font-semibold text-ink tracking-wide" for="username">Username or Verified Phone</label>
             <input
               id="username"
               v-model="form.username"
               type="text"
-              class="login-input"
+              class="h-10 w-full border border-border-subtle rounded-lg px-3 text-sm text-ink bg-surface-card outline-none focus:border-border-default transition-colors placeholder:text-ink-tertiary"
               placeholder="admin or +85569382165"
               autocomplete="username"
               autofocus
@@ -68,20 +68,20 @@
             />
           </div>
 
-          <div class="login-field">
-            <label class="login-label" for="password">Password</label>
+          <div class="flex flex-col gap-1.5 relative">
+            <label class="text-xs font-semibold text-ink tracking-wide" for="password">Password</label>
             <input
               id="password"
               v-model="form.password"
               :type="showPassword ? 'text' : 'password'"
-              class="login-input"
+              class="h-10 w-full border border-border-subtle rounded-lg px-3 text-sm text-ink bg-surface-card outline-none focus:border-border-default transition-colors placeholder:text-ink-tertiary"
               placeholder="Enter your password"
               autocomplete="current-password"
               required
             />
             <button
               type="button"
-              class="login-pw-toggle"
+              class="absolute right-2.5 bottom-2.5 text-ink-tertiary hover:text-ink bg-transparent border-0 cursor-pointer p-0 flex"
               :aria-label="showPassword ? 'Hide password' : 'Show password'"
               @click="showPassword = !showPassword"
             >
@@ -90,26 +90,26 @@
             </button>
           </div>
 
-          <div v-if="errorMsg" class="login-error">
+          <div v-if="errorMsg" class="flex items-center gap-1.5 p-2.5 bg-status-red-bg border border-border-subtle rounded-lg text-xs text-status-red">
             <UIcon name="i-heroicons-exclamation-circle" class="w-4 h-4 flex-shrink-0" />
             {{ errorMsg }}
           </div>
 
-          <button type="submit" class="login-btn" :disabled="loading">
-            <UIcon v-if="loading" name="i-heroicons-arrow-path" class="login-btn__spinner w-4 h-4 text-white" />
+          <button type="submit" class="h-10 w-full bg-brand-900 text-white border-0 rounded-lg text-sm font-semibold cursor-pointer flex items-center justify-center gap-2 mt-1 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity" :disabled="loading">
+            <UIcon v-if="loading" name="i-heroicons-arrow-path" class="w-4 h-4 text-white animate-spin" />
             {{ loading ? 'Signing in...' : 'Sign in' }}
           </button>
         </form>
 
         <!-- Telegram Login Section -->
-        <div class="login-divider">
+        <div class="flex items-center gap-2.5 text-[11px] text-ink-tertiary uppercase tracking-wider before:flex-1 before:h-px before:bg-border-subtle after:flex-1 after:h-px after:bg-border-subtle">
           <span>or</span>
         </div>
 
-        <div class="telegram-login-section">
+        <div class="flex flex-col gap-2">
           <button
             type="button"
-            class="login-tg-btn"
+            class="h-9.5 w-full bg-surface-card text-ink border border-border-subtle rounded-lg text-[13px] font-semibold cursor-pointer flex items-center justify-center gap-2 hover:bg-surface-hover disabled:opacity-50 transition-colors"
             :disabled="loading || appChallengeActive"
             @click="startTelegramAppLogin"
           >
@@ -117,9 +117,9 @@
             <span>{{ appChallengeActive ? 'Waiting for Telegram App...' : 'Open in Telegram App' }}</span>
           </button>
 
-          <div v-if="appChallengeActive" class="telegram-payload-card">
-            <div class="flex items-center gap-2 text-xs font-medium text-gray-800">
-              <UIcon name="i-heroicons-arrow-path" class="w-4 h-4 login-btn__spinner" />
+          <div v-if="appChallengeActive" class="p-2.5 border border-border-subtle rounded-lg bg-surface-card flex flex-col gap-2">
+            <div class="flex items-center gap-2 text-xs font-medium text-ink">
+              <UIcon name="i-heroicons-arrow-path" class="w-4 h-4 animate-spin" />
               <span>{{ appChallengeMessage || 'Confirm login in your Telegram App (@clothing_store_kvm_bot)...' }}</span>
             </div>
             <div class="flex items-center gap-2 pt-1">
@@ -128,16 +128,14 @@
                 :href="appChallengeWebUrl"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="login-tg-btn"
-                style="text-decoration: none; height: 34px; font-size: 12px;"
+                class="h-8.5 px-3 bg-surface-card text-ink border border-border-subtle rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 no-underline hover:bg-surface-hover"
               >
                 <UIcon name="i-heroicons-arrow-top-right-on-square" class="w-3.5 h-3.5" />
                 <span>Open in Telegram</span>
               </a>
               <button
                 type="button"
-                class="login-tg-btn"
-                style="height: 34px; font-size: 12px;"
+                class="h-8.5 px-3 bg-surface-card text-ink border border-border-subtle rounded-lg text-xs font-semibold cursor-pointer flex items-center justify-center hover:bg-surface-hover"
                 @click="cancelTelegramAppLogin"
               >
                 <span>Cancel</span>
@@ -146,7 +144,7 @@
           </div>
         </div>
 
-        <p class="login-footer-note">
+        <p class="text-xs text-ink-tertiary text-center">
           Secure admin access only. Contact your administrator if you need credentials.
         </p>
       </div>
@@ -326,104 +324,3 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped>
-.login-root {
-  display: flex;
-  min-height: 100dvh;
-  background: var(--surface-bg);
-}
-
-.login-brand {
-  display: none;
-  width: 320px;
-  min-width: 300px;
-  background: var(--brand-900, #111827);
-  padding: var(--space-5, 40px) var(--space-3, 24px);
-  flex-direction: column;
-  justify-content: center;
-}
-
-@media (min-width: 768px) {
-  .login-brand { display: flex; }
-}
-
-@media (min-width: 1024px) {
-  .login-brand {
-    width: 400px;
-    min-width: 400px;
-    padding: var(--space-6, 48px) var(--space-4, 32px);
-  }
-}
-
-.login-brand__inner { display: flex; flex-direction: column; gap: var(--space-3, 24px); }
-.login-brand__logo { width: 48px; height: 48px; background: rgba(255,255,255,0.1); border-radius: var(--radius-lg, 12px); display: flex; align-items: center; justify-content: center; }
-.login-brand__name { font-size: 22px; font-weight: 700; color: white; letter-spacing: -0.02em; margin-top: 4px; }
-.login-brand__subname { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.65); margin-top: 2px; }
-.login-brand__tagline { font-size: 14px; color: rgba(255,255,255,0.6); line-height: 1.6; max-width: 52ch; }
-.login-brand__features { display: flex; flex-direction: column; gap: 10px; margin-top: var(--space-1, 8px); }
-.login-brand__feature { display: flex; align-items: center; gap: 10px; font-size: 13px; color: rgba(255,255,255,0.75); }
-
-.login-mobile-brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--border-subtle, #e5e7eb);
-}
-@media (min-width: 768px) {
-  .login-mobile-brand { display: none; }
-}
-.login-mobile-brand__logo {
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-md, 8px);
-  background: var(--brand-900, #111827);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-.login-mobile-brand__name {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-.login-mobile-brand__sub {
-  font-size: 11px;
-  color: var(--text-secondary);
-}
-
-.login-form-panel { flex: 1; display: flex; align-items: center; justify-content: center; padding: var(--space-4, 32px) var(--space-2, 16px); }
-.login-form-wrap { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: var(--space-3, 24px); }
-.login-form-header { display: flex; flex-direction: column; gap: 4px; }
-.login-form-title { font-size: 22px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.02em; }
-.login-form-subtitle { font-size: 13px; color: var(--text-secondary); }
-
-.login-form { display: flex; flex-direction: column; gap: var(--space-2, 16px); }
-.login-field { display: flex; flex-direction: column; gap: 6px; position: relative; }
-.login-label { font-size: 12px; font-weight: 600; color: var(--text-primary); letter-spacing: 0.01em; max-width: none; }
-.login-input { height: 40px; width: 100%; border: 1px solid var(--border-subtle, #e5e7eb); border-radius: var(--radius-md, 8px); padding: 0 12px; font-family: var(--font-body); font-size: 14px; color: var(--text-primary); background: var(--surface-card); outline: none; }
-.login-input:focus { border-color: var(--border-subtle, #e2e8f0); }
-.login-input::placeholder { color: var(--text-tertiary); }
-.login-pw-toggle { position: absolute; right: 10px; bottom: 10px; color: var(--text-tertiary); background: none; border: none; cursor: pointer; padding: 0; display: flex; }
-.login-pw-toggle:hover { color: var(--text-primary); }
-
-.login-error { display: flex; align-items: center; gap: 6px; padding: 8px 12px; background: var(--status-red-bg); border: 1px solid var(--border-subtle, #e5e7eb); border-radius: var(--radius-md, 8px); font-size: 13px; color: var(--status-red); }
-
-.login-btn { height: 40px; width: 100%; background: var(--accent, #111827); color: var(--accent-fg, #ffffff); border: none; border-radius: var(--radius-md, 8px); font-family: var(--font-body); font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 4px; }
-.login-btn:hover:not(:disabled) { opacity: 0.88; }
-.login-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.login-btn__spinner { animation: spin 0.8s linear infinite; }
-
-.login-divider { display: flex; align-items: center; gap: 10px; font-size: 11px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; }
-.login-divider::before, .login-divider::after { content: ''; flex: 1; height: 1px; background: var(--border-subtle, #e5e7eb); }
-
-.telegram-login-section { display: flex; flex-direction: column; gap: 8px; }
-.login-tg-btn { height: 38px; width: 100%; background: var(--surface-card); color: var(--text-primary); border: 1px solid var(--border-subtle, #e5e7eb); border-radius: var(--radius-md, 8px); font-family: var(--font-body); font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
-.login-tg-btn:hover:not(:disabled) { background: var(--surface-subtle, #f8fafc); }
-
-.telegram-payload-card { padding: 10px; border: 1px solid var(--border-subtle, #e5e7eb); border-radius: var(--radius-md, 8px); background: var(--surface-card); display: flex; flex-direction: column; gap: 8px; }
-
-@keyframes spin { to { transform: rotate(360deg); } }
-.login-footer-note { font-size: 12px; color: var(--text-tertiary); text-align: center; max-width: none; }
-</style>

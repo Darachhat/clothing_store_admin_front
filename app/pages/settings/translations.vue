@@ -101,11 +101,11 @@
       empty-icon="i-heroicons-inbox"
     >
       <template #cell-key="{ row }">
-        <div class="tr-key">
-          <span class="tr-key__name">{{ row.table_name }}.{{ row.column_name }}</span>
-          <div class="tr-key__meta">
+        <div class="flex flex-col gap-0.5 min-w-0">
+          <span class="font-mono text-xs font-semibold text-ink">{{ row.table_name }}.{{ row.column_name }}</span>
+          <div class="flex items-center gap-1.5">
             <StatusBadge status="DEFAULT" :label="row.schema_name" />
-            <span v-if="row.note" class="tr-key__note" :title="row.note">{{ row.note }}</span>
+            <span v-if="row.note" class="text-[11px] text-ink-tertiary max-w-[140px] truncate" :title="row.note">{{ row.note }}</span>
           </div>
         </div>
       </template>
@@ -118,7 +118,7 @@
         <StatusBadge :status="row.status_code || 'ACTIVE'" :label="row.status_code || 'ACTIVE'" />
       </template>
       <template #cell-actions="{ row }">
-        <div class="tr-actions">
+        <div class="flex justify-end gap-1">
           <IconButton icon="i-heroicons-pencil-square" label="Edit Translation" @click="openEditModal(row)" />
           <IconButton icon="i-heroicons-trash" label="Delete Key" variant="danger" @click="confirmDeleteItem(row)" />
         </div>
@@ -163,7 +163,7 @@
           <FormField label="Khmer / ភាសាខ្មែរ (km)" required>
             <BaseInput v-model="form.km" required placeholder="អត្ថបទជាភាសាខ្មែរ" />
           </FormField>
-          <div class="tr-lang-grid">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             <FormField label="Chinese / 中文 (cn)">
               <BaseInput v-model="form.cn" placeholder="中文翻译" />
             </FormField>
@@ -498,13 +498,3 @@ function onFilterChange() {
   fetchItems()
 }
 </script>
-
-
-<style scoped>
-.tr-key { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-.tr-key__name { font-family: var(--font-mono); font-size: 12px; font-weight: 600; color: var(--text-primary, #0f172a); }
-.tr-key__meta { display: flex; align-items: center; gap: 6px; }
-.tr-key__note { font-size: 11px; color: var(--text-tertiary, #64748b); max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tr-actions { display: flex; justify-content: flex-end; gap: 4px; }
-.tr-lang-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
-</style>

@@ -15,7 +15,7 @@
 
     <!-- Date Range Filter -->
     <AppCard>
-      <div class="report-filter-row">
+      <div class="flex items-end gap-3 flex-wrap">
         <DateRangePicker v-model:from="fromDate" v-model:to="toDate" inline from-label="From Date" to-label="To Date" />
         <div class="form-field" style="min-width: 150px;">
           <label class="field-label">Group By</label>
@@ -73,10 +73,10 @@
         empty-icon="i-heroicons-chart-pie"
       >
         <template #cell-revenue="{ row }">
-          <span class="val-positive">${{ Number(row.revenue || 0).toFixed(2) }}</span>
+          <span class="font-semibold text-status-green tabular-nums">${{ Number(row.revenue || 0).toFixed(2) }}</span>
         </template>
         <template #cell-discount_total="{ row }">
-          <span class="val-negative">-${{ Number(row.discount_total || 0).toFixed(2) }}</span>
+          <span class="font-medium text-status-red tabular-nums">-${{ Number(row.discount_total || 0).toFixed(2) }}</span>
         </template>
       </AppTable>
     </AppCard>
@@ -154,23 +154,3 @@ function exportCsv() {
 onMounted(fetchReport)
 </script>
 
-<style scoped>
-.report-filter-row {
-  display: flex;
-  align-items: flex-end;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.val-positive {
-  font-weight: 600;
-  color: var(--status-success-text);
-  font-variant-numeric: tabular-nums;
-}
-
-.val-negative {
-  font-weight: 500;
-  color: var(--status-danger-text);
-  font-variant-numeric: tabular-nums;
-}
-</style>

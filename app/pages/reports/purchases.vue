@@ -15,7 +15,7 @@
 
     <!-- Filters -->
     <AppCard>
-      <div class="report-filter-row">
+      <div class="flex items-end gap-3 flex-wrap">
         <DateRangePicker v-model:from="fromDate" v-model:to="toDate" inline from-label="From Date" to-label="To Date" />
         <div class="form-field" style="min-width: 150px;">
           <label class="field-label">Group By</label>
@@ -73,7 +73,7 @@
         empty-icon="i-heroicons-truck"
       >
         <template #cell-total_cost="{ value }">
-          <span class="cost-value">${{ Number(value || 0).toFixed(2) }}</span>
+          <span class="font-semibold text-brand-900 tabular-nums">${{ Number(value || 0).toFixed(2) }}</span>
         </template>
       </AppTable>
     </AppCard>
@@ -146,17 +146,3 @@ function exportCsv() {
 onMounted(fetchReport)
 </script>
 
-<style scoped>
-.report-filter-row {
-  display: flex;
-  align-items: flex-end;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.cost-value {
-  font-weight: 600;
-  color: var(--color-primary, #6366f1);
-  font-variant-numeric: tabular-nums;
-}
-</style>

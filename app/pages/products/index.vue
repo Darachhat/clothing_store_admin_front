@@ -75,19 +75,19 @@
         </template>
 
         <template #cell-name="{ row }">
-          <div class="product-cell">
+          <div class="flex items-center gap-2.5">
             <img
               v-if="row.image_url"
               :src="row.image_url"
               :alt="row.name"
-              class="product-thumb"
+              class="w-[34px] h-[34px] rounded-md border border-border-subtle object-cover shrink-0 bg-surface-inset"
             />
-            <div v-else class="product-thumb product-thumb--placeholder">
+            <div v-else class="w-[34px] h-[34px] rounded-md border border-border-subtle shrink-0 bg-surface-inset flex items-center justify-center">
               <UIcon name="i-heroicons-photo" class="w-4 h-4 text-gray-400" />
             </div>
             <div class="min-w-0">
-              <NuxtLink :to="`/products/${row.id}`" class="product-name">{{ row.name }}</NuxtLink>
-              <div class="product-sku mono">{{ row.slug || row.code || row.sku_prefix || '' }}</div>
+              <NuxtLink :to="`/products/${row.id}`" class="block text-[13px] font-semibold text-ink no-underline hover:underline truncate">{{ row.name }}</NuxtLink>
+              <div class="text-[11px] text-ink-tertiary mono">{{ row.slug || row.code || row.sku_prefix || '' }}</div>
             </div>
           </div>
         </template>
@@ -334,43 +334,3 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped>
-.product-cell {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.product-thumb {
-  width: 34px;
-  height: 34px;
-  border-radius: var(--radius-md, 6px);
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  object-fit: cover;
-  flex-shrink: 0;
-  background: var(--surface-inset, #f8fafc);
-}
-
-.product-thumb--placeholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.product-name {
-  display: block;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-primary, #0f172a);
-  text-decoration: none;
-}
-
-.product-name:hover {
-  text-decoration: underline;
-}
-
-.product-sku {
-  font-size: 11px;
-  color: var(--text-tertiary, #64748b);
-}
-</style>

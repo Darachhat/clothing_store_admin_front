@@ -5,17 +5,17 @@
     size="md"
     @update:model-value="$emit('update:modelValue', $event)"
   >
-    <div v-if="variant" class="sticker-modal-root no-print">
+    <div v-if="variant" class="flex flex-col gap-3.5 no-print">
       <!-- Top Controls Grid -->
-      <div class="sticker-controls-grid">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
         <!-- Code Format -->
-        <div class="control-group">
-          <label class="control-label">Code Format (ប្រភេទកូដ)</label>
-          <div class="segmented-pills">
+        <div class="flex flex-col gap-1.5">
+          <label class="text-[11.5px] font-semibold text-text-secondary">Code Format (ប្រភេទកូដ)</label>
+          <div class="flex gap-1 bg-surface-inset border border-border-subtle rounded-md p-[3px]">
             <button
               type="button"
-              class="seg-pill"
-              :class="{ 'is-active': codeType === 'BARCODE' }"
+              class="flex-1 inline-flex items-center justify-center gap-1.5 h-7 px-2 text-[11.5px] font-semibold text-text-secondary bg-transparent border border-transparent rounded cursor-pointer whitespace-nowrap transition-all"
+              :class="{ '!bg-surface-card !text-text-primary !border-border-subtle shadow-xs': codeType === 'BARCODE' }"
               @click="codeType = 'BARCODE'"
             >
               <UIcon name="i-heroicons-bars-3-bottom-left" class="w-3.5 h-3.5" />
@@ -23,8 +23,8 @@
             </button>
             <button
               type="button"
-              class="seg-pill"
-              :class="{ 'is-active': codeType === 'QR' }"
+              class="flex-1 inline-flex items-center justify-center gap-1.5 h-7 px-2 text-[11.5px] font-semibold text-text-secondary bg-transparent border border-transparent rounded cursor-pointer whitespace-nowrap transition-all"
+              :class="{ '!bg-surface-card !text-text-primary !border-border-subtle shadow-xs': codeType === 'QR' }"
               @click="codeType = 'QR'"
             >
               <UIcon name="i-heroicons-qr-code" class="w-3.5 h-3.5" />
@@ -34,15 +34,15 @@
         </div>
 
         <!-- Sticker Size Preset -->
-        <div class="control-group">
-          <label class="control-label">Label Size (ទំហំស្លាក)</label>
-          <div class="segmented-pills">
+        <div class="flex flex-col gap-1.5">
+          <label class="text-[11.5px] font-semibold text-text-secondary">Label Size (ទំហំស្លាក)</label>
+          <div class="flex gap-1 bg-surface-inset border border-border-subtle rounded-md p-[3px]">
             <button
               v-for="p in sizePresets"
               :key="p.id"
               type="button"
-              class="seg-pill"
-              :class="{ 'is-active': preset === p.id }"
+              class="flex-1 inline-flex items-center justify-center gap-1.5 h-7 px-2 text-[11.5px] font-semibold text-text-secondary bg-transparent border border-transparent rounded cursor-pointer whitespace-nowrap transition-all"
+              :class="{ '!bg-surface-card !text-text-primary !border-border-subtle shadow-xs': preset === p.id }"
               @click="preset = p.id"
             >
               {{ p.shortLabel }}
@@ -52,11 +52,11 @@
       </div>
 
       <!-- Copies & KHR Row -->
-      <div class="sticker-copies-bar">
-        <div class="copies-left">
-          <span class="control-label mb-0">Copies to Print (ចំនួនស្លាក):</span>
-          <div class="qty-stepper">
-            <button type="button" class="qty-btn" @click="copies = Math.max(1, copies - 1)">
+      <div class="flex items-center justify-between flex-wrap gap-2.5 p-2 sm:px-3 bg-surface-inset border border-border-subtle rounded-md">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="text-[11.5px] font-semibold text-text-secondary mb-0">Copies to Print (ចំនួនស្លាក):</span>
+          <div class="inline-flex items-center bg-surface-card border border-border-subtle rounded-md overflow-hidden">
+            <button type="button" class="w-7 h-7 inline-flex items-center justify-center border-none bg-transparent text-text-secondary hover:bg-surface-hover hover:text-text-primary cursor-pointer transition-colors" @click="copies = Math.max(1, copies - 1)">
               <UIcon name="i-heroicons-minus" class="w-3.5 h-3.5" />
             </button>
             <input
@@ -64,19 +64,19 @@
               type="number"
               min="1"
               max="500"
-              class="qty-input mono"
+              class="w-[46px] h-7 text-center border-y-0 border-x border-border-subtle text-[12.5px] font-bold text-text-primary bg-surface-card focus:outline-hidden mono"
             />
-            <button type="button" class="qty-btn" @click="copies = Math.min(500, copies + 1)">
+            <button type="button" class="w-7 h-7 inline-flex items-center justify-center border-none bg-transparent text-text-secondary hover:bg-surface-hover hover:text-text-primary cursor-pointer transition-colors" @click="copies = Math.min(500, copies + 1)">
               <UIcon name="i-heroicons-plus" class="w-3.5 h-3.5" />
             </button>
           </div>
-          <div class="quick-qty-group">
+          <div class="inline-flex gap-1">
             <button
               v-for="q in [1, 5, 10, 20]"
               :key="q"
               type="button"
-              class="quick-qty-btn"
-              :class="{ 'is-active': copies === q }"
+              class="h-[26px] px-2 text-[11px] font-semibold rounded border border-border-subtle bg-surface-card text-text-secondary hover:bg-surface-hover cursor-pointer transition-colors"
+              :class="{ '!bg-text-primary !text-white !border-text-primary': copies === q }"
               @click="copies = q"
             >
               {{ q }}×
@@ -84,14 +84,14 @@
           </div>
         </div>
 
-        <label class="khr-toggle">
+        <label class="inline-flex items-center gap-1.5 text-xs font-medium text-text-secondary cursor-pointer">
           <input v-model="showKhr" type="checkbox" />
           <span>Show KHR (៛)</span>
         </label>
       </div>
 
       <!-- Live Thermal Sticker Preview Stage -->
-      <div class="sticker-preview-stage">
+      <div class="flex items-center justify-center p-5 bg-slate-100 border border-border-subtle rounded-lg">
         <div
           class="kh-product-sticker"
           :class="`size-${labelWidthMm}x${labelHeightMm}`"
@@ -152,7 +152,7 @@
       </div>
 
       <!-- Scan Readiness Info Banner -->
-      <div class="scan-ready-banner">
+      <div class="flex items-start gap-2 p-2.5 px-3 bg-surface-inset border border-border-subtle rounded-md">
         <UIcon name="i-heroicons-check-circle" class="w-4 h-4 text-slate-700 flex-shrink-0" />
         <div class="text-xs text-slate-600 leading-relaxed">
           <strong>One-Scan Ready:</strong> Scanning either the 1D Barcode
@@ -164,8 +164,8 @@
     </div>
 
     <template #footer>
-      <div class="sticker-modal-footer no-print">
-        <div class="footer-left">
+      <div class="flex items-center justify-between w-full flex-wrap gap-2 no-print">
+        <div class="flex items-center gap-2">
           <AppButton
             variant="ghost"
             size="sm"
@@ -182,7 +182,7 @@
             @click="handleDownloadPdf"
           />
         </div>
-        <div class="footer-right">
+        <div class="flex items-center gap-2">
           <AppButton
             variant="secondary"
             size="sm"
@@ -397,200 +397,6 @@ function openInBatchStudio() {
   navigateTo(`/labels/generate?variant_id=${props.variant.id}`)
 }
 </script>
-
-<style scoped>
-.sticker-modal-root {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.sticker-controls-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-@media (max-width: 560px) {
-  .sticker-controls-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.control-group {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-.control-label {
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--text-secondary, #475569);
-}
-
-.segmented-pills {
-  display: flex;
-  gap: 4px;
-  background: var(--surface-inset, #f8fafc);
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  border-radius: 6px;
-  padding: 3px;
-}
-
-.seg-pill {
-  flex: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  height: 28px;
-  padding: 0 8px;
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--text-secondary, #475569);
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: 4px;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.12s;
-}
-
-.seg-pill.is-active {
-  background: var(--surface-card, #ffffff);
-  color: var(--text-primary, #0f172a);
-  border-color: var(--border-subtle, #e5e7eb);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
-}
-
-.sticker-copies-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 10px;
-  padding: 8px 12px;
-  background: var(--surface-inset, #f8fafc);
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  border-radius: 6px;
-}
-
-.copies-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.qty-stepper {
-  display: inline-flex;
-  align-items: center;
-  background: var(--surface-card, #ffffff);
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.qty-btn {
-  width: 28px;
-  height: 28px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: transparent;
-  color: var(--text-secondary, #475569);
-  cursor: pointer;
-}
-
-.qty-btn:hover {
-  background: var(--surface-hover, #f1f5f9);
-  color: var(--text-primary, #0f172a);
-}
-
-.qty-input {
-  width: 46px;
-  height: 28px;
-  text-align: center;
-  border: none;
-  border-left: 1px solid var(--border-subtle, #e5e7eb);
-  border-right: 1px solid var(--border-subtle, #e5e7eb);
-  font-size: 12.5px;
-  font-weight: 700;
-  color: var(--text-primary, #0f172a);
-  background: var(--surface-card, #ffffff);
-}
-
-.quick-qty-group {
-  display: inline-flex;
-  gap: 4px;
-}
-
-.quick-qty-btn {
-  height: 26px;
-  padding: 0 8px;
-  font-size: 11px;
-  font-weight: 600;
-  border-radius: 4px;
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  background: var(--surface-card, #ffffff);
-  color: var(--text-secondary, #475569);
-  cursor: pointer;
-}
-
-.quick-qty-btn.is-active {
-  background: var(--text-primary, #0f172a);
-  color: #ffffff;
-  border-color: var(--text-primary, #0f172a);
-}
-
-.khr-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-secondary, #475569);
-  cursor: pointer;
-}
-
-.sticker-preview-stage {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  background: #f1f5f9;
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  border-radius: 8px;
-}
-
-.scan-ready-banner {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 9px 12px;
-  background: var(--surface-inset, #f8fafc);
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  border-radius: 6px;
-}
-
-.sticker-modal-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.footer-left,
-.footer-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-</style>
 
 <style>
 .instant-print-only {

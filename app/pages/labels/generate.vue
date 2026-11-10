@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="page-root">
     <!-- Header (no-print) -->
     <PageHeader
@@ -34,12 +34,12 @@
       </template>
     </PageHeader>
 
-    <div class="studio-grid no-print">
+    <div class="grid grid-cols-1 lg:grid-cols-[440px_1fr] gap-4 items-start no-print">
       <!-- Left: Variant Selector & Sticker Configuration -->
-      <div class="studio-left">
+      <div class="flex flex-col gap-4 min-w-0">
         <!-- Sticker Format Settings -->
         <AppCard title="1. ទំហំស្លាកទំនិញ & ការកំណត់ (Sticker Format & Printer Setup)">
-          <div class="settings-grid">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div class="form-field col-span-2">
               <label class="field-label kh-text">ទំហំស្លាកទំនិញ (Label Size Preset)</label>
               <AppSelect
@@ -174,7 +174,7 @@
       </div>
 
       <!-- Right: Live Sticker Preview -->
-      <div class="studio-right">
+      <div class="flex flex-col gap-4 min-w-0">
         <AppCard title="3. មើលស្លាកទំនិញមុនបោះពុម្ព (Live Khmer Sticker Preview)">
           <div class="preview-summary">
             <span>
@@ -187,12 +187,12 @@
             </span>
           </div>
 
-          <div v-if="expandedPreviewStickers.length === 0" class="preview-empty">
+          <div v-if="expandedPreviewStickers.length === 0" class="flex flex-col items-center justify-center gap-2 py-14 px-5 text-ink-tertiary text-[12.5px] text-center">
             <UIcon name="i-heroicons-tag" class="w-8 h-8" />
             <p>Check one or more variants on the left to preview product stickers.</p>
           </div>
 
-          <div v-else class="preview-stage">
+          <div v-else class="bg-slate-100 border border-border-subtle rounded-md p-5 max-h-[620px] overflow-auto flex justify-center">
             <div
               class="preview-grid"
               :class="isThermalRollMode ? 'is-thermal' : 'is-sheet'"
@@ -572,119 +572,6 @@ async function generateLabelsPdf() {
 }
 </script>
 
-<style scoped>
-.kh-text {
-  font-family: 'Kantumruy Pro', 'Battambang', 'Battambang Local', 'Noto Sans Khmer', sans-serif;
-}
-
-.page-root { display: flex; flex-direction: column; gap: 16px; }
-.page-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-.page-header__left { display: flex; flex-direction: column; gap: 2px; }
-.page-header__actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-
-.back-link {
-  display: inline-flex; align-items: center; gap: 4px;
-  font-size: 12px; color: var(--text-tertiary); text-decoration: none; margin-bottom: 4px;
-}
-.back-link:hover { color: var(--text-primary); }
-.page-title { font-size: 16px; font-weight: 600; color: var(--text-primary); letter-spacing: -0.01em; }
-.page-subtitle { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
-
-.studio-grid { display: grid; grid-template-columns: 440px 1fr; gap: 16px; align-items: start; }
-@media (max-width: 1024px) { .studio-grid { grid-template-columns: 1fr; } }
-.studio-left, .studio-right { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
-
-.settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.col-span-2 { grid-column: span 2; }
-@media (max-width: 540px) {
-  .settings-grid { grid-template-columns: 1fr; }
-  .col-span-2 { grid-column: span 1; }
-}
-.form-field { display: flex; flex-direction: column; gap: 5px; }
-.field-label { font-size: 12px; font-weight: 500; color: var(--text-secondary); }
-.field-input {
-  height: 36px; padding: 0 10px; font-size: 13px; background: var(--surface-card);
-  border: 1px solid var(--border-default); border-radius: var(--radius-md);
-  color: var(--text-primary); outline: none; width: 100%; box-sizing: border-box;
-}
-.field-input:focus { border-color: var(--border-strong); }
-.field-input:disabled { opacity: 0.5; cursor: not-allowed; }
-
-.checkbox-row {
-  display: flex; align-items: center; gap: 8px; font-size: 12.5px;
-  color: var(--text-primary); cursor: pointer; user-select: none; padding-top: 4px;
-}
-.native-checkbox { width: 15px; height: 15px; accent-color: #111827; cursor: pointer; flex-shrink: 0; }
-
-.selector-toolbar { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
-.search-wrap { position: relative; display: flex; align-items: center; }
-.search-icon { position: absolute; left: 10px; color: var(--text-tertiary); pointer-events: none; }
-.search-input {
-  width: 100%; height: 34px; padding: 0 10px 0 32px; font-size: 12.5px;
-  border: 1px solid var(--border-default); border-radius: var(--radius-md);
-  background: var(--surface-card); color: var(--text-primary); outline: none;
-}
-.toolbar-btns { display: flex; justify-content: flex-end; gap: 6px; }
-
-.empty-box {
-  padding: 28px; text-align: center; font-size: 12.5px; color: var(--text-tertiary);
-  border: 1px dashed var(--border-subtle); border-radius: var(--radius-md);
-}
-
-.variant-list {
-  display: flex; flex-direction: column; gap: 6px;
-  max-height: 420px; overflow-y: auto; padding-right: 2px;
-}
-.variant-item {
-  display: flex; align-items: center; gap: 10px; padding: 8px 10px;
-  border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
-  background: var(--surface-card); cursor: pointer; transition: background 0.12s;
-}
-.variant-item:hover { background: var(--surface-hover); }
-.variant-item.is-selected { background: var(--surface-inset); border-color: var(--border-strong); }
-
-.variant-info { flex: 1; min-width: 0; }
-.variant-name { font-size: 13px; font-weight: 600; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.variant-meta { font-size: 11.5px; color: var(--text-tertiary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.mono { font-family: monospace; }
-
-.qty-control { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
-.qty-btn {
-  width: 24px; height: 24px; border-radius: 4px; border: 1px solid var(--border-default);
-  background: var(--surface-card); color: var(--text-secondary);
-  display: flex; align-items: center; justify-content: center; cursor: pointer;
-}
-.qty-btn:hover { background: var(--surface-hover); color: var(--text-primary); }
-.qty-input {
-  width: 44px; height: 24px; text-align: center; font-size: 12px; font-weight: 600;
-  border: 1px solid var(--border-default); border-radius: 4px; background: var(--surface-card); color: var(--text-primary);
-}
-
-.preview-summary {
-  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
-  font-size: 12px; color: var(--text-secondary); padding-bottom: 12px; margin-bottom: 12px;
-  border-bottom: 1px solid var(--border-subtle);
-}
-.preview-mode-tag {
-  font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px;
-  background: var(--surface-inset); border: 1px solid var(--border-subtle); color: var(--text-primary);
-}
-.preview-empty {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 8px; padding: 56px 20px; color: var(--text-tertiary); font-size: 12.5px; text-align: center;
-}
-.preview-stage {
-  background: #f1f5f9; border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
-  padding: 20px; max-height: 620px; overflow: auto; display: flex; justify-content: center;
-}
-.preview-grid.is-thermal { display: flex; flex-direction: column; align-items: center; gap: 12px; }
-.preview-grid.is-sheet {
-  display: grid; grid-template-columns: repeat(auto-fill, var(--sticker-w, 50mm));
-  gap: 10px; justify-content: center; width: 100%;
-}
-
-.print-only-stickers { display: none; }
-</style>
 
 <style>
 /* Template C: Modern Khmer Product Sticker Styles */

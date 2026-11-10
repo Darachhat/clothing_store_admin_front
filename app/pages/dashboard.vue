@@ -91,26 +91,26 @@
       </div>
 
       <!-- Charts & Operational Panels -->
-      <div class="dashboard-charts-grid">
+      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-[1.3fr_1fr_1fr] gap-3.5">
         <!-- 14-Day Revenue Trend -->
         <AppCard title="Revenue — Last 14 Days">
           <template #header-right>
-            <NuxtLink to="/reports/sales" class="card-link">Full Report</NuxtLink>
+            <NuxtLink to="/reports/sales" class="text-xs font-semibold text-ink-secondary hover:text-ink no-underline hover:underline">Full Report</NuxtLink>
           </template>
-          <div v-if="salesTrend.length > 0" class="bar-chart">
+          <div v-if="salesTrend.length > 0" class="flex items-end gap-1.5 h-[150px] pt-2 pb-1 overflow-x-auto pos-scroll">
             <div
               v-for="bar in salesTrend"
               :key="bar.period"
-              class="bar-col"
+              class="flex-1 min-w-[22px] flex flex-col items-center gap-1.5 h-full group cursor-default"
               :title="`${bar.period}: $${fmt(bar.revenue)} (${bar.order_count || 0} orders)`"
             >
-              <div class="bar-fill-wrap">
+              <div class="flex-1 w-full flex items-end">
                 <div
-                  class="bar-fill"
+                  class="w-full bg-brand-900 rounded-t transition-all duration-200 group-hover:opacity-75 min-h-[4px]"
                   :style="{ height: maxRevenue > 0 ? `${Math.max(6, (Number(bar.revenue) / maxRevenue) * 100)}%` : '6%' }"
                 />
               </div>
-              <span class="bar-label">{{ bar.period.slice(5) }}</span>
+              <span class="text-[10px] text-ink-tertiary whitespace-nowrap">{{ bar.period.slice(5) }}</span>
             </div>
           </div>
           <AppEmptyState
@@ -124,16 +124,16 @@
         <!-- Top Products -->
         <AppCard title="Top Products (30d)">
           <template #header-right>
-            <NuxtLink to="/products" class="card-link">Catalog</NuxtLink>
+            <NuxtLink to="/products" class="text-xs font-semibold text-ink-secondary hover:text-ink no-underline hover:underline">Catalog</NuxtLink>
           </template>
-          <div v-if="topProducts.length > 0" class="top-products">
-            <div v-for="(p, i) in topProducts" :key="i" class="top-product-row">
-              <span class="top-rank">{{ i + 1 }}</span>
-              <span class="top-name" :title="p.name">{{ p.name }}</span>
-              <div class="top-bar-wrap">
-                <div class="top-bar" :style="{ width: `${(p.qty / (topProducts[0]?.qty || 1)) * 100}%` }" />
+          <div v-if="topProducts.length > 0" class="flex flex-col gap-2.5">
+            <div v-for="(p, i) in topProducts" :key="i" class="flex items-center gap-2 text-xs">
+              <span class="w-4.5 text-[11px] font-bold text-ink-tertiary text-center shrink-0">{{ i + 1 }}</span>
+              <span class="flex-1 text-ink font-medium truncate" :title="p.name">{{ p.name }}</span>
+              <div class="w-16 h-1.5 bg-surface-hover rounded shrink-0 overflow-hidden">
+                <div class="h-full bg-brand-900 rounded" :style="{ width: `${(p.qty / (topProducts[0]?.qty || 1)) * 100}%` }" />
               </div>
-              <span class="top-qty">{{ p.qty }} sold</span>
+              <span class="w-[52px] text-right font-semibold text-ink-secondary shrink-0 text-[11px]">{{ p.qty }} sold</span>
             </div>
           </div>
           <AppEmptyState
@@ -146,42 +146,42 @@
         <!-- Inventory Health -->
         <AppCard title="Inventory Health">
           <template #header-right>
-            <NuxtLink to="/inventory" class="card-link">Manage Stock</NuxtLink>
+            <NuxtLink to="/inventory" class="text-xs font-semibold text-ink-secondary hover:text-ink no-underline hover:underline">Manage Stock</NuxtLink>
           </template>
-          <div class="inv-breakdown">
-            <div class="inv-row">
-              <span class="inv-dot green" />
-              <span class="inv-label">Healthy Stock</span>
-              <span class="inv-val">{{ invSummary.inStock }}</span>
+          <div class="flex flex-col gap-2.5">
+            <div class="flex items-center gap-2 text-[12.5px]">
+              <span class="w-2 h-2 rounded-full shrink-0 bg-status-green" />
+              <span class="flex-1 text-ink-secondary">Healthy Stock</span>
+              <span class="font-semibold text-ink">{{ invSummary.inStock }}</span>
             </div>
-            <div class="inv-row">
-              <span class="inv-dot amber" />
-              <span class="inv-label">Low Stock Warning</span>
-              <span class="inv-val amber">{{ invSummary.lowStock }}</span>
+            <div class="flex items-center gap-2 text-[12.5px]">
+              <span class="w-2 h-2 rounded-full shrink-0 bg-status-amber" />
+              <span class="flex-1 text-ink-secondary">Low Stock Warning</span>
+              <span class="font-semibold text-status-amber">{{ invSummary.lowStock }}</span>
             </div>
-            <div class="inv-row">
-              <span class="inv-dot red" />
-              <span class="inv-label">Out of Stock</span>
-              <span class="inv-val red">{{ invSummary.outOfStock }}</span>
+            <div class="flex items-center gap-2 text-[12.5px]">
+              <span class="w-2 h-2 rounded-full shrink-0 bg-status-red" />
+              <span class="flex-1 text-ink-secondary">Out of Stock</span>
+              <span class="font-semibold text-status-red">{{ invSummary.outOfStock }}</span>
             </div>
-            <div class="inv-divider" />
-            <div class="inv-row">
-              <span class="inv-label">Total Active SKUs</span>
-              <span class="inv-val">{{ invSummary.totalSkus }}</span>
+            <div class="h-px bg-border-subtle my-0.5" />
+            <div class="flex items-center gap-2 text-[12.5px]">
+              <span class="flex-1 text-ink-secondary">Total Active SKUs</span>
+              <span class="font-semibold text-ink">{{ invSummary.totalSkus }}</span>
             </div>
-            <div class="inv-row">
-              <span class="inv-label">Stock Cost Valuation</span>
-              <span class="inv-val mono">${{ fmt(invSummary.stockValue) }}</span>
+            <div class="flex items-center gap-2 text-[12.5px]">
+              <span class="flex-1 text-ink-secondary">Stock Cost Valuation</span>
+              <span class="font-semibold text-ink mono">${{ fmt(invSummary.stockValue) }}</span>
             </div>
           </div>
         </AppCard>
       </div>
 
       <!-- Bottom Row: Recent Sales + Low Stock Alerts -->
-      <div class="dashboard-bottom-grid">
+      <div class="grid grid-cols-1 lg:grid-cols-[1.35fr_1fr] gap-3.5">
         <AppCard title="Recent Sales Transactions" :no-pad="true">
           <template #header-right>
-            <NuxtLink to="/sales" class="card-link">View All</NuxtLink>
+            <NuxtLink to="/sales" class="text-xs font-semibold text-ink-secondary hover:text-ink no-underline hover:underline">View All</NuxtLink>
           </template>
           <AppTable
             :columns="saleColumns"
@@ -215,7 +215,7 @@
 
         <AppCard title="Low Stock Operational Alerts" :no-pad="true">
           <template #header-right>
-            <NuxtLink to="/inventory?low_stock_only=true" class="card-link">Restock</NuxtLink>
+            <NuxtLink to="/inventory?low_stock_only=true" class="text-xs font-semibold text-ink-secondary hover:text-ink no-underline hover:underline">Restock</NuxtLink>
           </template>
           <AppTable :columns="alertColumns" :rows="lowStockItems" :loading="loading" empty-text="All SKUs are well stocked.">
             <template #cell-sku="{ value }">
@@ -339,183 +339,3 @@ async function loadDashboard() {
 onMounted(loadDashboard)
 </script>
 
-<style scoped>
-.dashboard-charts-grid {
-  display: grid;
-  grid-template-columns: 1.3fr 1fr 1fr;
-  gap: 14px;
-}
-
-.dashboard-bottom-grid {
-  display: grid;
-  grid-template-columns: 1.35fr 1fr;
-  gap: 14px;
-}
-
-@media (max-width: 1100px) {
-  .dashboard-charts-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-  .dashboard-bottom-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 768px) {
-  .dashboard-charts-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.card-link {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-secondary, #475569);
-  text-decoration: none;
-}
-
-.card-link:hover {
-  color: var(--text-primary, #0f172a);
-  text-decoration: underline;
-}
-
-.bar-chart {
-  display: flex;
-  align-items: flex-end;
-  gap: 6px;
-  height: 150px;
-  padding-top: 8px;
-  overflow-x: auto;
-  padding-bottom: 4px;
-}
-
-.bar-col {
-  flex: 1 0 22px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
-  height: 100%;
-  min-width: 22px;
-}
-
-.bar-fill-wrap {
-  flex: 1;
-  width: 100%;
-  display: flex;
-  align-items: flex-end;
-}
-
-.bar-fill {
-  width: 100%;
-  background: var(--accent-primary, #0f172a);
-  border-radius: 3px 3px 0 0;
-  transition: height 0.25s ease, opacity 0.15s;
-  min-height: 4px;
-}
-
-.bar-col:hover .bar-fill {
-  opacity: 0.75;
-}
-
-.bar-label {
-  font-size: 10px;
-  color: var(--text-tertiary, #64748b);
-  white-space: nowrap;
-}
-
-.top-products {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.top-product-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-}
-
-.top-rank {
-  width: 18px;
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-tertiary, #64748b);
-  text-align: center;
-  flex-shrink: 0;
-}
-
-.top-name {
-  flex: 1;
-  color: var(--text-primary, #0f172a);
-  font-weight: 500;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.top-bar-wrap {
-  width: 64px;
-  height: 5px;
-  background: var(--surface-hover, #f1f5f9);
-  border-radius: 3px;
-  flex-shrink: 0;
-}
-
-.top-bar {
-  height: 100%;
-  background: var(--accent-primary, #0f172a);
-  border-radius: 3px;
-}
-
-.top-qty {
-  width: 52px;
-  text-align: right;
-  font-weight: 600;
-  color: var(--text-secondary, #475569);
-  flex-shrink: 0;
-  font-size: 11px;
-}
-
-.inv-breakdown {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.inv-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12.5px;
-}
-
-.inv-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-.inv-dot.green { background: var(--status-green, #15803d); }
-.inv-dot.amber { background: var(--status-amber, #b45309); }
-.inv-dot.red   { background: var(--status-red, #b91c1c); }
-
-.inv-label {
-  flex: 1;
-  color: var(--text-secondary, #475569);
-}
-
-.inv-val {
-  font-weight: 600;
-  color: var(--text-primary, #0f172a);
-}
-.inv-val.amber { color: var(--status-amber, #b45309); }
-.inv-val.red   { color: var(--status-red, #b91c1c); }
-
-.inv-divider {
-  height: 1px;
-  background: var(--border-subtle, #e5e7eb);
-  margin: 2px 0;
-}
-</style>

@@ -98,15 +98,15 @@
       :subtitle="selectedEntry ? `${formatDate(selectedEntry.created_at)} · Entity: ${selectedEntry.entity_type || 'N/A'}` : ''"
       width="lg"
     >
-      <div v-if="selectedEntry" class="audit-drawer-body">
+      <div v-if="selectedEntry" class="flex flex-col gap-4">
         <div class="detail-list">
           <div class="detail-row">
             <dt>Action Code</dt>
-            <dd><span class="action-code-pill">{{ selectedEntry.action }}</span></dd>
+            <dd><span class="inline-block px-2 py-0.5 font-mono text-[11.5px] font-semibold text-ink bg-surface-inset border border-border-subtle rounded-sm">{{ selectedEntry.action }}</span></dd>
           </div>
           <div class="detail-row">
             <dt>Timestamp</dt>
-            <dd class="mono-muted">{{ formatDate(selectedEntry.created_at) }}</dd>
+            <dd class="font-mono text-xs text-ink-secondary">{{ formatDate(selectedEntry.created_at) }}</dd>
           </div>
           <div class="detail-row">
             <dt>Entity Type</dt>
@@ -114,22 +114,22 @@
           </div>
           <div class="detail-row">
             <dt>Entity ID</dt>
-            <dd class="mono-muted">{{ selectedEntry.entity_id || '—' }}</dd>
+            <dd class="font-mono text-xs text-ink-secondary">{{ selectedEntry.entity_id || '—' }}</dd>
           </div>
           <div class="detail-row">
             <dt>Actor User ID</dt>
-            <dd class="mono-muted">{{ selectedEntry.user_id || 'System' }}</dd>
+            <dd class="font-mono text-xs text-ink-secondary">{{ selectedEntry.user_id || 'System' }}</dd>
           </div>
         </div>
 
-        <div class="json-diff-grid">
-          <div class="json-panel">
-            <p class="json-panel__title">Previous State (old_data)</p>
-            <pre class="json-panel__code">{{ JSON.stringify(selectedEntry.old_data || {}, null, 2) }}</pre>
+        <div class="grid grid-cols-1 gap-3">
+          <div class="p-3 bg-surface-inset border border-border-subtle rounded-md">
+            <p class="text-[11px] font-semibold uppercase tracking-wider text-ink-tertiary mb-2">Previous State (old_data)</p>
+            <pre class="font-mono text-[11.5px] text-ink overflow-x-auto whitespace-pre-wrap break-words m-0">{{ JSON.stringify(selectedEntry.old_data || {}, null, 2) }}</pre>
           </div>
-          <div class="json-panel">
-            <p class="json-panel__title">New State (new_data)</p>
-            <pre class="json-panel__code">{{ JSON.stringify(selectedEntry.new_data || {}, null, 2) }}</pre>
+          <div class="p-3 bg-surface-inset border border-border-subtle rounded-md">
+            <p class="text-[11px] font-semibold uppercase tracking-wider text-ink-tertiary mb-2">New State (new_data)</p>
+            <pre class="font-mono text-[11.5px] text-ink overflow-x-auto whitespace-pre-wrap break-words m-0">{{ JSON.stringify(selectedEntry.new_data || {}, null, 2) }}</pre>
           </div>
         </div>
       </div>
@@ -254,60 +254,3 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
-.mono-muted {
-  font-family: var(--font-mono, monospace);
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
-.action-code-pill {
-  display: inline-block;
-  padding: 2px 8px;
-  font-family: var(--font-mono, monospace);
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--text-primary);
-  background: var(--surface-inset);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-}
-
-.audit-drawer-body {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.json-diff-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 12px;
-}
-
-.json-panel {
-  padding: 12px;
-  background: var(--surface-inset);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-}
-
-.json-panel__title {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-tertiary);
-  margin-bottom: 8px;
-}
-
-.json-panel__code {
-  font-family: var(--font-mono, monospace);
-  font-size: 11.5px;
-  color: var(--text-primary);
-  overflow-x: auto;
-  white-space: pre-wrap;
-  word-break: break-word;
-  margin: 0;
-}
-</style>

@@ -14,9 +14,9 @@
       </template>
     </AppPageHeader>
 
-    <form class="product-form-layout" @submit.prevent="submitProduct(false)">
+    <form class="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-4 items-start" @submit.prevent="submitProduct(false)">
       <!-- Left Column: Core Details + Initial Variant -->
-      <div class="product-form-main">
+      <div class="flex flex-col gap-4">
         <AppCard title="Basic Information">
           <div class="form-grid">
             <div class="form-field">
@@ -191,7 +191,7 @@
       </div>
 
       <!-- Right Column: Photo & Actions -->
-      <div class="product-form-side">
+      <div class="flex flex-col gap-4">
         <AppCard title="Product Main Photo">
           <AppFileUpload
             v-model="form.image_url"
@@ -200,7 +200,7 @@
           />
         </AppCard>
 
-        <div class="form-actions-stack">
+        <div class="flex flex-col gap-2">
           <AppButton
             v-if="includeInitialVariant"
             type="button"
@@ -211,7 +211,7 @@
             class="w-full justify-center"
             @click="submitProduct(true)"
           />
-          <div class="form-actions-bar">
+          <div class="flex justify-end gap-2">
             <AppButton to="/products" variant="default" label="Cancel" />
             <AppButton
               type="submit"
@@ -398,42 +398,3 @@ onMounted(() => {
 })
 </script>
 
-<style scoped>
-.product-form-layout {
-  display: grid;
-  grid-template-columns: 1fr 340px;
-  gap: 16px;
-  align-items: start;
-}
-
-@media (max-width: 960px) {
-  .product-form-layout {
-    grid-template-columns: 1fr;
-  }
-}
-
-.product-form-main,
-.product-form-side {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.form-actions-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.form-actions-bar {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
-.field-hint {
-  font-size: 11px;
-  color: var(--text-tertiary, #64748b);
-  margin-top: 2px;
-}
-</style>

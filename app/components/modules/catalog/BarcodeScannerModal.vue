@@ -1,29 +1,29 @@
 <template>
   <AppModal :model-value="modelValue" @update:model-value="$emit('update:modelValue', $event)">
-    <div class="scanner-modal">
+    <div class="flex flex-col gap-4 w-full max-w-[540px]">
       <!-- Modal Header -->
-      <div class="scanner-modal__header">
-        <div class="scanner-modal__title-group">
-          <div class="scanner-modal__icon">
+      <div class="flex items-center justify-between pb-3 border-b border-border-subtle">
+        <div class="flex items-center gap-3">
+          <div class="w-[38px] h-[38px] rounded-md bg-surface-active border border-border-subtle text-text-primary flex items-center justify-center">
             <UIcon name="i-heroicons-qr-code" class="w-5 h-5" />
           </div>
           <div>
-            <h3 class="scanner-modal__title">Scan Barcode / QR Code</h3>
-            <p class="scanner-modal__subtitle">Scan 1D Barcode, 2D QR Tag, or SKU via Camera, Image, Phone, or USB Scanner</p>
+            <h3 class="text-[15px] font-semibold text-text-primary m-0">Scan Barcode / QR Code</h3>
+            <p class="text-xs text-text-tertiary m-0">Scan 1D Barcode, 2D QR Tag, or SKU via Camera, Image, Phone, or USB Scanner</p>
           </div>
         </div>
 
-        <button type="button" class="scanner-modal__close-btn" @click="closeModal">
+        <button type="button" class="p-1 bg-transparent border-none text-text-tertiary hover:text-text-primary cursor-pointer transition-colors" @click="closeModal">
           <UIcon name="i-heroicons-x-mark" class="w-4 h-4" />
         </button>
       </div>
 
       <!-- Mode Selector Tabs -->
-      <div class="scanner-tabs">
+      <div class="flex border-b border-border-subtle gap-1 overflow-x-auto">
         <button
           type="button"
-          class="scanner-tab"
-          :class="{ 'is-active': activeTab === 'webcam' }"
+          class="flex items-center gap-1.5 px-3 py-2 bg-transparent border-none border-b-2 font-medium text-[12.5px] cursor-pointer -mb-px whitespace-nowrap transition-colors"
+          :class="activeTab === 'webcam' ? 'text-text-primary border-b-text-primary' : 'text-text-secondary border-b-transparent hover:text-text-primary'"
           @click="activeTab = 'webcam'"
         >
           <UIcon name="i-heroicons-camera" class="w-4 h-4" />
@@ -32,8 +32,8 @@
 
         <button
           type="button"
-          class="scanner-tab"
-          :class="{ 'is-active': activeTab === 'image' }"
+          class="flex items-center gap-1.5 px-3 py-2 bg-transparent border-none border-b-2 font-medium text-[12.5px] cursor-pointer -mb-px whitespace-nowrap transition-colors"
+          :class="activeTab === 'image' ? 'text-text-primary border-b-text-primary' : 'text-text-secondary border-b-transparent hover:text-text-primary'"
           @click="activeTab = 'image'"
         >
           <UIcon name="i-heroicons-photo" class="w-4 h-4" />
@@ -42,46 +42,42 @@
 
         <button
           type="button"
-          class="scanner-tab"
-          :class="{ 'is-active': activeTab === 'phone' }"
+          class="flex items-center gap-1.5 px-3 py-2 bg-transparent border-none border-b-2 font-medium text-[12.5px] cursor-pointer -mb-px whitespace-nowrap transition-colors"
+          :class="activeTab === 'phone' ? 'text-text-primary border-b-text-primary' : 'text-text-secondary border-b-transparent hover:text-text-primary'"
           @click="activeTab = 'phone'"
         >
           <UIcon name="i-heroicons-device-phone-mobile" class="w-4 h-4" />
           Connect Phone
-          <span v-if="phoneConnected" class="scanner-tab__online-dot" />
+          <span v-if="phoneConnected" class="w-1.5 h-1.5 rounded-full bg-emerald-500" />
         </button>
       </div>
 
       <!-- Tab 1: Live Camera -->
-      <div v-if="activeTab === 'webcam'" class="scanner-body">
-        <div v-if="!hasLocalCamera || cameraError" class="scanner-empty-cam">
+      <div v-if="activeTab === 'webcam'" class="flex flex-col gap-3.5">
+        <div v-if="!hasLocalCamera || cameraError" class="flex flex-col items-center justify-center text-center p-7 bg-surface-card border border-dashed border-border-subtle rounded-lg gap-2 text-text-secondary">
           <UIcon name="i-heroicons-video-camera-slash" class="w-9 h-9 text-slate-400" />
-          <div class="empty-title">{{ cameraError || 'No Camera Detected on This Device' }}</div>
-          <p class="empty-desc">
+          <div class="font-semibold text-sm text-text-primary">{{ cameraError || 'No Camera Detected on This Device' }}</div>
+          <p class="text-xs text-text-tertiary max-w-[340px]">
             Use a USB barcode scanner below, upload a barcode photo in the "Upload Image" tab, or connect your smartphone camera.
           </p>
           <div class="flex items-center gap-2 mt-1">
-            <button type="button" class="btn btn--secondary btn--sm" @click="activeTab = 'image'">
-              Upload Barcode Photo
-            </button>
-            <button type="button" class="btn btn--primary btn--sm" @click="activeTab = 'phone'">
-              Connect Phone
-            </button>
+            <AppButton variant="secondary" size="sm" label="Upload Barcode Photo" @click="activeTab = 'image'" />
+            <AppButton variant="primary" size="sm" label="Connect Phone" @click="activeTab = 'phone'" />
           </div>
         </div>
 
-        <div v-else class="scanner-webcam-feed">
-          <video ref="webcamVideoRef" autoplay playsinline muted class="webcam-video" />
-          <div class="webcam-overlay">
-            <div class="webcam-reticle" />
+        <div v-else class="relative w-full h-[220px] bg-black rounded-lg overflow-hidden border border-border-subtle">
+          <video ref="webcamVideoRef" autoplay playsinline muted class="w-full h-full object-cover" />
+          <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div class="w-[min(220px,75%)] h-[120px] border-2 border-dashed border-white/70 rounded-lg" />
           </div>
         </div>
       </div>
 
       <!-- Tab 2: Upload Barcode / QR Image -->
-      <div v-else-if="activeTab === 'image'" class="scanner-body">
+      <div v-else-if="activeTab === 'image'" class="flex flex-col gap-3.5">
         <div
-          class="scanner-dropzone"
+          class="flex flex-col items-center justify-center text-center py-7 px-4 bg-surface-card border border-dashed border-border-subtle rounded-lg cursor-pointer hover:bg-surface-hover transition-colors"
           @dragover.prevent
           @drop.prevent="handleFileDrop"
           @click="triggerFileInput"
@@ -99,64 +95,62 @@
             Supports PNG, JPG, WEBP photos of 1D Code-128, EAN-13, or 2D QR tags.
           </p>
         </div>
-        <div v-if="imageDecodeMessage" class="scanner-notice scanner-notice--info">
+        <div v-if="imageDecodeMessage" class="flex items-start gap-2.5 p-2.5 sm:px-3 rounded-md text-xs leading-snug bg-surface-hover border border-border-subtle text-text-primary">
           <UIcon name="i-heroicons-information-circle" class="w-4 h-4 flex-shrink-0" />
           <span>{{ imageDecodeMessage }}</span>
         </div>
       </div>
 
       <!-- Tab 3: Phone Wireless Pairing -->
-      <div v-else-if="activeTab === 'phone'" class="scanner-body">
-        <div class="scanner-pairing-grid">
-          <div class="scanner-qr-card">
-            <div class="scanner-qr-frame">
+      <div v-else-if="activeTab === 'phone'" class="flex flex-col gap-3.5">
+        <div class="grid grid-cols-1 sm:grid-cols-[180px_1fr] gap-4 items-start">
+          <div class="flex flex-col items-center gap-2">
+            <div class="w-[170px] h-[170px] bg-white border border-border-subtle rounded-lg p-1.5 flex items-center justify-center">
               <img
                 v-if="qrCodeUrl"
                 :src="qrCodeUrl"
                 alt="Scanner pairing QR Code"
-                class="scanner-qr-img"
+                class="w-full h-full object-contain"
               />
-              <div v-else class="scanner-qr-loading">Generating QR...</div>
+              <div v-else class="text-xs text-text-tertiary">Generating QR...</div>
             </div>
 
-            <div class="scanner-status-indicator" :class="{ 'is-connected': phoneConnected }">
-              <span class="status-pulse-dot" />
+            <div class="flex items-center gap-1.5 text-[11px] text-text-tertiary" :class="{ '!text-emerald-500': phoneConnected }">
+              <span class="w-2 h-2 rounded-full bg-current" />
               <span>{{ phoneConnected ? 'Phone Connected & Active' : 'Waiting for phone...' }}</span>
             </div>
           </div>
 
-          <div class="scanner-instructions">
-            <div class="instruction-step">
-              <span class="step-num">1</span>
+          <div class="flex flex-col gap-3">
+            <div class="flex gap-2.5 items-start text-xs">
+              <span class="w-5 h-5 rounded-full bg-surface-active text-text-primary font-bold text-[11px] flex items-center justify-center shrink-0">1</span>
               <div>
-                <strong>Scan QR Code with your phone</strong>
-                <p>Open camera app on your phone and tap the link</p>
+                <strong class="text-text-primary block">Scan QR Code with your phone</strong>
+                <p class="text-text-tertiary mt-0.5 mb-0">Open camera app on your phone and tap the link</p>
               </div>
             </div>
 
-            <div class="instruction-step">
-              <span class="step-num">2</span>
+            <div class="flex gap-2.5 items-start text-xs">
+              <span class="w-5 h-5 rounded-full bg-surface-active text-text-primary font-bold text-[11px] flex items-center justify-center shrink-0">2</span>
               <div>
-                <strong>Point phone camera at tag</strong>
-                <p>Scanned codes are transmitted directly to this screen</p>
+                <strong class="text-text-primary block">Point phone camera at tag</strong>
+                <p class="text-text-tertiary mt-0.5 mb-0">Scanned codes are transmitted directly to this screen</p>
               </div>
             </div>
 
-            <div class="scanner-link-config">
-              <label class="config-label">Companion Link:</label>
-              <div class="config-input-group">
+            <div class="bg-surface-card border border-border-subtle rounded-md p-2 sm:px-2.5 flex flex-col gap-1">
+              <label class="text-[11px] text-text-tertiary">Companion Link:</label>
+              <div class="flex gap-1.5">
                 <input
                   v-model="customHost"
                   type="text"
                   placeholder="e.g. admin.kimvannak.store"
-                  class="config-input font-mono"
+                  class="flex-1 text-xs border border-border-subtle rounded px-2 py-1 bg-surface-hover text-text-primary focus:outline-hidden font-mono"
                   @change="updateHost"
                 />
-                <button type="button" class="btn btn--secondary btn--sm" @click="copyPairingUrl">
-                  {{ copied ? 'Copied!' : 'Copy' }}
-                </button>
+                <AppButton size="xs" variant="secondary" :label="copied ? 'Copied!' : 'Copy'" @click="copyPairingUrl" />
               </div>
-              <span class="config-hint font-mono text-xs">PIN: {{ sessionShortCode }}</span>
+              <span class="text-text-tertiary font-mono text-xs">PIN: {{ sessionShortCode }}</span>
             </div>
           </div>
         </div>
@@ -170,33 +164,33 @@
           type="text"
           data-barcode-scanner-target="true"
           placeholder="Or scan with USB scanner / type barcode, QR, or SKU and press Enter..."
-          class="field-input flex-1 mono"
+          class="flex-1 text-xs rounded-md border border-border-subtle bg-surface-card px-2.5 py-1.5 text-text-primary focus:outline-hidden font-mono"
         />
         <AppButton type="submit" size="sm" variant="default" label="Apply" :disabled="!manualCode.trim()" />
       </form>
 
       <!-- Recent Scans / Live Log -->
-      <div class="scanner-scans-panel">
-        <div class="scans-header">
-          <span class="scans-title">Recent Scans ({{ recentScans.length }})</span>
-          <button v-if="recentScans.length" type="button" class="clear-scans-btn" @click="recentScans = []">
+      <div class="bg-surface-card border border-border-subtle rounded-md p-2.5 sm:px-3 flex flex-col gap-1.5 max-h-[140px] overflow-y-auto">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-semibold text-text-secondary uppercase tracking-wider">Recent Scans ({{ recentScans.length }})</span>
+          <button v-if="recentScans.length" type="button" class="text-[11px] text-text-tertiary bg-transparent border-none cursor-pointer hover:text-text-primary" @click="recentScans = []">
             Clear
           </button>
         </div>
 
-        <div v-if="recentScans.length === 0" class="scans-empty">
+        <div v-if="recentScans.length === 0" class="text-xs text-text-tertiary italic py-1">
           No items scanned yet. Point camera at a sticker or scan with a USB barcode gun.
         </div>
 
-        <div v-else class="scans-list">
+        <div v-else class="flex flex-col gap-1">
           <div
             v-for="(scan, idx) in recentScans"
             :key="idx"
-            class="scan-item"
+            class="flex items-center justify-between px-2 py-1.5 bg-surface-hover rounded border border-border-subtle"
           >
-            <div class="scan-item__code font-mono">{{ scan.barcode }}</div>
-            <div class="scan-item__meta">
-              <span class="scan-item__source">{{ scan.source || 'Scanner' }}</span>
+            <div class="text-[12.5px] font-semibold text-text-primary font-mono">{{ scan.barcode }}</div>
+            <div class="flex items-center gap-2 text-[11px] text-text-tertiary">
+              <span class="bg-surface-active px-1.5 py-0.5 rounded text-[10px] border border-border-subtle">{{ scan.source || 'Scanner' }}</span>
               <span class="scan-item__time">{{ formatTime(scan.timestamp) }}</span>
             </div>
           </div>
@@ -204,10 +198,8 @@
       </div>
 
       <!-- Footer -->
-      <div class="scanner-modal__footer">
-        <button type="button" class="btn btn--secondary" @click="closeModal">
-          Done
-        </button>
+      <div class="flex justify-end border-t border-border-subtle pt-3">
+        <AppButton variant="secondary" size="sm" label="Done" @click="closeModal" />
       </div>
     </div>
   </AppModal>
@@ -523,413 +515,3 @@ onUnmounted(() => {
   stopWebcam()
 })
 </script>
-
-<style scoped>
-.scanner-modal {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  width: 100%;
-  max-width: 540px;
-}
-
-.scanner-modal__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid var(--border-subtle, #e5e7eb);
-  padding-bottom: 12px;
-}
-
-.scanner-modal__title-group {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.scanner-modal__icon {
-  width: 38px;
-  height: 38px;
-  border-radius: 6px;
-  background: var(--surface-active, #f1f5f9);
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  color: var(--text-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.scanner-modal__title {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text-primary);
-  margin: 0;
-}
-
-.scanner-modal__subtitle {
-  font-size: 12px;
-  color: var(--text-tertiary);
-  margin: 0;
-}
-
-.scanner-modal__close-btn {
-  background: transparent;
-  border: none;
-  color: var(--text-tertiary);
-  cursor: pointer;
-  padding: 4px;
-}
-
-.scanner-modal__close-btn:hover {
-  color: var(--text-primary);
-}
-
-.scanner-tabs {
-  display: flex;
-  border-bottom: 1px solid var(--border-subtle, #e5e7eb);
-  gap: 4px;
-  overflow-x: auto;
-}
-
-.scanner-tab {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 12px;
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-  font-size: 12.5px;
-  font-weight: 500;
-  color: var(--text-secondary);
-  cursor: pointer;
-  margin-bottom: -1px;
-  white-space: nowrap;
-}
-
-.scanner-tab.is-active {
-  color: var(--text-primary);
-  border-bottom-color: var(--text-primary);
-}
-
-.scanner-tab__online-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #10b981;
-}
-
-.scanner-body {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.scanner-notice {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 6px;
-  font-size: 12px;
-  line-height: 1.4;
-}
-
-.scanner-notice--info {
-  background: var(--surface-hover, #f8fafc);
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  color: var(--text-primary);
-}
-
-.scanner-dropzone {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 28px 16px;
-  background: var(--surface-card, #ffffff);
-  border: 1px dashed var(--border-subtle, #e5e7eb);
-  border-radius: 8px;
-  cursor: pointer;
-}
-
-.scanner-dropzone:hover {
-  background: var(--surface-hover, #f8fafc);
-}
-
-.scanner-pairing-grid {
-  display: grid;
-  grid-template-columns: 180px 1fr;
-  gap: 16px;
-  align-items: start;
-}
-
-@media (max-width: 540px) {
-  .scanner-pairing-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.scanner-qr-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-.scanner-qr-frame {
-  width: 170px;
-  height: 170px;
-  background: #fff;
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  border-radius: 8px;
-  padding: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.scanner-qr-img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-.scanner-qr-loading {
-  font-size: 12px;
-  color: var(--text-tertiary);
-}
-
-.scanner-status-indicator {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  color: var(--text-tertiary);
-}
-
-.scanner-status-indicator.is-connected {
-  color: #10b981;
-}
-
-.status-pulse-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: currentColor;
-}
-
-.scanner-instructions {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.instruction-step {
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-  font-size: 12px;
-}
-
-.instruction-step strong {
-  color: var(--text-primary);
-  display: block;
-}
-
-.instruction-step p {
-  color: var(--text-tertiary);
-  margin: 2px 0 0 0;
-}
-
-.step-num {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--surface-active, #f1f5f9);
-  color: var(--text-primary);
-  font-weight: 700;
-  font-size: 11px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.scanner-link-config {
-  background: var(--surface-card, #ffffff);
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  border-radius: 6px;
-  padding: 8px 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.config-label {
-  font-size: 11px;
-  color: var(--text-tertiary);
-}
-
-.config-input-group {
-  display: flex;
-  gap: 6px;
-}
-
-.config-input {
-  flex: 1;
-  font-size: 12px;
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  border-radius: 4px;
-  padding: 4px 8px;
-  background: var(--surface-hover);
-  color: var(--text-primary);
-}
-
-.config-hint {
-  color: var(--text-tertiary);
-}
-
-.scanner-empty-cam {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 28px 16px;
-  background: var(--surface-card, #ffffff);
-  border: 1px dashed var(--border-subtle, #e5e7eb);
-  border-radius: 8px;
-  gap: 8px;
-  color: var(--text-secondary);
-}
-
-.empty-title {
-  font-weight: 600;
-  font-size: 14px;
-  color: var(--text-primary);
-}
-
-.empty-desc {
-  font-size: 12px;
-  color: var(--text-tertiary);
-  max-width: 340px;
-}
-
-.scanner-webcam-feed {
-  position: relative;
-  width: 100%;
-  height: 220px;
-  background: #000;
-  border-radius: 8px;
-  overflow: hidden;
-  border: 1px solid var(--border-subtle, #e5e7eb);
-}
-
-.webcam-video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.webcam-overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.webcam-reticle {
-  width: min(220px, 75%);
-  height: 120px;
-  border: 2px dashed rgba(255, 255, 255, 0.7);
-  border-radius: 8px;
-}
-
-.scanner-scans-panel {
-  background: var(--surface-card, #ffffff);
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  border-radius: 6px;
-  padding: 10px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  max-height: 140px;
-  overflow-y: auto;
-}
-
-.scans-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.scans-title {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.clear-scans-btn {
-  font-size: 11px;
-  color: var(--text-tertiary);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-}
-
-.scans-empty {
-  font-size: 12px;
-  color: var(--text-tertiary);
-  font-style: italic;
-  padding: 4px 0;
-}
-
-.scans-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.scan-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 5px 8px;
-  background: var(--surface-hover, #f8fafc);
-  border-radius: 4px;
-  border: 1px solid var(--border-subtle, #e5e7eb);
-}
-
-.scan-item__code {
-  font-size: 12.5px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.scan-item__meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 11px;
-  color: var(--text-tertiary);
-}
-
-.scan-item__source {
-  background: var(--surface-active, #f1f5f9);
-  padding: 1px 5px;
-  border-radius: 3px;
-  border: 1px solid var(--border-subtle, #e5e7eb);
-}
-
-.scanner-modal__footer {
-  display: flex;
-  justify-content: flex-end;
-  border-top: 1px solid var(--border-subtle, #e5e7eb);
-  padding-top: 12px;
-}
-</style>

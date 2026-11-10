@@ -16,15 +16,15 @@
     <div v-show="activeTab === 'payway'" class="space-y-6">
       <DataCard>
         <template #header>
-          <div class="int-card-header">
-            <div class="int-card-header__title">
+          <div class="flex items-center justify-between gap-3 flex-wrap w-full">
+            <div class="flex items-center gap-2 min-w-0">
               <UIcon name="i-heroicons-credit-card" class="w-5 h-5 text-gray-500" />
               <div>
-                <h3 class="int-card-header__h">ABA PayWay Payment Gateway</h3>
-                <p class="int-card-header__sub">Configured in auth.system and auth.credential_api_key</p>
+                <h3 class="m-0 text-[13.5px] font-semibold text-ink">ABA PayWay Payment Gateway</h3>
+                <p class="m-0 text-xs text-ink-tertiary">Configured in auth.system and auth.credential_api_key</p>
               </div>
             </div>
-            <div class="int-card-header__actions">
+            <div class="flex items-center gap-2">
               <StatusBadge
                 :status="paywayForm.status_code === 'active' ? 'ACTIVE' : 'INACTIVE'"
                 :label="paywayForm.status_code === 'active' ? 'Active' : 'Inactive'"
@@ -36,7 +36,7 @@
 
         <form class="space-y-5" @submit.prevent="savePaywayConfig">
           <!-- Gateway Status & Mode -->
-          <div class="int-panel">
+          <div class="p-3.5 rounded-lg border border-border-subtle bg-surface-inset">
             <FormSection :columns="2">
               <FormField label="Gateway Status">
                 <BaseSelect v-model="paywayForm.status_code" :options="paywayStatusOptions" />
@@ -62,7 +62,7 @@
                 placeholder="3F3C50388E2F0236777CC5E9BB90D47C35447D5B"
               >
                 <template #trailing>
-                  <button type="button" class="int-reveal" :aria-label="showPublicKey ? 'Hide key' : 'Reveal key'" @click="showPublicKey = !showPublicKey">
+                  <button type="button" class="bg-transparent border-0 cursor-pointer text-ink-tertiary hover:text-ink inline-flex p-0.5" :aria-label="showPublicKey ? 'Hide key' : 'Reveal key'" @click="showPublicKey = !showPublicKey">
                     <UIcon :name="showPublicKey ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'" class="w-4 h-4" />
                   </button>
                 </template>
@@ -71,16 +71,16 @@
           </FormSection>
 
           <!-- RSA Keys Section (Collapsible) -->
-          <div class="int-panel int-panel--plain">
-            <button type="button" class="int-collapse" :aria-expanded="showRsaKeys" @click="showRsaKeys = !showRsaKeys">
-              <span class="int-collapse__title">
+          <div class="p-3.5 rounded-lg border border-border-subtle bg-surface-card">
+            <button type="button" class="w-full flex items-center justify-between gap-2 bg-transparent border-0 p-0 cursor-pointer text-left" :aria-expanded="showRsaKeys" @click="showRsaKeys = !showRsaKeys">
+              <span class="flex items-center gap-2 text-xs font-semibold text-ink">
                 <UIcon name="i-heroicons-key" class="w-4 h-4 text-gray-500" />
                 <span>PayWay RSA Cryptographic Keys (Optional for standard KHQR)</span>
               </span>
               <UIcon :name="showRsaKeys ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down'" class="w-4 h-4 text-gray-500" />
             </button>
 
-            <div v-show="showRsaKeys" class="int-collapse__body">
+            <div v-show="showRsaKeys" class="flex flex-col gap-3 mt-3 pt-3 border-t border-border-subtle">
               <FormField label="RSA Public Key">
                 <BaseTextarea v-model="paywayForm.rsa_public_key" mono :rows="3" placeholder="MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQ..." />
               </FormField>
@@ -92,8 +92,8 @@
 
           <!-- Webhook & Checkout Endpoints -->
           <FormSection title="Endpoints &amp; Timers">
-            <div class="int-endpoints">
-              <div class="int-endpoints__wide">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div class="md:col-span-2">
                 <FormField
                   label="Pushback Webhook Domain (Callback Base URL)"
                   hint="ABA sends instant payment IPN callbacks to /api/payments/aba/pushback under this domain."
@@ -120,7 +120,7 @@
             :variant="testResult.is_valid ? 'success' : 'warning'"
             :title="testResult.message"
           >
-            <pre v-if="testResult.details" class="int-pre">{{ JSON.stringify(testResult.details, null, 2) }}</pre>
+            <pre v-if="testResult.details" class="my-2 p-2 font-mono text-[11px] overflow-x-auto bg-surface-card border border-border-subtle rounded-md text-ink-secondary">{{ JSON.stringify(testResult.details, null, 2) }}</pre>
           </InlineAlert>
 
           <!-- Action Buttons -->
@@ -150,12 +150,12 @@
       <!-- Active Bots Card -->
       <DataCard>
         <template #header>
-          <div class="int-card-header">
-            <div class="int-card-header__title">
+          <div class="flex items-center justify-between gap-3 flex-wrap w-full">
+            <div class="flex items-center gap-2 min-w-0">
               <UIcon name="i-heroicons-paper-airplane" class="w-5 h-5 text-gray-500" />
               <div>
-                <h3 class="int-card-header__h">Configured Telegram Bots</h3>
-                <p class="int-card-header__sub">Stored in auth.telegram_bot table</p>
+                <h3 class="m-0 text-[13.5px] font-semibold text-ink">Configured Telegram Bots</h3>
+                <p class="m-0 text-xs text-ink-tertiary">Stored in auth.telegram_bot table</p>
               </div>
             </div>
             <IconButton icon="i-heroicons-arrow-path" label="Reload Telegram data" :loading="loadingTelegram" @click="loadTelegramData" />
@@ -169,19 +169,19 @@
             title="No Telegram bots configured."
           />
 
-          <div v-for="bot in telegramBots" :key="bot.id" class="int-panel int-bot">
-            <div class="int-bot__top">
+          <div v-for="bot in telegramBots" :key="bot.id" class="p-3.5 rounded-lg border border-border-subtle bg-surface-inset flex flex-col gap-2.5">
+            <div class="flex items-center justify-between gap-2 flex-wrap">
               <div class="int-bot__name">
-                <span class="int-bot__title">{{ bot.name }}</span>
-                <span class="int-bot__code">({{ bot.code }})</span>
-                <span v-if="bot.username" class="int-bot__user">@{{ bot.username }}</span>
+                <span class="text-[13px] font-semibold text-ink">{{ bot.name }}</span>
+                <span class="ml-2 font-mono text-xs text-ink-tertiary">({{ bot.code }})</span>
+                <span v-if="bot.username" class="ml-2 font-mono text-xs text-ink-tertiary">@{{ bot.username }}</span>
               </div>
-              <div class="int-card-header__actions">
+              <div class="flex items-center gap-2">
                 <StatusBadge :status="(bot.status_code || 'active').toUpperCase()" :label="bot.status_code || 'active'" />
                 <BaseButton size="sm" variant="secondary" label="Edit Token" icon="i-heroicons-pencil-square" @click="openEditBotModal(bot)" />
               </div>
             </div>
-            <div class="int-bot__meta">
+            <div class="flex justify-between gap-2 flex-wrap pt-2 border-t border-border-subtle font-mono text-xs text-ink-tertiary">
               <span>Token: {{ bot.token ? bot.token.slice(0, 8) + '...' + bot.token.slice(-6) : 'Not configured' }}</span>
               <span>Updated: {{ bot.updated_datetime ? new Date(bot.updated_datetime).toLocaleDateString() : 'N/A' }}</span>
             </div>
@@ -192,12 +192,12 @@
       <!-- Alert Channels & Groups Card -->
       <DataCard no-pad>
         <template #header>
-          <div class="int-card-header">
-            <div class="int-card-header__title">
+          <div class="flex items-center justify-between gap-3 flex-wrap w-full">
+            <div class="flex items-center gap-2 min-w-0">
               <UIcon name="i-heroicons-chat-bubble-left-right" class="w-5 h-5 text-gray-500" />
               <div>
-                <h3 class="int-card-header__h">Operational Alert Channels</h3>
-                <p class="int-card-header__sub">Configured Telegram chat groups stored in auth.telegram_chat</p>
+                <h3 class="m-0 text-[13.5px] font-semibold text-ink">Operational Alert Channels</h3>
+                <p class="m-0 text-xs text-ink-tertiary">Configured Telegram chat groups stored in auth.telegram_chat</p>
               </div>
             </div>
             <BaseButton size="sm" variant="primary" label="Add Channel" icon="i-heroicons-plus" @click="openCreateChatModal" />
@@ -212,15 +212,15 @@
           empty-title="No alert channels found."
           empty-icon="i-heroicons-chat-bubble-left-right"
         >
-          <template #cell-code="{ row }"><span class="int-mono-strong">{{ row.code }}</span></template>
-          <template #cell-chat_id="{ row }"><span class="int-mono">{{ row.chat_id || 'N/A' }}</span></template>
-          <template #cell-thread_id="{ row }"><span class="int-mono">{{ row.thread_id || 'General' }}</span></template>
-          <template #cell-type="{ row }"><span class="int-upper">{{ row.type || 'group' }}</span></template>
+          <template #cell-code="{ row }"><span class="font-mono font-semibold text-ink">{{ row.code }}</span></template>
+          <template #cell-chat_id="{ row }"><span class="font-mono text-ink-tertiary">{{ row.chat_id || 'N/A' }}</span></template>
+          <template #cell-thread_id="{ row }"><span class="font-mono text-ink-tertiary">{{ row.thread_id || 'General' }}</span></template>
+          <template #cell-type="{ row }"><span class="uppercase text-[11px]">{{ row.type || 'group' }}</span></template>
           <template #cell-status_code="{ row }">
             <StatusBadge :status="(row.status_code || 'active').toUpperCase()" :label="row.status_code || 'active'" />
           </template>
           <template #cell-actions="{ row }">
-            <div class="int-row-actions">
+            <div class="flex justify-end gap-1">
               <IconButton icon="i-heroicons-pencil-square" label="Edit Channel" @click="openEditChatModal(row)" />
               <IconButton icon="i-heroicons-trash" label="Delete Channel" variant="danger" @click="handleDeleteChat(row.id)" />
             </div>
@@ -231,18 +231,18 @@
       <!-- Test Telegram Dispatcher Card -->
       <DataCard>
         <template #header>
-          <div class="int-card-header__title">
+          <div class="flex items-center gap-2 min-w-0">
             <UIcon name="i-heroicons-signal" class="w-5 h-5 text-gray-500" />
-            <h3 class="int-card-header__h">Send Operational Test Notification</h3>
+            <h3 class="m-0 text-[13.5px] font-semibold text-ink">Send Operational Test Notification</h3>
           </div>
         </template>
 
         <form class="space-y-4" @submit.prevent="handleSendTestTelegram">
-          <div class="int-endpoints">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
             <FormField label="Target Channel" required>
               <BaseSelect v-model="testTelegramTarget" :options="chatTargetOptions" required />
             </FormField>
-            <div class="int-endpoints__wide">
+            <div class="md:col-span-2">
               <FormField label="Message Body (Markdown / HTML)" required>
                 <BaseInput v-model="testTelegramMessage" required placeholder="Operational status test: Systems online and verified." />
               </FormField>
@@ -611,33 +611,3 @@ const botOptions = computed(() => telegramBots.value.map((b: any) => ({ value: b
 const chatTargetOptions = computed(() => telegramChats.value.map((c: any) => ({ value: c.code, label: `${c.name} (${c.code})` })))
 </script>
 
-<style scoped>
-.int-card-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; width: 100%; }
-.int-card-header__title { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.int-card-header__h { margin: 0; font-size: 13.5px; font-weight: 600; color: var(--text-primary, #0f172a); }
-.int-card-header__sub { margin: 0; font-size: 12px; color: var(--text-tertiary, #64748b); }
-.int-card-header__actions { display: flex; align-items: center; gap: 8px; }
-.int-panel { padding: 14px; border-radius: var(--radius-lg, 8px); border: 1px solid var(--border-subtle, #e5e7eb); background: var(--surface-inset, #f8fafc); }
-.int-panel--plain { background: var(--surface-card, #ffffff); }
-.int-collapse { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 8px; background: none; border: none; padding: 0; cursor: pointer; text-align: left; }
-.int-collapse__title { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: var(--text-primary, #0f172a); }
-.int-collapse__body { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border-subtle, #e5e7eb); }
-.int-reveal { background: none; border: none; cursor: pointer; color: var(--text-tertiary, #64748b); display: inline-flex; padding: 2px; }
-.int-endpoints { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-.int-endpoints__wide { grid-column: span 2; }
-.int-pre { margin: 8px 0 0; padding: 8px; font-family: var(--font-mono); font-size: 11px; overflow-x: auto; background: var(--surface-card, #ffffff); border: 1px solid var(--border-subtle, #e5e7eb); border-radius: var(--radius-md, 6px); color: var(--text-secondary, #475569); }
-.int-bot { display: flex; flex-direction: column; gap: 10px; }
-.int-bot__top { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
-.int-bot__title { font-size: 13px; font-weight: 600; color: var(--text-primary, #0f172a); }
-.int-bot__code, .int-bot__user { margin-left: 8px; font-family: var(--font-mono); font-size: 12px; color: var(--text-tertiary, #64748b); }
-.int-bot__meta { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; padding-top: 8px; border-top: 1px solid var(--border-subtle, #e5e7eb); font-family: var(--font-mono); font-size: 12px; color: var(--text-tertiary, #64748b); }
-.int-mono { font-family: var(--font-mono); color: var(--text-tertiary, #64748b); }
-.int-mono-strong { font-family: var(--font-mono); font-weight: 600; }
-.int-upper { text-transform: uppercase; font-size: 11px; }
-.int-row-actions { display: flex; justify-content: flex-end; gap: 4px; }
-
-@media (max-width: 767px) {
-  .int-endpoints { grid-template-columns: 1fr; }
-  .int-endpoints__wide { grid-column: auto; }
-}
-</style>

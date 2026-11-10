@@ -15,7 +15,7 @@
 
     <!-- Date Picker -->
     <AppCard>
-      <div class="report-filter-row">
+      <div class="flex items-end gap-3 flex-wrap">
         <DateRangePicker v-model:from="fromDate" v-model:to="toDate" inline from-label="From Date" to-label="To Date" />
         <AppButton variant="primary" icon="i-heroicons-play" :loading="loading" @click="fetchReport">
           Run Report
@@ -24,7 +24,7 @@
     </AppCard>
 
     <!-- P&L KPIs -->
-    <div class="pnl-kpi-grid">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
       <AppStatCard
         label="Gross Revenue"
         :value="`$${fmt(report.revenue)}`"
@@ -84,13 +84,13 @@
         empty-text="No period breakdown rows."
       >
         <template #cell-revenue="{ row }">
-          <span class="val-positive">${{ fmt(row.revenue) }}</span>
+          <span class="font-semibold text-status-green tabular-nums">${{ fmt(row.revenue) }}</span>
         </template>
         <template #cell-expenses="{ row }">
-          <span class="val-negative">${{ fmt(row.expenses) }}</span>
+          <span class="font-semibold text-status-red tabular-nums">${{ fmt(row.expenses) }}</span>
         </template>
         <template #cell-net_profit="{ row }">
-          <span :class="Number(row.net_profit) >= 0 ? 'val-positive' : 'val-negative'">
+          <span :class="Number(row.net_profit) >= 0 ? 'font-semibold text-status-green tabular-nums' : 'font-semibold text-status-red tabular-nums'">
             ${{ fmt(row.net_profit) }}
           </span>
         </template>
@@ -180,41 +180,3 @@ function exportCsv() {
 onMounted(fetchReport)
 </script>
 
-<style scoped>
-.report-filter-row {
-  display: flex;
-  align-items: flex-end;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.pnl-kpi-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-}
-
-@media (max-width: 1024px) {
-  .pnl-kpi-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 640px) {
-  .pnl-kpi-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.val-positive {
-  font-weight: 600;
-  color: var(--status-success-text);
-  font-variant-numeric: tabular-nums;
-}
-
-.val-negative {
-  font-weight: 600;
-  color: var(--status-danger-text);
-  font-variant-numeric: tabular-nums;
-}
-</style>

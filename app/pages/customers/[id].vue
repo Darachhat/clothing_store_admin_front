@@ -45,7 +45,7 @@
         />
       </div>
 
-      <div class="detail-grid">
+      <div class="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-4 items-start">
         <AppCard title="Customer Information">
           <dl class="detail-list">
             <div class="detail-row"><dt>Code</dt><dd><code class="mono font-semibold">{{ customer.customer_code || customer.code }}</code></dd></div>
@@ -233,17 +233,3 @@ async function loadData() {
 onMounted(loadData)
 </script>
 
-<style scoped>
-.detail-grid {
-  display: grid;
-  grid-template-columns: 340px 1fr;
-  gap: 16px;
-  align-items: start;
-}
-
-@media (max-width: 860px) {
-  .detail-grid {
-    grid-template-columns: 1fr;
-  }
-}
-</style>

@@ -17,8 +17,8 @@
 
     <div v-if="loading" class="state-card">Loading product…</div>
 
-    <form v-else-if="product" class="product-form-layout" @submit.prevent="save">
-      <div class="product-form-main">
+    <form v-else-if="product" class="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-4 items-start" @submit.prevent="save">
+      <div class="flex flex-col gap-4">
         <AppCard title="Basic Information">
           <div class="form-grid">
             <div class="form-field">
@@ -66,7 +66,7 @@
           />
         </AppCard>
 
-        <div class="form-actions-bar">
+        <div class="flex justify-end gap-2">
           <AppButton type="button" variant="default" label="Cancel" :to="`/products/${id}`" />
           <AppButton type="submit" variant="primary" label="Save Changes" icon="i-heroicons-check" :loading="saving" />
         </div>
@@ -170,30 +170,3 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped>
-.product-form-layout {
-  display: grid;
-  grid-template-columns: 1fr 340px;
-  gap: 16px;
-  align-items: start;
-}
-
-@media (max-width: 960px) {
-  .product-form-layout {
-    grid-template-columns: 1fr;
-  }
-}
-
-.product-form-main,
-.product-form-side {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.form-actions-bar {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
-</style>

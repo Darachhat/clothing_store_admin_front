@@ -44,8 +44,8 @@
           <code class="mono font-semibold">{{ value }}</code>
         </template>
         <template #cell-color="{ row }">
-          <div class="color-cell">
-            <span v-if="row.color?.hex_code" class="color-dot" :style="{ background: row.color.hex_code }" />
+          <div class="flex items-center gap-1.5">
+            <span v-if="row.color?.hex_code" class="inline-block w-2.5 h-2.5 rounded-full border border-border-subtle shrink-0" :style="{ background: row.color.hex_code }" />
             {{ row.color?.name ?? (row as any).color_name ?? '—' }}
           </div>
         </template>
@@ -163,7 +163,7 @@
       :initial-copies="stickerInitialCopies"
     />
 
-    <BarcodeScannerModal v-model="showScanner" :auto-close-on-scan="true" @scanned="(code) => { form.barcode = code; showScanner = false }" />
+    <BarcodeScannerModal v-model="showScanner" :auto-close-on-scan="true" @scanned="(code: string) => { form.barcode = code; showScanner = false }" />
 
     <AppConfirmDialog
       v-model="showDeleteConfirm"
@@ -376,49 +376,3 @@ onMounted(async () => {
 })
 </script>
 
-<style scoped>
-.kh-text {
-  font-family: 'Kantumruy Pro', 'Battambang', 'Battambang Local', 'Noto Sans Khmer', sans-serif;
-}
-
-.color-cell {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.color-dot {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  flex-shrink: 0;
-}
-
-.sticker-modal-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-  padding: 8px;
-}
-
-.sticker-preview-stage {
-  background: #f1f5f9;
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  border-radius: var(--radius-md, 6px);
-  padding: 16px;
-  width: 100%;
-  overflow-x: auto;
-  display: flex;
-  justify-content: center;
-}
-
-.qr-actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-</style>
