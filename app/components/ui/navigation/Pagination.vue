@@ -1,10 +1,10 @@
 <template>
-  <div v-if="total > 0" class="app-pagination">
-    <div class="app-pagination__summary">
-      Showing <strong>{{ startItem }}</strong>–<strong>{{ endItem }}</strong> of <strong>{{ total }}</strong>
+  <div v-if="total > 0" class="flex items-center justify-between gap-3 flex-wrap text-xs text-ink-secondary py-2">
+    <div>
+      Showing <strong class="text-ink font-semibold">{{ startItem }}</strong>–<strong class="text-ink font-semibold">{{ endItem }}</strong> of <strong class="text-ink font-semibold">{{ total }}</strong>
     </div>
 
-    <div class="app-pagination__controls">
+    <div class="flex items-center gap-2">
       <AppButton
         size="xs"
         variant="default"
@@ -13,12 +13,13 @@
         :disabled="page <= 1"
         @click="$emit('update:page', page - 1)"
       />
-      <span class="app-pagination__page">
-        Page <strong>{{ page }}</strong> of <strong>{{ totalPages }}</strong>
+      <span class="text-xs px-1">
+        Page <strong class="text-ink font-semibold">{{ page }}</strong> of <strong class="text-ink font-semibold">{{ totalPages }}</strong>
       </span>
       <AppButton
         size="xs"
         variant="default"
+        trailing-icon="i-heroicons-chevron-right"
         label="Next"
         :disabled="page >= totalPages"
         @click="$emit('update:page', page + 1)"
@@ -28,6 +29,8 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+
 const props = withDefaults(defineProps<{
   page: number
   pageSize?: number
@@ -44,44 +47,3 @@ const totalPages = computed(() => Math.max(1, Math.ceil(props.total / props.page
 const startItem = computed(() => props.total === 0 ? 0 : (props.page - 1) * props.pageSize + 1)
 const endItem = computed(() => Math.min(props.total, props.page * props.pageSize))
 </script>
-
-<style scoped>
-.app-pagination {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  flex-wrap: wrap;
-  font-size: 12px;
-  color: var(--text-tertiary, #64748b);
-}
-
-.app-pagination__summary strong,
-.app-pagination__page strong {
-  color: var(--text-primary, #0f172a);
-  font-weight: 600;
-}
-
-.app-pagination__controls {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-@media (max-width: 520px) {
-  .app-pagination {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
-  }
-
-  .app-pagination__summary {
-    text-align: center;
-  }
-
-  .app-pagination__controls {
-    justify-content: space-between;
-    width: 100%;
-  }
-}
-</style>

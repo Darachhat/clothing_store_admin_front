@@ -1,18 +1,18 @@
 <template>
-  <div v-if="!dismissed" class="inline-alert" :class="`inline-alert--${variant}`" role="alert">
-    <UIcon :name="iconName" class="inline-alert__icon" />
-    <div class="inline-alert__body">
-      <p v-if="title" class="inline-alert__title">{{ title }}</p>
-      <p v-if="description" class="inline-alert__desc">{{ description }}</p>
+  <div v-if="!dismissed" class="flex items-start gap-2.5 p-3 rounded-lg border border-subtle text-xs leading-normal" :class="alertVariantClasses" role="alert">
+    <UIcon :name="iconName" class="w-4 h-4 flex-shrink-0 mt-0.5" />
+    <div class="flex-1 min-w-0">
+      <p v-if="title" class="m-0 font-semibold text-ink">{{ title }}</p>
+      <p v-if="description" class="m-0 text-ink-secondary mt-0.5">{{ description }}</p>
       <slot />
     </div>
-    <div v-if="$slots.actions" class="inline-alert__actions">
+    <div v-if="$slots.actions" class="flex items-center gap-1.5 flex-shrink-0">
       <slot name="actions" />
     </div>
     <button
       v-if="dismissible"
       type="button"
-      class="inline-alert__close"
+      class="text-inherit opacity-70 hover:opacity-100 p-0.5 cursor-pointer transition-opacity"
       aria-label="Dismiss"
       @click="dismiss"
     >
@@ -22,6 +22,8 @@
 </template>
 
 <script setup lang="ts">
+import { ref, computed } from 'vue'
+
 const props = withDefaults(defineProps<{
   variant?: 'info' | 'success' | 'warning' | 'danger'
   title?: string
@@ -35,6 +37,19 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{ dismiss: [] }>()
 
 const dismissed = ref(false)
+
+const alertVariantClasses = computed(() => {
+  switch (props.variant) {
+    case 'success':
+      return 'bg-status-green-bg text-status-green'
+    case 'warning':
+      return 'bg-status-amber-bg text-status-amber'
+    case 'danger':
+      return 'bg-status-red-bg text-status-red'
+    default:
+      return 'bg-status-blue-bg text-status-blue'
+  }
+})
 
 const iconName = computed(() => {
   if (props.icon) return props.icon
@@ -51,61 +66,3 @@ function dismiss() {
   emit('dismiss')
 }
 </script>
-
-<style scoped>
-.inline-alert {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: var(--radius-lg, 8px);
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  font-size: 12.5px;
-  line-height: 1.45;
-}
-
-.inline-alert--info { background: var(--status-blue-bg, #eff6ff); color: var(--status-blue, #1d4ed8); }
-.inline-alert--success { background: var(--status-green-bg, #f0fdf4); color: var(--status-green, #15803d); }
-.inline-alert--warning { background: var(--status-amber-bg, #fffbeb); color: var(--status-amber, #b45309); }
-.inline-alert--danger { background: var(--status-red-bg, #fef2f2); color: var(--status-red, #b91c1c); }
-
-.inline-alert__icon {
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
-  margin-top: 1px;
-}
-
-.inline-alert__body {
-  flex: 1;
-  min-width: 0;
-}
-
-.inline-alert__title {
-  margin: 0;
-  font-weight: 600;
-}
-
-.inline-alert__desc {
-  margin: 0;
-  color: var(--text-secondary, #475569);
-}
-
-.inline-alert__actions {
-  display: flex;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-.inline-alert__close {
-  background: none;
-  border: none;
-  color: inherit;
-  cursor: pointer;
-  padding: 2px;
-  opacity: 0.7;
-}
-
-.inline-alert__close:hover { opacity: 1; }
-</style>
-

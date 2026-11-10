@@ -1,33 +1,40 @@
 <template>
   <div>
     <!-- Mobile Backdrop -->
-    <Transition name="fade">
+    <Transition
+      enter-active-class="transition-opacity duration-150 ease-out"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition-opacity duration-150 ease-in"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
       <div
         v-if="isMobileOpen"
-        class="sidebar-mobile-backdrop no-print"
+        class="fixed inset-0 bg-ink/45 backdrop-blur-[1px] z-45 md:hidden no-print"
         aria-hidden="true"
         @click="closeMobileSidebar"
       />
     </Transition>
 
     <aside
-      class="admin-sidebar app-sidebar no-print"
+      class="fixed inset-y-0 left-0 z-50 md:z-30 flex flex-col border-r border-border-subtle bg-surface-card transition-all duration-200 md:static no-print"
       :class="[
-        effectiveRail ? 'is-collapsed app-sidebar--rail' : 'app-sidebar--full',
-        { 'is-mobile-open': isMobileOpen },
+        effectiveRail ? 'w-16' : 'w-60',
+        isMobileOpen ? 'translate-x-0 shadow-xl' : '-translate-x-full md:translate-x-0',
         customClass,
       ]"
       :aria-label="ariaLabel || 'Main navigation'"
     >
       <!-- ─── Header: Brand Logo & Title ─────────────────────────────── -->
-      <div class="sidebar-brand app-sidebar__header">
+      <div class="h-14 px-3 flex items-center justify-between border-b border-border-subtle shrink-0">
         <NuxtLink
           to="/dashboard"
-          class="app-sidebar__brand flex items-center gap-2.5 min-w-0 no-underline flex-1"
+          class="flex items-center gap-2.5 min-w-0 no-underline flex-1"
           :title="String(config.public.appName || 'Clothing Store')"
           @click="closeMobileSidebar"
         >
-          <div class="sidebar-brand-mark app-sidebar__logo-mark">
+          <div class="w-8 h-8 rounded-md bg-ink text-white flex items-center justify-center shrink-0 overflow-hidden">
             <img
               v-if="brand.logo_url"
               :src="brand.logo_url"
@@ -36,11 +43,11 @@
             />
             <UIcon v-else name="i-heroicons-building-storefront" class="w-4 h-4 text-white" />
           </div>
-          <div v-if="!effectiveRail" class="app-sidebar__brand-meta min-w-0">
-            <span class="sidebar-brand-name app-sidebar__brand-name block truncate font-khmer">
+          <div v-if="!effectiveRail" class="flex flex-col min-w-0">
+            <span class="font-semibold text-xs text-ink block truncate font-khmer">
               {{ displayName }}
             </span>
-            <span v-if="branchName" class="app-sidebar__brand-branch block truncate">
+            <span v-if="branchName" class="text-[10px] text-ink-tertiary block truncate leading-tight">
               {{ branchName }}
             </span>
           </div>
@@ -50,7 +57,7 @@
         <button
           v-if="collapsible"
           type="button"
-          class="sidebar-collapse-btn app-sidebar__toggle-btn"
+          class="hidden md:inline-flex items-center justify-center w-7 h-7 rounded border border-border-subtle bg-surface-card text-ink-secondary hover:bg-surface-hover hover:text-ink cursor-pointer shrink-0"
           :aria-label="effectiveRail ? 'Expand sidebar' : 'Collapse sidebar'"
           :title="effectiveRail ? 'Expand sidebar' : 'Collapse sidebar'"
           @click="toggleCollapse"
@@ -64,7 +71,7 @@
         <!-- Mobile Close Drawer Button -->
         <button
           type="button"
-          class="sidebar-mobile-close-btn"
+          class="md:hidden inline-flex items-center justify-center w-8 h-8 rounded border border-border-subtle bg-surface-card text-ink-secondary hover:bg-surface-hover hover:text-ink cursor-pointer shrink-0"
           aria-label="Close navigation menu"
           @click="closeMobileSidebar"
         >
@@ -73,52 +80,57 @@
       </div>
 
       <!-- ─── Navigation Sections ────────────────────────────────────── -->
-      <nav class="sidebar-nav app-sidebar__full-nav" :aria-label="ariaLabel || 'Main navigation'">
+      <nav class="flex-1 overflow-y-auto px-2 py-3 flex flex-col gap-0.5" :aria-label="ariaLabel || 'Main navigation'">
         <template v-for="(section, idx) in filteredNavSections" :key="section.title">
-          <div v-if="!effectiveRail" class="sidebar-section-label app-sidebar__section-title">
+          <div v-if="!effectiveRail" class="px-2 pt-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-ink-tertiary select-none">
             {{ section.title }}
           </div>
-          <div v-else-if="idx > 0" class="sidebar-section-divider" />
+          <div v-else-if="idx > 0" class="h-px my-2 bg-border-subtle mx-2" />
 
           <NuxtLink
             v-for="item in section.items"
             :key="item.to"
             :to="item.to"
-            class="nav-item app-sidebar__nav-link"
-            :class="{ active: isActive(item.to, item.exact), 'is-active': isActive(item.to, item.exact) }"
+            class="flex items-center gap-2.5 px-2.5 py-2 rounded-md text-xs font-medium transition-colors"
+            :class="[
+              isActive(item.to, item.exact)
+                ? 'bg-ink text-white font-semibold'
+                : 'text-ink-secondary hover:bg-surface-hover hover:text-ink',
+              effectiveRail && 'justify-center px-0'
+            ]"
             :title="effectiveRail ? `${section.title}: ${item.label}${item.shortcut ? ` [${item.shortcut}]` : ''}` : undefined"
             @click="closeMobileSidebar"
           >
-            <UIcon :name="item.icon" class="nav-icon" />
-            <span v-show="!effectiveRail" class="app-sidebar__nav-label truncate flex-1">{{ item.label }}</span>
-            <span v-if="!effectiveRail && item.badge" class="app-sidebar__nav-badge">{{ item.badge }}</span>
-            <span v-else-if="!effectiveRail && item.shortcut" class="app-sidebar__nav-shortcut">{{ item.shortcut }}</span>
+            <UIcon :name="item.icon" class="w-4 h-4 shrink-0" />
+            <span v-show="!effectiveRail" class="truncate flex-1">{{ item.label }}</span>
+            <span v-if="!effectiveRail && item.badge" class="text-[10px] font-semibold bg-ink text-white px-1.5 py-0.5 rounded-full">{{ item.badge }}</span>
+            <span v-else-if="!effectiveRail && item.shortcut" class="text-[10px] font-mono bg-surface-hover text-ink-tertiary px-1 py-0.5 rounded">{{ item.shortcut }}</span>
           </NuxtLink>
         </template>
       </nav>
 
       <!-- ─── Bottom Footer Actions ──────────────────────────────────── -->
-      <div class="sidebar-footer app-sidebar__footer" :class="{ 'is-rail': effectiveRail }">
+      <div class="p-2 border-t border-border-subtle flex flex-col gap-1 shrink-0" :class="[effectiveRail && 'items-center']">
         <div
-          class="sidebar-user-card"
-          :class="{ 'is-collapsed': effectiveRail }"
+          class="flex items-center gap-2 p-1.5 rounded-md mb-1 w-full"
+          :class="[effectiveRail ? 'justify-center p-0' : '']"
           :title="effectiveRail ? `${userName} (${userRole})` : undefined"
         >
-          <div class="sidebar-user-avatar app-sidebar__user-avatar">
+          <div class="w-7 h-7 rounded-full bg-ink text-white flex items-center justify-center text-[11px] font-bold shrink-0">
             {{ userInitials }}
           </div>
           <div v-show="!effectiveRail" class="min-w-0 flex-1">
-            <div class="sidebar-user-name truncate" :title="userName">
+            <div class="text-xs font-semibold text-ink truncate" :title="userName">
               {{ userName }}
             </div>
-            <div class="sidebar-user-role truncate">
+            <div class="text-[10.5px] text-ink-tertiary truncate">
               {{ userRole }}
             </div>
           </div>
           <button
             v-if="!effectiveRail && showShortcuts"
             type="button"
-            class="app-sidebar__logout-btn"
+            class="w-6.5 h-6.5 rounded flex items-center justify-center cursor-pointer text-ink-tertiary hover:bg-surface-hover hover:text-ink shrink-0"
             title="Keyboard Shortcuts [?]"
             @click="$emit('shortcuts')"
           >
@@ -128,11 +140,12 @@
 
         <button
           type="button"
-          class="nav-item sidebar-signout-btn"
+          class="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-xs font-medium transition-colors text-status-red hover:bg-status-red-bg cursor-pointer"
+          :class="[effectiveRail && 'justify-center px-0']"
           :title="effectiveRail ? t('common.sign_out', 'Sign out') : undefined"
           @click="onLogout"
         >
-          <UIcon name="i-heroicons-arrow-right-on-rectangle" class="nav-icon" />
+          <UIcon name="i-heroicons-arrow-right-on-rectangle" class="w-4 h-4 shrink-0" />
           <span v-show="!effectiveRail">{{ t('common.sign_out', 'Sign out') }}</span>
         </button>
       </div>
@@ -172,7 +185,7 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
   (e: 'shortcuts'): void
   (e: 'logout'): void
-}>()
+  }>()
 
 const config = useRuntimeConfig()
 const authStore = useAuthStore()
@@ -312,149 +325,3 @@ onBeforeUnmount(() => {
   }
 })
 </script>
-
-<style scoped>
-.sidebar-mobile-backdrop {
-  display: none;
-}
-
-.sidebar-mobile-close-btn {
-  display: none;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: var(--radius-md, 6px);
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  background: var(--surface-card, #ffffff);
-  color: var(--text-secondary, #475569);
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.sidebar-mobile-close-btn:hover {
-  background: var(--surface-hover, #f1f5f9);
-  color: var(--text-primary, #0f172a);
-}
-
-@media (max-width: 767px) {
-  .sidebar-mobile-backdrop {
-    display: block;
-    position: fixed;
-    inset: 0;
-    background: rgba(15, 23, 42, 0.45);
-    backdrop-filter: blur(1px);
-    z-index: 45;
-  }
-
-  .sidebar-collapse-btn {
-    display: none !important;
-  }
-
-  .sidebar-mobile-close-btn {
-    display: inline-flex;
-  }
-}
-
-.app-sidebar__brand-meta {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.app-sidebar__brand-branch {
-  font-size: 10px;
-  color: var(--text-tertiary, #64748b);
-  line-height: 1.2;
-}
-
-.app-sidebar__nav-shortcut {
-  font-size: 10px;
-  font-family: var(--font-mono, monospace);
-  background: var(--surface-hover, #f1f5f9);
-  color: var(--text-tertiary, #64748b);
-  padding: 1px 4px;
-  border-radius: 3px;
-}
-
-.app-sidebar__nav-badge {
-  font-size: 10px;
-  font-weight: 600;
-  background: var(--accent-primary, #0f172a);
-  color: #ffffff;
-  padding: 1px 6px;
-  border-radius: 999px;
-}
-
-.sidebar-user-card {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 6px 8px;
-  margin-bottom: 4px;
-  border-radius: var(--radius-md, 6px);
-}
-
-.sidebar-user-card.is-collapsed {
-  justify-content: center;
-  padding: 6px 0;
-}
-
-.sidebar-user-avatar {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: var(--accent-primary, #0f172a);
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 11px;
-  font-weight: 700;
-  flex-shrink: 0;
-}
-
-.sidebar-user-name {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-primary, #0f172a);
-}
-
-.sidebar-user-role {
-  font-size: 10.5px;
-  color: var(--text-tertiary, #64748b);
-}
-
-.app-sidebar__logout-btn {
-  width: 26px;
-  height: 26px;
-  border-radius: var(--radius-sm, 4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  color: var(--text-tertiary, #64748b);
-  background: none;
-  border: none;
-  flex-shrink: 0;
-}
-
-.app-sidebar__logout-btn:hover {
-  background: var(--surface-hover, #f1f5f9);
-  color: var(--text-primary, #0f172a);
-}
-
-.sidebar-signout-btn {
-  color: var(--status-red, #b91c1c) !important;
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.15s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-</style>

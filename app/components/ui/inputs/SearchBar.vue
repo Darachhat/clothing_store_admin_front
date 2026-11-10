@@ -1,14 +1,18 @@
 <template>
   <div
-    class="search-bar"
-    :class="[`search-bar--${size || 'md'}`, { 'is-disabled': disabled, 'is-scannable': scannable }]"
-    :style="maxWidth ? { '--search-max-w': maxWidth } : undefined"
+    class="relative flex items-center w-full min-w-0"
+    :class="[disabled && 'opacity-55 pointer-events-none']"
+    :style="maxWidth ? { maxWidth } : undefined"
   >
-    <span v-if="loading" class="search-bar__spinner" aria-hidden="true" />
+    <span
+      v-if="loading"
+      class="absolute left-2.5 w-3.5 h-3.5 border-2 border-border-default border-t-ink rounded-full animate-spin pointer-events-none"
+      aria-hidden="true"
+    />
     <UIcon
       v-else
       name="i-heroicons-magnifying-glass"
-      class="search-bar__icon"
+      class="absolute left-2.5 w-4 h-4 text-ink-tertiary pointer-events-none"
     />
 
     <input
@@ -19,17 +23,22 @@
       :disabled="disabled"
       :aria-label="ariaLabel || placeholder || 'Search'"
       data-barcode-scanner-target="true"
-      class="search-bar__input search-bare"
+      class="w-full rounded-md border border-border-subtle bg-surface-inset text-ink placeholder:text-ink-tertiary focus:border-border-default focus:bg-surface-card focus:outline-none transition-colors [&::-webkit-search-cancel-button]:appearance-none"
+      :class="[
+        size === 'sm' ? 'h-7.5 text-xs pl-7.5 pr-14' :
+        size === 'lg' ? 'h-10 text-sm pl-9 pr-16' :
+        'h-9 text-xs sm:text-sm pl-8 pr-16'
+      ]"
       @input="onInput"
       @keydown.enter="onEnter"
       @keydown.esc="onEscape"
     />
 
-    <div class="search-bar__actions">
+    <div class="absolute right-1.5 flex items-center gap-1">
       <button
         v-if="clearable && internalValue && !disabled"
         type="button"
-        class="search-bar__action-btn"
+        class="inline-flex items-center justify-center w-6 h-6 rounded text-ink-tertiary hover:text-ink hover:bg-surface-hover transition-colors"
         aria-label="Clear search"
         title="Clear search"
         @click="clearSearch"
@@ -40,7 +49,7 @@
       <button
         v-if="scannable && !disabled"
         type="button"
-        class="search-bar__scan-btn"
+        class="inline-flex items-center justify-center w-6 h-6 rounded border border-border-subtle bg-surface-card text-ink-secondary hover:text-ink hover:bg-surface-hover transition-colors shadow-2xs"
         aria-label="Scan barcode or QR code"
         title="Scan barcode or QR code to search"
         @click="showScannerModal = true"
@@ -186,129 +195,3 @@ onBeforeUnmount(() => {
   if (debounceTimer) clearTimeout(debounceTimer)
 })
 </script>
-
-<style scoped>
-.search-bar {
-  position: relative;
-  display: flex;
-  align-items: center;
-  width: 100%;
-  max-width: var(--search-max-w, 100%);
-  min-width: 0;
-}
-
-@media (max-width: 639px) {
-  .search-bar {
-    max-width: 100% !important;
-  }
-}
-
-.search-bar.is-disabled {
-  opacity: 0.55;
-  pointer-events: none;
-}
-
-.search-bar__icon {
-  position: absolute;
-  left: 10px;
-  width: 15px;
-  height: 15px;
-  color: var(--text-tertiary, #64748b);
-  pointer-events: none;
-}
-
-.search-bar__spinner {
-  position: absolute;
-  left: 10px;
-  width: 14px;
-  height: 14px;
-  border: 2px solid var(--border-default, #d1d5db);
-  border-top-color: var(--text-primary, #0f172a);
-  border-radius: 50%;
-  animation: spin 0.6s linear infinite;
-  pointer-events: none;
-}
-
-.search-bar__input {
-  width: 100%;
-  height: var(--input-height-md, 36px);
-  padding: 6px 60px 6px 32px;
-  font-family: var(--font-body);
-  font-size: 13px;
-  color: var(--text-primary, #0f172a);
-  background: var(--surface-inset, #f8fafc);
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  border-radius: var(--radius-md, 6px);
-  outline: none;
-  transition: border-color 0.12s, background 0.12s;
-}
-
-.search-bar--sm .search-bar__input {
-  height: var(--input-height-sm, 30px);
-  font-size: 12px;
-  padding: 4px 54px 4px 30px;
-}
-
-.search-bar--lg .search-bar__input {
-  height: var(--input-height-lg, 40px);
-  font-size: 14px;
-  padding: 8px 64px 8px 34px;
-}
-
-.search-bar__input::-webkit-search-cancel-button {
-  -webkit-appearance: none;
-  appearance: none;
-}
-
-.search-bar__input::placeholder {
-  color: var(--text-muted, #94a3b8);
-}
-
-.search-bar__input:hover:not(:disabled) {
-  border-color: var(--border-default, #d1d5db);
-}
-
-.search-bar__input:focus {
-  border-color: var(--border-strong, #9ca3af);
-  background: var(--surface-card, #ffffff);
-}
-
-.search-bar__actions {
-  position: absolute;
-  right: 5px;
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-}
-
-.search-bar__action-btn,
-.search-bar__scan-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: var(--radius-sm, 4px);
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--text-tertiary, #64748b);
-  cursor: pointer;
-  transition: color 0.12s, background 0.12s, border-color 0.12s;
-}
-
-.search-bar__scan-btn {
-  background: var(--surface-card, #ffffff);
-  border-color: var(--border-subtle, #e5e7eb);
-  color: var(--text-secondary, #475569);
-}
-
-.search-bar__action-btn:hover,
-.search-bar__scan-btn:hover {
-  color: var(--text-primary, #0f172a);
-  background: var(--surface-hover, #f1f5f9);
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-</style>

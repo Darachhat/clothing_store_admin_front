@@ -1,34 +1,34 @@
 <template>
-  <div class="app-file-upload">
-    <label v-if="label" class="app-file-upload__label">
+  <div class="flex flex-col gap-1.5 w-full">
+    <label v-if="label" class="text-xs font-semibold text-ink-secondary flex items-center gap-1">
       {{ label }}
-      <span v-if="required" class="app-file-upload__required">*</span>
+      <span v-if="required" class="text-status-red">*</span>
     </label>
 
     <!-- Preview if file already uploaded / provided -->
-    <div v-if="modelValue" class="app-file-upload__preview">
-      <div class="app-file-upload__thumb-wrap">
+    <div v-if="modelValue" class="flex items-center gap-3 p-2.5 sm:px-3 bg-surface-card border border-border-subtle rounded-md">
+      <div class="w-11 h-11 rounded overflow-hidden bg-surface-inset border border-border-subtle shrink-0 flex items-center justify-center">
         <img
           v-if="isImage(modelValue)"
           :src="modelValue"
           alt="Attachment preview"
-          class="app-file-upload__thumb"
+          class="w-full h-full object-cover"
         />
-        <div v-else class="app-file-upload__doc-icon">
+        <div v-else class="text-ink-secondary">
           <UIcon name="i-heroicons-document-text" class="w-6 h-6" />
         </div>
       </div>
 
-      <div class="app-file-upload__meta">
-        <a :href="modelValue" target="_blank" rel="noopener noreferrer" class="app-file-upload__filename" :title="modelValue">
+      <div class="flex-1 min-w-0 flex flex-col gap-0.5">
+        <a :href="modelValue" target="_blank" rel="noopener noreferrer" class="text-xs sm:text-sm font-medium text-ink hover:underline truncate" :title="modelValue">
           {{ getDisplayFilename(modelValue) }}
         </a>
-        <span class="app-file-upload__tag">Uploaded</span>
+        <span class="text-[11px] font-mono text-ink-tertiary">Uploaded</span>
       </div>
 
       <button
         type="button"
-        class="app-file-upload__remove-btn"
+        class="w-7 h-7 rounded border border-border-subtle bg-transparent text-ink-secondary flex items-center justify-center hover:bg-status-red-bg hover:text-status-red transition-colors cursor-pointer"
         title="Remove attachment"
         @click="clearFile"
       >
@@ -39,12 +39,11 @@
     <!-- Dropzone when no file selected -->
     <div
       v-else
-      class="app-file-upload__dropzone"
-      :class="{
-        'is-dragging': isDragging,
-        'is-uploading': isUploading,
-        'is-error': !!uploadError,
-      }"
+      class="flex flex-col items-center justify-center p-4 sm:px-5 bg-surface-card border border-dashed rounded-md cursor-pointer transition-colors min-h-[90px] relative"
+      :class="[
+        isDragging ? 'border-border-default bg-surface-hover' : 'border-border-default hover:border-border-default hover:bg-surface-hover',
+        isUploading && 'pointer-events-none'
+      ]"
       @dragover.prevent="isDragging = true"
       @dragleave.prevent="isDragging = false"
       @drop.prevent="handleDrop"
@@ -54,34 +53,34 @@
         ref="fileInputRef"
         type="file"
         :accept="accept"
-        class="app-file-upload__input"
+        class="hidden"
         @change="handleFileChange"
       />
 
       <!-- Uploading spinner / progress -->
-      <div v-if="isUploading" class="app-file-upload__progress-wrap">
-        <div class="app-file-upload__spinner" />
-        <span class="app-file-upload__progress-text">Uploading attachment... {{ uploadProgress }}%</span>
-        <div class="app-file-upload__bar">
-          <div class="app-file-upload__bar-fill" :style="{ width: `${uploadProgress}%` }" />
+      <div v-if="isUploading" class="flex flex-col items-center gap-2 w-full max-w-[240px]">
+        <div class="w-5 h-5 border-2 border-border-subtle border-t-ink rounded-full animate-spin" />
+        <span class="text-xs text-ink-secondary font-mono">Uploading attachment... {{ uploadProgress }}%</span>
+        <div class="w-full h-1 bg-surface-active rounded-full overflow-hidden">
+          <div class="h-full bg-ink transition-all duration-200" :style="{ width: `${uploadProgress}%` }" />
         </div>
       </div>
 
       <!-- Idle prompt -->
-      <div v-else class="app-file-upload__prompt">
-        <div class="app-file-upload__icon-box">
+      <div v-else class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-md bg-surface-inset border border-border-subtle text-ink-secondary flex items-center justify-center shrink-0">
           <UIcon name="i-heroicons-arrow-up-tray" class="w-5 h-5" />
         </div>
-        <div class="app-file-upload__text-group">
-          <span class="app-file-upload__main-text">
-            <strong style="color:var(--text-primary); font-weight:600;">Click to upload</strong> or drag and drop
+        <div class="flex flex-col gap-0.5">
+          <span class="text-xs sm:text-sm text-ink-secondary">
+            <strong class="text-ink font-semibold">Click to upload</strong> or drag and drop
           </span>
-          <span class="app-file-upload__sub-text">{{ hint || 'PNG, JPG, WEBP, or PDF up to 10MB' }}</span>
+          <span class="text-[11px] text-ink-tertiary">{{ hint || 'PNG, JPG, WEBP, or PDF up to 10MB' }}</span>
         </div>
       </div>
     </div>
 
-    <div v-if="uploadError" class="app-file-upload__error">
+    <div v-if="uploadError" class="text-xs text-status-red m-0">
       {{ uploadError }}
     </div>
   </div>
@@ -166,221 +165,4 @@ function getDisplayFilename(url: string) {
   }
 }
 </script>
-
-<style scoped>
-.app-file-upload {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  width: 100%;
-}
-
-.app-file-upload__label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-secondary, #475569);
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.app-file-upload__required {
-  color: var(--status-red, #b91c1c);
-}
-
-.app-file-upload__dropzone {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 16px 20px;
-  background: var(--surface-card, #ffffff);
-  border: 1px dashed var(--border-default, #d1d5db);
-  border-radius: var(--radius-md, 6px);
-  cursor: pointer;
-  transition: border-color 0.15s, background-color 0.15s;
-  min-height: 90px;
-  position: relative;
-}
-
-.app-file-upload__dropzone:hover {
-  border-color: var(--border-strong, #9ca3af);
-  background: var(--surface-hover, #f1f5f9);
-}
-
-.app-file-upload__dropzone.is-dragging {
-  border-color: var(--border-strong, #9ca3af);
-  background: var(--surface-hover, #f1f5f9);
-}
-
-.app-file-upload__dropzone.is-error {
-  border-color: var(--border-strong, #9ca3af);
-}
-
-.app-file-upload__input {
-  display: none;
-}
-
-.app-file-upload__prompt {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.app-file-upload__icon-box {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-md, 6px);
-  background: var(--surface-inset, #f8fafc);
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  color: var(--text-secondary, #475569);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.app-file-upload__text-group {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.app-file-upload__main-text {
-  font-size: 13px;
-  color: var(--text-secondary, #475569);
-}
-
-.app-file-upload__sub-text {
-  font-size: 11px;
-  color: var(--text-tertiary, #64748b);
-}
-
-.app-file-upload__progress-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  max-width: 240px;
-}
-
-.app-file-upload__spinner {
-  width: 20px;
-  height: 20px;
-  border: 2px solid var(--border-subtle, #e5e7eb);
-  border-top-color: var(--accent-primary, #0f172a);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.app-file-upload__progress-text {
-  font-size: 12px;
-  color: var(--text-secondary, #475569);
-  font-family: var(--font-mono);
-}
-
-.app-file-upload__bar {
-  width: 100%;
-  height: 4px;
-  background: var(--surface-active, #e2e8f0);
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.app-file-upload__bar-fill {
-  height: 100%;
-  background: var(--accent-primary, #0f172a);
-  transition: width 0.2s ease;
-}
-
-.app-file-upload__preview {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  background: var(--surface-card, #ffffff);
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  border-radius: var(--radius-md, 6px);
-}
-
-.app-file-upload__thumb-wrap {
-  width: 44px;
-  height: 44px;
-  border-radius: var(--radius-sm, 4px);
-  overflow: hidden;
-  background: var(--surface-inset, #f8fafc);
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.app-file-upload__thumb {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.app-file-upload__doc-icon {
-  color: var(--text-secondary, #475569);
-}
-
-.app-file-upload__meta {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.app-file-upload__filename {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-primary, #0f172a);
-  text-decoration: none;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.app-file-upload__filename:hover {
-  text-decoration: underline;
-}
-
-.app-file-upload__tag {
-  font-size: 11px;
-  font-family: var(--font-mono);
-  color: var(--text-tertiary, #64748b);
-}
-
-.app-file-upload__remove-btn {
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-sm, 4px);
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  background: transparent;
-  color: var(--text-secondary, #475569);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.app-file-upload__remove-btn:hover {
-  background: var(--status-red-bg, #fef2f2);
-  color: var(--status-red, #b91c1c);
-}
-
-.app-file-upload__error {
-  font-size: 12px;
-  color: var(--status-red, #b91c1c);
-}
-</style>
 

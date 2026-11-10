@@ -1,23 +1,29 @@
 <template>
-  <label :for="id" class="app-checkbox" :class="{ 'is-disabled': disabled }">
+  <label
+    :for="id"
+    class="inline-flex items-start gap-2.5 text-xs select-none cursor-pointer"
+    :class="{ 'opacity-50 cursor-not-allowed': disabled }"
+  >
     <input
       :id="id"
       type="checkbox"
       :checked="isChecked"
       :disabled="disabled"
-      class="app-checkbox__input"
+      class="w-4 h-4 rounded border-subtle text-brand-900 focus:ring-brand-900 mt-0.5 cursor-pointer disabled:cursor-not-allowed"
       @change="onChange"
     />
-    <span class="app-checkbox__content">
-      <span v-if="label || $slots.default" class="app-checkbox__label">
+    <span class="flex flex-col gap-0.5">
+      <span v-if="label || $slots.default" class="font-medium text-ink leading-tight">
         <slot>{{ label }}</slot>
       </span>
-      <span v-if="description" class="app-checkbox__desc">{{ description }}</span>
+      <span v-if="description" class="text-ink-secondary text-[11px] leading-tight">{{ description }}</span>
     </span>
   </label>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+
 const props = defineProps<{
   modelValue?: boolean | Array<string | number>
   value?: string | number
@@ -53,51 +59,3 @@ function onChange(event: Event) {
   emit('change', checked)
 }
 </script>
-
-<style scoped>
-.app-checkbox {
-  display: inline-flex;
-  align-items: flex-start;
-  gap: 8px;
-  cursor: pointer;
-  user-select: none;
-  font-size: 13px;
-  color: var(--text-primary, #0f172a);
-}
-
-.app-checkbox.is-disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-.app-checkbox__input {
-  width: 15px;
-  height: 15px;
-  margin-top: 2px;
-  accent-color: var(--accent-primary, #0f172a);
-  border-radius: var(--radius-sm, 4px);
-  cursor: inherit;
-  flex-shrink: 0;
-}
-
-.app-checkbox__content {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
-}
-
-.app-checkbox__label {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-primary, #0f172a);
-  line-height: 1.35;
-}
-
-.app-checkbox__desc {
-  font-size: 11.5px;
-  color: var(--text-tertiary, #64748b);
-  line-height: 1.35;
-}
-</style>
-

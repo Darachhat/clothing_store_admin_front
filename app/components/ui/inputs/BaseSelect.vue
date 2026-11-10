@@ -1,16 +1,23 @@
 <template>
-  <div class="app-select-group">
-    <label v-if="label" :for="id" class="app-select-label">
+  <div class="flex flex-col gap-1.5 min-w-0">
+    <label v-if="label" :for="id" class="text-xs font-semibold text-ink-secondary leading-tight">
       {{ label }}
-      <span v-if="required" class="required">*</span>
+      <span v-if="required" class="text-status-red ml-0.5">*</span>
     </label>
-    <div class="app-select-wrap" :class="[`app-select-wrap--${size || 'md'}`, { 'has-error': !!error }]">
+    <div
+      class="relative flex items-center bg-white border rounded-md transition-colors shadow-xs"
+      :class="[
+        size === 'sm' ? 'h-[30px] text-xs' : size === 'lg' ? 'h-[40px] text-sm' : 'h-[36px] text-sm',
+        error ? 'border-status-red' : 'border-subtle focus-within:border-brand-900 focus-within:ring-1 focus-within:ring-brand-900',
+        disabled ? 'bg-surface-bg opacity-50 cursor-not-allowed' : ''
+      ]"
+    >
       <select
         :id="id"
         :value="modelValue ?? ''"
         :disabled="disabled"
         :required="required"
-        class="app-select"
+        class="w-full h-full pl-3 pr-8 bg-transparent text-ink outline-none appearance-none cursor-pointer disabled:cursor-not-allowed"
         @change="onChange"
       >
         <option v-if="placeholder" value="" :disabled="required">{{ placeholder }}</option>
@@ -25,10 +32,10 @@
           </option>
         </slot>
       </select>
-      <UIcon name="i-heroicons-chevron-down" class="app-select-chevron" />
+      <UIcon name="i-heroicons-chevron-down" class="w-4 h-4 text-ink-tertiary absolute right-2.5 pointer-events-none" />
     </div>
-    <p v-if="error" class="app-select-error">{{ error }}</p>
-    <p v-else-if="hint" class="app-select-hint">{{ hint }}</p>
+    <p v-if="error" :id="id ? `${id}-error` : undefined" class="text-xs text-status-red m-0" role="alert">{{ error }}</p>
+    <p v-else-if="hint" :id="id ? `${id}-hint` : undefined" class="text-xs text-ink-tertiary m-0">{{ hint }}</p>
   </div>
 </template>
 
@@ -60,100 +67,3 @@ function onChange(e: Event) {
   emit('change', val)
 }
 </script>
-
-<style scoped>
-.app-select-group {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  min-width: 0;
-}
-
-.app-select-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-secondary, #475569);
-  line-height: 1.3;
-}
-
-.required {
-  color: var(--status-red, #b91c1c);
-  margin-left: 2px;
-}
-
-.app-select-wrap {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.app-select {
-  width: 100%;
-  min-height: var(--input-height-md, 36px);
-  padding: 7px 30px 7px 11px;
-  font-family: var(--font-body);
-  font-size: 13px;
-  color: var(--text-primary, #0f172a);
-  background-color: var(--surface-input, #ffffff);
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  border-radius: var(--radius-md, 6px);
-  outline: none;
-  appearance: none;
-  cursor: pointer;
-  transition: border-color 0.12s, background-color 0.12s;
-}
-
-.app-select-wrap--sm .app-select {
-  min-height: var(--input-height-sm, 30px);
-  padding: 4px 26px 4px 9px;
-  font-size: 12px;
-}
-
-.app-select-wrap--lg .app-select {
-  min-height: var(--input-height-lg, 40px);
-  padding: 9px 32px 9px 13px;
-  font-size: 14px;
-}
-
-.app-select:hover:not(:disabled) {
-  border-color: var(--border-default, #d1d5db);
-}
-
-.app-select:focus {
-  border-color: var(--border-strong, #9ca3af);
-  background-color: var(--surface-card, #ffffff);
-}
-
-.app-select:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-  background-color: var(--surface-inset, #f8fafc);
-}
-
-.has-error .app-select {
-  border-color: var(--border-strong, #9ca3af);
-  background-color: var(--status-red-bg, #fef2f2);
-}
-
-.app-select-chevron {
-  position: absolute;
-  right: 9px;
-  width: 14px;
-  height: 14px;
-  color: var(--text-tertiary, #64748b);
-  pointer-events: none;
-}
-
-.app-select-error {
-  font-size: 11px;
-  color: var(--status-red, #b91c1c);
-  margin: 0;
-}
-
-.app-select-hint {
-  font-size: 11px;
-  color: var(--text-tertiary, #64748b);
-  margin: 0;
-}
-</style>
-

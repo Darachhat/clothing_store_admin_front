@@ -1,30 +1,45 @@
 <template>
   <Teleport to="body">
-    <Transition name="modal">
+    <Transition
+      enter-active-class="transition duration-150 ease-out"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition duration-100 ease-in"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
       <div
         v-if="modelValue"
-        class="modal-backdrop"
+        class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50"
         role="dialog"
         aria-modal="true"
         :aria-label="title || 'Dialog'"
         @click.self="close"
       >
-        <div class="modal-panel" :class="`modal-panel--${resolvedSize}`">
-          <div v-if="title || $slots.header" class="modal-header">
+        <div
+          class="bg-white border border-subtle rounded-xl shadow-2xl flex flex-col w-full max-h-[calc(100dvh-32px)] overflow-hidden min-w-0"
+          :class="sizeClasses"
+        >
+          <div v-if="title || $slots.header" class="flex items-start justify-between gap-3 px-5 py-3.5 border-b border-subtle flex-shrink-0">
             <slot name="header">
-              <div class="modal-header__titles">
-                <h3 class="modal-title">{{ title }}</h3>
-                <p v-if="description" class="modal-subtitle">{{ description }}</p>
+              <div class="flex flex-col gap-0.5 min-w-0">
+                <h3 class="text-base font-semibold text-ink m-0 leading-snug">{{ title }}</h3>
+                <p v-if="description" class="text-xs text-ink-secondary m-0 mt-0.5">{{ description }}</p>
               </div>
             </slot>
-            <button type="button" class="modal-close" aria-label="Close dialog" @click="close">
+            <button
+              type="button"
+              class="inline-flex items-center justify-center w-7 h-7 rounded-md text-ink-tertiary hover:text-ink hover:bg-surface-hover cursor-pointer transition-colors"
+              aria-label="Close dialog"
+              @click="close"
+            >
               <UIcon name="i-heroicons-x-mark" class="w-4 h-4" />
             </button>
           </div>
-          <div class="modal-body">
+          <div class="p-5 overflow-y-auto flex-1 min-w-0">
             <slot />
           </div>
-          <div v-if="$slots.footer" class="modal-footer">
+          <div v-if="$slots.footer" class="px-5 py-3.5 border-t border-subtle bg-surface-bg/40 flex items-center justify-end gap-2 flex-shrink-0">
             <slot name="footer" />
           </div>
         </div>
@@ -34,6 +49,8 @@
 </template>
 
 <script setup lang="ts">
+import { computed, onMounted, onUnmounted } from 'vue'
+
 const props = defineProps<{
   modelValue: boolean
   title?: string
@@ -53,6 +70,15 @@ const resolvedSize = computed(() => {
   return 'md'
 })
 
+const sizeClasses = computed(() => {
+  switch (resolvedSize.value) {
+    case 'sm': return 'max-w-[420px]'
+    case 'lg': return 'max-w-[680px]'
+    case 'xl': return 'max-w-[860px]'
+    default: return 'max-w-[540px]'
+  }
+})
+
 function close() {
   emit('update:modelValue', false)
   emit('close')
@@ -64,173 +90,6 @@ function onKeydown(e: KeyboardEvent) {
   }
 }
 
-watch(() => props.modelValue, (open) => {
-  if (!import.meta.client) return
-  if (open) {
-    document.body.style.overflow = 'hidden'
-  } else {
-    document.body.style.overflow = ''
-  }
-})
-
-onMounted(() => {
-  if (import.meta.client) {
-    window.addEventListener('keydown', onKeydown)
-  }
-})
-
-onBeforeUnmount(() => {
-  if (import.meta.client) {
-    window.removeEventListener('keydown', onKeydown)
-    document.body.style.overflow = ''
-  }
-})
+onMounted(() => window.addEventListener('keydown', onKeydown))
+onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 </script>
-
-<style scoped>
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.45);
-  backdrop-filter: blur(2px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 200;
-  padding: 16px;
-}
-
-.modal-panel {
-  background: var(--surface-card, #ffffff);
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  border-radius: var(--radius-xl, 12px);
-  box-shadow: var(--shadow-lg, 0 12px 28px rgba(15, 23, 42, 0.12));
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  max-height: calc(100dvh - 32px);
-  overflow: hidden;
-  min-width: 0;
-}
-
-.modal-panel--sm { max-width: 420px; }
-.modal-panel--md { max-width: 540px; }
-.modal-panel--lg { max-width: 680px; }
-.modal-panel--xl { max-width: 860px; }
-
-.modal-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 15px 20px;
-  border-bottom: 1px solid var(--border-subtle, #e5e7eb);
-  flex-shrink: 0;
-}
-
-.modal-header__titles {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.modal-title {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text-primary, #0f172a);
-  margin: 0;
-  line-height: 1.35;
-}
-
-.modal-subtitle {
-  font-size: 12px;
-  color: var(--text-tertiary, #64748b);
-  margin: 0;
-}
-
-.modal-close {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  background: none;
-  border: 1px solid transparent;
-  color: var(--text-tertiary, #64748b);
-  cursor: pointer;
-  border-radius: var(--radius-md, 6px);
-  transition: color 0.12s, background 0.12s;
-  flex-shrink: 0;
-}
-
-.modal-close:hover {
-  color: var(--text-primary, #0f172a);
-  background: var(--surface-hover, #f1f5f9);
-}
-
-.modal-body {
-  padding: 20px;
-  overflow-y: auto;
-  overflow-x: hidden;
-  flex: 1;
-  min-width: 0;
-}
-
-/* Seamless support when a legacy page wraps <AppCard> directly inside <AppModal> */
-.modal-body > :deep(.app-card:only-child) {
-  border: none;
-  box-shadow: none;
-  border-radius: 0;
-  margin: -20px;
-}
-
-.modal-footer {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 13px 20px;
-  border-top: 1px solid var(--border-subtle, #e5e7eb);
-  background: var(--surface-inset, #f8fafc);
-  flex-shrink: 0;
-}
-
-@media (max-width: 639px) {
-  .modal-backdrop {
-    padding: 8px;
-  }
-
-  .modal-panel {
-    max-height: calc(100dvh - 16px);
-    border-radius: 10px;
-  }
-
-  .modal-header {
-    padding: 12px 14px;
-  }
-
-  .modal-body {
-    padding: 14px;
-  }
-
-  .modal-body > :deep(.app-card:only-child) {
-    margin: -14px;
-  }
-
-  .modal-footer {
-    padding: 11px 14px;
-  }
-}
-
-.modal-enter-active,
-.modal-leave-active {
-  transition: opacity 0.15s ease;
-}
-
-.modal-enter-from,
-.modal-leave-to {
-  opacity: 0;
-}
-</style>

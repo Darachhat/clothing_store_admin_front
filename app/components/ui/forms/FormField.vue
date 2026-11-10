@@ -1,21 +1,21 @@
 <template>
-  <div class="app-form-field">
-    <div v-if="label || $slots.label || $slots['label-right']" class="app-form-field__header">
-      <label v-if="label || $slots.label" :for="htmlFor" class="app-form-field__label">
+  <div class="flex flex-col gap-1.5 min-w-0">
+    <div v-if="label || $slots.label || $slots['label-right']" class="flex items-center justify-between gap-2">
+      <label v-if="label || $slots.label" :for="htmlFor" class="text-xs font-semibold text-ink-secondary leading-tight">
         <slot name="label">{{ label }}</slot>
-        <span v-if="required" class="app-form-field__req">*</span>
+        <span v-if="required" class="text-status-red ml-0.5">*</span>
       </label>
       <slot name="label-right" />
     </div>
 
-    <div class="app-form-field__control">
+    <div class="flex flex-col min-w-0">
       <slot />
     </div>
 
     <p
       v-if="error"
       :id="htmlFor ? `${htmlFor}-error` : undefined"
-      class="app-form-field__error"
+      class="text-[11px] text-status-red m-0 leading-snug"
       role="alert"
     >
       {{ error }}
@@ -23,7 +23,7 @@
     <p
       v-else-if="hint"
       :id="htmlFor ? `${htmlFor}-hint` : undefined"
-      class="app-form-field__hint"
+      class="text-[11px] text-ink-tertiary m-0 leading-snug"
     >
       {{ hint }}
     </p>
@@ -39,52 +39,4 @@ defineProps<{
   error?: string
 }>()
 </script>
-
-<style scoped>
-.app-form-field {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  min-width: 0;
-}
-
-.app-form-field__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.app-form-field__label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-secondary, #475569);
-  line-height: 1.3;
-}
-
-.app-form-field__req {
-  color: var(--status-red, #b91c1c);
-  margin-left: 2px;
-}
-
-.app-form-field__control {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.app-form-field__error {
-  font-size: 11px;
-  color: var(--status-red, #b91c1c);
-  margin: 0;
-  line-height: 1.35;
-}
-
-.app-form-field__hint {
-  font-size: 11px;
-  color: var(--text-tertiary, #64748b);
-  margin: 0;
-  line-height: 1.35;
-}
-</style>
 

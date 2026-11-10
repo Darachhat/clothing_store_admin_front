@@ -1,32 +1,41 @@
 <template>
-  <div class="date-range-picker" :class="{ 'is-inline': inline }">
-    <div class="date-range-picker__field">
-      <label v-if="!inline" class="date-range-picker__label">{{ fromLabel || 'From Date' }}</label>
-      <span v-else class="date-range-picker__inline-label">{{ fromLabel || 'From:' }}</span>
+  <div
+    class="flex flex-wrap w-full sm:w-auto"
+    :class="inline ? 'items-center gap-2' : 'items-end gap-3'"
+  >
+    <div
+      class="flex flex-1 sm:flex-initial min-w-0"
+      :class="inline ? 'flex-row items-center gap-1.5 w-full sm:w-auto' : 'flex-col gap-1.5 min-w-[135px] sm:min-w-[140px]'"
+    >
+      <label v-if="!inline" class="text-xs font-medium text-ink-secondary leading-tight">{{ fromLabel || 'From Date' }}</label>
+      <span v-else class="text-xs text-ink-tertiary whitespace-nowrap min-w-9 sm:min-w-0">{{ fromLabel || 'From:' }}</span>
       <input
         type="date"
         :value="from ?? ''"
         :max="to || undefined"
         :disabled="disabled"
-        class="date-range-picker__input"
+        class="w-full h-9 px-2.5 text-xs sm:text-sm rounded-md border border-border-subtle bg-surface-card text-ink hover:border-border-default focus:border-border-default focus:outline-none transition-colors disabled:opacity-55 disabled:cursor-not-allowed disabled:bg-surface-inset"
         @change="onFromChange"
       />
     </div>
 
-    <div class="date-range-picker__field">
-      <label v-if="!inline" class="date-range-picker__label">{{ toLabel || 'To Date' }}</label>
-      <span v-else class="date-range-picker__inline-label">{{ toLabel || 'To:' }}</span>
+    <div
+      class="flex flex-1 sm:flex-initial min-w-0"
+      :class="inline ? 'flex-row items-center gap-1.5 w-full sm:w-auto' : 'flex-col gap-1.5 min-w-[135px] sm:min-w-[140px]'"
+    >
+      <label v-if="!inline" class="text-xs font-medium text-ink-secondary leading-tight">{{ toLabel || 'To Date' }}</label>
+      <span v-else class="text-xs text-ink-tertiary whitespace-nowrap min-w-9 sm:min-w-0">{{ toLabel || 'To:' }}</span>
       <input
         type="date"
         :value="to ?? ''"
         :min="from || undefined"
         :disabled="disabled"
-        class="date-range-picker__input"
+        class="w-full h-9 px-2.5 text-xs sm:text-sm rounded-md border border-border-subtle bg-surface-card text-ink hover:border-border-default focus:border-border-default focus:outline-none transition-colors disabled:opacity-55 disabled:cursor-not-allowed disabled:bg-surface-inset"
         @change="onToChange"
       />
     </div>
 
-    <div v-if="$slots.default" class="date-range-picker__extra">
+    <div v-if="$slots.default" class="flex items-end gap-2.5 flex-wrap w-full sm:w-auto">
       <slot />
     </div>
   </div>
@@ -58,94 +67,4 @@ function onToChange(event: Event) {
   emit('change')
 }
 </script>
-
-<style scoped>
-.date-range-picker {
-  display: flex;
-  align-items: flex-end;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.date-range-picker.is-inline {
-  align-items: center;
-  gap: 8px;
-}
-
-.date-range-picker__field {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  min-width: 140px;
-}
-
-.date-range-picker.is-inline .date-range-picker__field {
-  flex-direction: row;
-  align-items: center;
-  gap: 6px;
-}
-
-.date-range-picker__label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-secondary, #475569);
-  line-height: 1.3;
-}
-
-.date-range-picker__inline-label {
-  font-size: 12px;
-  color: var(--text-tertiary, #64748b);
-  white-space: nowrap;
-}
-
-.date-range-picker__input {
-  width: 100%;
-  min-height: var(--input-height-md, 36px);
-  padding: 6px 10px;
-  font-family: var(--font-body);
-  font-size: 13px;
-  color: var(--text-primary, #0f172a);
-  background: var(--surface-input, #ffffff);
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  border-radius: var(--radius-md, 6px);
-  outline: none;
-  transition: border-color 0.12s, background 0.12s;
-}
-
-.date-range-picker__input:hover:not(:disabled) {
-  border-color: var(--border-default, #d1d5db);
-}
-
-.date-range-picker__input:focus {
-  border-color: var(--border-strong, #9ca3af);
-  background: var(--surface-card, #ffffff);
-}
-
-.date-range-picker__extra {
-  display: flex;
-  align-items: flex-end;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-@media (max-width: 639px) {
-  .date-range-picker,
-  .date-range-picker__extra {
-    width: 100%;
-  }
-
-  .date-range-picker__field {
-    flex: 1 1 135px;
-    min-width: 0;
-  }
-
-  .date-range-picker.is-inline .date-range-picker__field {
-    width: 100%;
-  }
-
-  .date-range-picker.is-inline .date-range-picker__inline-label {
-    min-width: 36px;
-  }
-}
-</style>
 

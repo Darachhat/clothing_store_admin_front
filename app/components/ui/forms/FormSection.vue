@@ -1,15 +1,22 @@
 <template>
-  <section class="app-form-section" :class="{ 'is-bordered': bordered }">
-    <div v-if="title || description || $slots.header" class="app-form-section__header">
-      <div class="app-form-section__titles">
-        <h4 v-if="title" class="app-form-section__title">{{ title }}</h4>
-        <p v-if="description" class="app-form-section__desc">{{ description }}</p>
+  <section class="flex flex-col gap-3" :class="{ 'pt-3.5 border-t border-subtle': bordered }">
+    <div v-if="title || description || $slots.header" class="flex items-start justify-between gap-3 flex-wrap">
+      <div class="flex flex-col gap-0.5">
+        <h4 v-if="title" class="text-xs font-bold uppercase tracking-wider text-ink-secondary m-0">{{ title }}</h4>
+        <p v-if="description" class="text-xs text-ink-tertiary m-0">{{ description }}</p>
       </div>
-      <div v-if="$slots['header-right']" class="app-form-section__right">
+      <div v-if="$slots['header-right']">
         <slot name="header-right" />
       </div>
     </div>
-    <div class="app-form-section__body" :class="[`cols-${columns || 1}`]">
+    <div
+      class="grid gap-3.5"
+      :class="{
+        'grid-cols-1': !columns || columns === 1,
+        'grid-cols-1 md:grid-cols-2': columns === 2,
+        'grid-cols-1 md:grid-cols-3': columns === 3,
+      }"
+    >
       <slot />
     </div>
   </section>
@@ -23,70 +30,3 @@ defineProps<{
   bordered?: boolean
 }>()
 </script>
-
-<style scoped>
-.app-form-section {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.app-form-section.is-bordered {
-  padding-top: 14px;
-  border-top: 1px solid var(--border-subtle, #e5e7eb);
-}
-
-.app-form-section__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.app-form-section__titles {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.app-form-section__title {
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-secondary, #475569);
-  margin: 0;
-}
-
-.app-form-section__desc {
-  font-size: 12px;
-  color: var(--text-tertiary, #64748b);
-  margin: 0;
-}
-
-.app-form-section__body {
-  display: grid;
-  gap: 14px;
-}
-
-.app-form-section__body.cols-1 {
-  grid-template-columns: minmax(0, 1fr);
-}
-
-.app-form-section__body.cols-2 {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.app-form-section__body.cols-3 {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-@media (max-width: 639px) {
-  .app-form-section__body.cols-2,
-  .app-form-section__body.cols-3 {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-</style>
-

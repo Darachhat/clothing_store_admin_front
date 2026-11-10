@@ -1,12 +1,20 @@
 <template>
-  <span class="app-badge" :class="[`app-badge--${normalizedColor}`, `app-badge--${size || 'md'}`]">
-    <UIcon v-if="resolvedIcon" :name="resolvedIcon" class="app-badge__icon" />
-    <span v-else-if="showDot" class="app-badge__dot" />
+  <span
+    class="inline-flex items-center gap-1.5 rounded-full border border-subtle font-semibold leading-tight whitespace-nowrap"
+    :class="[
+      size === 'sm' ? 'px-2 py-0.5 text-[10.5px]' : 'px-2.5 py-1 text-xs',
+      badgeColorClasses
+    ]"
+  >
+    <UIcon v-if="resolvedIcon" :name="resolvedIcon" class="w-3.5 h-3.5 flex-shrink-0" />
+    <span v-else-if="showDot" class="w-1.5 h-1.5 rounded-full bg-current flex-shrink-0" />
     <slot>{{ label || status }}</slot>
   </span>
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+
 const props = defineProps<{
   color?: string
   variant?: string
@@ -39,10 +47,6 @@ const COLOR_ALIAS_MAP: Record<string, string> = {
   default: 'default',
 }
 
-/**
- * Centralized semantic status-to-color mapping so individual pages
- * do not need to duplicate statusColor() switch statements.
- */
 const STATUS_SEMANTIC_MAP: Record<string, string> = {
   ACTIVE: 'green',
   PAID: 'green',
@@ -100,6 +104,21 @@ const normalizedColor = computed(() => {
   return 'default'
 })
 
+const badgeColorClasses = computed(() => {
+  switch (normalizedColor.value) {
+    case 'green':
+      return 'bg-status-green-bg text-status-green'
+    case 'red':
+      return 'bg-status-red-bg text-status-red'
+    case 'yellow':
+      return 'bg-status-amber-bg text-status-amber'
+    case 'blue':
+      return 'bg-status-blue-bg text-status-blue'
+    default:
+      return 'bg-surface-hover text-ink-secondary'
+  }
+})
+
 const resolvedIcon = computed(() => props.icon || '')
 
 const showDot = computed(() => {
@@ -107,64 +126,3 @@ const showDot = computed(() => {
   return normalizedColor.value !== 'default'
 })
 </script>
-
-<style scoped>
-.app-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 2px 8px;
-  font-size: 11px;
-  font-weight: 600;
-  border-radius: var(--radius-full, 9999px);
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  line-height: 1.4;
-  white-space: nowrap;
-  letter-spacing: 0.01em;
-}
-
-.app-badge--sm {
-  padding: 1px 7px;
-  font-size: 10.5px;
-}
-
-.app-badge__dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-  flex-shrink: 0;
-}
-
-.app-badge__icon {
-  width: 12px;
-  height: 12px;
-  flex-shrink: 0;
-}
-
-.app-badge--default {
-  background: var(--surface-hover, #f1f5f9);
-  color: var(--text-secondary, #475569);
-}
-
-.app-badge--green {
-  background: var(--status-green-bg, #f0fdf4);
-  color: var(--status-green, #15803d);
-}
-
-.app-badge--red {
-  background: var(--status-red-bg, #fef2f2);
-  color: var(--status-red, #b91c1c);
-}
-
-.app-badge--yellow {
-  background: var(--status-amber-bg, #fffbeb);
-  color: var(--status-amber, #b45309);
-}
-
-.app-badge--blue {
-  background: var(--status-blue-bg, #eff6ff);
-  color: var(--status-blue, #1d4ed8);
-}
-</style>
-

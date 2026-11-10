@@ -1,25 +1,22 @@
 <template>
-  <div class="app-input-group">
-    <div v-if="label || $slots['label-right']" class="app-input-label-row">
-      <label v-if="label" :for="id" class="app-input-label">
+  <div class="flex flex-col gap-1.5 min-w-0">
+    <div v-if="label || $slots['label-right']" class="flex items-center justify-between gap-2">
+      <label v-if="label" :for="id" class="text-xs font-semibold text-ink-secondary leading-tight">
         {{ label }}
-        <span v-if="required" class="required">*</span>
+        <span v-if="required" class="text-status-red ml-0.5">*</span>
       </label>
       <slot name="label-right" />
     </div>
 
     <div
-      class="app-input-wrap"
+      class="relative flex items-center bg-white border rounded-md transition-colors shadow-xs"
       :class="[
-        `app-input-wrap--${size || 'md'}`,
-        {
-          'has-error': !!error,
-          'has-icon-left': !!icon,
-          'has-trailing': clearable || !!$slots.trailing,
-        },
+        size === 'sm' ? 'h-[30px] text-xs' : size === 'lg' ? 'h-[40px] text-sm' : 'h-[36px] text-sm',
+        error ? 'border-status-red' : 'border-subtle focus-within:border-brand-900 focus-within:ring-1 focus-within:ring-brand-900',
+        disabled ? 'bg-surface-bg opacity-50 cursor-not-allowed' : ''
       ]"
     >
-      <UIcon v-if="icon" :name="icon" class="app-input-icon" />
+      <UIcon v-if="icon" :name="icon" class="w-4 h-4 text-ink-tertiary ml-2.5 flex-shrink-0" />
       <input
         :id="id"
         :type="type || 'text'"
@@ -36,20 +33,21 @@
         :autocomplete="autocomplete"
         :aria-invalid="!!error"
         :aria-describedby="error && id ? `${id}-error` : hint && id ? `${id}-hint` : undefined"
-        class="app-input"
+        class="w-full h-full px-3 bg-transparent text-ink placeholder:text-ink-tertiary outline-none disabled:cursor-not-allowed"
         :class="{
           'font-mono': mono,
           'uppercase': uppercase,
+          'pl-2': icon,
         }"
         @input="onInput"
         @blur="$emit('blur', $event)"
         @keyup.enter="$emit('enter', $event)"
       />
-      <div v-if="(clearable && modelValue) || $slots.trailing" class="app-input-trailing">
+      <div v-if="(clearable && modelValue) || $slots.trailing" class="flex items-center gap-1 pr-2 flex-shrink-0">
         <button
           v-if="clearable && modelValue && !disabled && !readonly"
           type="button"
-          class="app-input-clear"
+          class="p-0.5 text-ink-tertiary hover:text-ink cursor-pointer rounded"
           aria-label="Clear input"
           @click="$emit('update:modelValue', ''); $emit('clear')"
         >
@@ -59,8 +57,8 @@
       </div>
     </div>
 
-    <p v-if="error" :id="id ? `${id}-error` : undefined" class="app-input-error" role="alert">{{ error }}</p>
-    <p v-else-if="hint" :id="id ? `${id}-hint` : undefined" class="app-input-hint">{{ hint }}</p>
+    <p v-if="error" :id="id ? `${id}-error` : undefined" class="text-xs text-status-red m-0" role="alert">{{ error }}</p>
+    <p v-else-if="hint" :id="id ? `${id}-hint` : undefined" class="text-xs text-ink-tertiary m-0">{{ hint }}</p>
   </div>
 </template>
 
@@ -106,143 +104,3 @@ function onInput(event: Event) {
   emit('update:modelValue', props.uppercase ? raw.toUpperCase() : raw)
 }
 </script>
-
-<style scoped>
-.app-input-group {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  min-width: 0;
-}
-
-.app-input-label-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.app-input-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-secondary, #475569);
-  line-height: 1.3;
-}
-
-.required {
-  color: var(--status-red, #b91c1c);
-  margin-left: 2px;
-}
-
-.app-input-wrap {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.app-input-icon {
-  position: absolute;
-  left: 10px;
-  width: 15px;
-  height: 15px;
-  color: var(--text-tertiary, #64748b);
-  pointer-events: none;
-}
-
-.app-input {
-  width: 100%;
-  min-height: var(--input-height-md, 36px);
-  padding: 7px var(--input-padding-x, 11px);
-  font-family: var(--font-body);
-  font-size: 13px;
-  color: var(--text-primary, #0f172a);
-  background: var(--surface-input, #ffffff);
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  border-radius: var(--radius-md, 6px);
-  outline: none;
-  transition: border-color 0.12s, background 0.12s;
-}
-
-.app-input-wrap--sm .app-input {
-  min-height: var(--input-height-sm, 30px);
-  padding: 4px 9px;
-  font-size: 12px;
-}
-
-.app-input-wrap--lg .app-input {
-  min-height: var(--input-height-lg, 40px);
-  padding: 9px 13px;
-  font-size: 14px;
-}
-
-.has-icon-left .app-input {
-  padding-left: 32px;
-}
-
-.has-trailing .app-input {
-  padding-right: 32px;
-}
-
-.app-input-trailing {
-  position: absolute;
-  right: 8px;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.app-input-clear {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  border-radius: var(--radius-sm, 4px);
-  border: none;
-  background: transparent;
-  color: var(--text-tertiary, #64748b);
-  cursor: pointer;
-}
-
-.app-input-clear:hover {
-  color: var(--text-primary, #0f172a);
-  background: var(--surface-hover, #f1f5f9);
-}
-
-.app-input::placeholder {
-  color: var(--text-muted, #94a3b8);
-}
-
-.app-input:hover:not(:disabled) {
-  border-color: var(--border-default, #d1d5db);
-}
-
-.app-input:focus {
-  border-color: var(--border-strong, #9ca3af);
-  background: var(--surface-card, #ffffff);
-}
-
-.app-input:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-  background: var(--surface-inset, #f8fafc);
-}
-
-.has-error .app-input {
-  border-color: var(--border-strong, #9ca3af);
-  background: var(--status-red-bg, #fef2f2);
-}
-
-.app-input-error {
-  font-size: 11px;
-  color: var(--status-red, #b91c1c);
-  margin: 0;
-}
-
-.app-input-hint {
-  font-size: 11px;
-  color: var(--text-tertiary, #64748b);
-  margin: 0;
-}
-</style>
-

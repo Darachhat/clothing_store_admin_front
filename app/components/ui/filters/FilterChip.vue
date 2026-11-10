@@ -1,11 +1,11 @@
 <template>
-  <span class="filter-chip">
-    <span v-if="label" class="filter-chip__key">{{ label }}:</span>
-    <span class="filter-chip__val">{{ value }}</span>
+  <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-surface-hover border border-subtle text-xs text-ink">
+    <span v-if="label" class="text-ink-tertiary font-medium">{{ label }}:</span>
+    <span class="font-semibold">{{ value }}</span>
     <button
       v-if="removable"
       type="button"
-      class="filter-chip__remove"
+      class="inline-flex items-center justify-center p-0.5 rounded-full text-ink-tertiary hover:text-ink hover:bg-surface-active cursor-pointer transition-colors"
       :aria-label="`Remove ${label || value} filter`"
       @click="$emit('remove')"
     >
@@ -27,44 +27,3 @@ defineEmits<{
   remove: []
 }>()
 </script>
-
-<style scoped>
-.filter-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 8px;
-  border-radius: var(--radius-full, 9999px);
-  background: var(--surface-hover, #f1f5f9);
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  font-size: 11.5px;
-  color: var(--text-primary, #0f172a);
-}
-
-.filter-chip__key {
-  color: var(--text-tertiary, #64748b);
-  font-weight: 500;
-}
-
-.filter-chip__val {
-  font-weight: 600;
-}
-
-.filter-chip__remove {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: none;
-  color: var(--text-tertiary, #64748b);
-  cursor: pointer;
-  padding: 1px;
-  border-radius: 50%;
-}
-
-.filter-chip__remove:hover {
-  color: var(--text-primary, #0f172a);
-  background: var(--surface-active, #e2e8f0);
-}
-</style>
-

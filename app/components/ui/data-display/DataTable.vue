@@ -1,24 +1,24 @@
 <template>
-  <div class="app-table-wrap" :class="`is-mobile-${mobileMode}`">
+  <div class="w-full">
     <!-- Mobile Toolbar: Sort & View Mode Switcher (<768px) -->
-    <div v-if="!loading && !error && sortedRows.length > 0" class="app-table-mobile-bar">
-      <div v-if="sortableColumns.length > 0" class="app-table-mobile-sort">
-        <UIcon name="i-heroicons-arrows-up-down" class="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+    <div v-if="!loading && !error && sortedRows.length > 0" class="flex md:hidden items-center justify-between gap-2 p-2 sm:px-3 bg-surface-inset border-b border-border-subtle flex-wrap">
+      <div v-if="sortableColumns.length > 0" class="flex items-center gap-1.5 min-w-0 flex-1">
+        <UIcon name="i-heroicons-arrows-up-down" class="w-3.5 h-3.5 text-ink-tertiary shrink-0" />
         <select
-          class="app-table-mobile-sort__select"
+          class="h-7 px-2 text-xs font-medium text-ink-secondary bg-surface-card border border-border-subtle rounded max-w-[185px] min-w-0"
           :value="sortKey"
           aria-label="Sort records by"
           @change="onMobileSortSelect(($event.target as HTMLSelectElement).value)"
         >
           <option value="">Sort: Default</option>
           <option v-for="sc in sortableColumns" :key="sc.key" :value="sc.key">
-            Sort: {{ sc.label }} ({{ sortKey === sc.key ? (sortOrder === 'asc' ? 'A→Z / Low→High' : 'Z→A / High→Low') : 'Asc' }})
+            Sort: {{ sc.label }} ({{ sortKey === sc.key ? (sortOrder === 'asc' ? 'A→Z' : 'Z→A') : 'Asc' }})
           </option>
         </select>
         <button
           v-if="sortKey"
           type="button"
-          class="app-table-mobile-sort__dir"
+          class="inline-flex items-center justify-center w-7 h-7 rounded border border-border-subtle bg-surface-card text-ink shrink-0 cursor-pointer"
           :title="sortOrder === 'asc' ? 'Ascending' : 'Descending'"
           @click="toggleSort(sortKey)"
         >
@@ -28,15 +28,15 @@
           />
         </button>
       </div>
-      <div v-else class="text-xs text-gray-500 font-medium">
+      <div v-else class="text-xs text-ink-tertiary font-medium">
         {{ sortedRows.length }} {{ sortedRows.length === 1 ? 'record' : 'records' }}
       </div>
 
-      <div class="app-table-view-switch" role="group" aria-label="View mode">
+      <div class="inline-flex items-center bg-surface-card border border-border-subtle rounded p-0.5 gap-0.5 shrink-0" role="group" aria-label="View mode">
         <button
           type="button"
-          class="view-switch-btn"
-          :class="{ 'is-active': mobileMode === 'cards' }"
+          class="inline-flex items-center gap-1 h-6 px-2 text-[11px] font-semibold rounded cursor-pointer transition-colors"
+          :class="mobileMode === 'cards' ? 'bg-ink text-white' : 'text-ink-tertiary hover:text-ink'"
           title="Card view"
           @click="mobileMode = 'cards'"
         >
@@ -45,8 +45,8 @@
         </button>
         <button
           type="button"
-          class="view-switch-btn"
-          :class="{ 'is-active': mobileMode === 'table' }"
+          class="inline-flex items-center gap-1 h-6 px-2 text-[11px] font-semibold rounded cursor-pointer transition-colors"
+          :class="mobileMode === 'table' ? 'bg-ink text-white' : 'text-ink-tertiary hover:text-ink'"
           title="Table view"
           @click="mobileMode = 'table'"
         >
@@ -57,22 +57,22 @@
     </div>
 
     <!-- Mobile Record Cards (<768px when mobileMode === 'cards' and rows exist) -->
-    <div v-if="!loading && !error && sortedRows.length > 0 && mobileMode === 'cards'" class="app-table-mobile-cards">
+    <div v-if="!loading && !error && sortedRows.length > 0 && mobileMode === 'cards'" class="flex md:hidden flex-col divide-y divide-border-subtle">
       <div
         v-for="(row, idx) in sortedRows"
         :key="row[rowKey] ?? idx"
-        class="mobile-record-card"
-        :class="{ 'is-clickable': rowClickable }"
+        class="p-3 sm:px-3.5 bg-surface-card flex flex-col gap-2.5"
+        :class="rowClickable && 'cursor-pointer hover:bg-surface-hover transition-colors'"
         @click="rowClickable ? $emit('row-click', row) : undefined"
       >
         <!-- Card Header: Primary Identifier + Status Badge -->
-        <div v-if="primaryColumn" class="mobile-record-card__header">
-          <div class="mobile-record-card__primary">
+        <div v-if="primaryColumn" class="flex items-start justify-between gap-2.5">
+          <div class="min-w-0 flex-1 text-xs sm:text-sm font-medium">
             <slot :name="`cell-${primaryColumn.key}`" :row="row" :value="row[primaryColumn.key]">
-              <span class="font-semibold text-gray-900">{{ row[primaryColumn.key] ?? '—' }}</span>
+              <span class="font-semibold text-ink">{{ row[primaryColumn.key] ?? '—' }}</span>
             </slot>
           </div>
-          <div v-if="statusColumn" class="mobile-record-card__status">
+          <div v-if="statusColumn" class="shrink-0">
             <slot :name="`cell-${statusColumn.key}`" :row="row" :value="row[statusColumn.key]">
               {{ row[statusColumn.key] ?? '—' }}
             </slot>
@@ -80,14 +80,14 @@
         </div>
 
         <!-- Card Primary Body Fields -->
-        <div v-if="visibleBodyColumns.length > 0" class="mobile-record-card__grid">
+        <div v-if="visibleBodyColumns.length > 0" class="grid grid-cols-1 min-[360px]:grid-cols-2 gap-2 pt-1.5 border-t border-dashed border-border-subtle">
           <div
             v-for="col in visibleBodyColumns"
             :key="col.key"
-            class="mobile-record-card__field"
+            class="flex flex-col gap-0.5 min-w-0"
           >
-            <span class="mobile-record-card__label">{{ col.label }}</span>
-            <div class="mobile-record-card__val">
+            <span class="text-[10px] font-semibold uppercase tracking-wider text-ink-tertiary">{{ col.label }}</span>
+            <div class="text-xs text-ink min-w-0 break-words">
               <slot :name="`cell-${col.key}`" :row="row" :value="row[col.key]">
                 {{ row[col.key] ?? '—' }}
               </slot>
@@ -97,14 +97,14 @@
 
         <!-- Card Expandable Secondary Fields -->
         <template v-if="extraBodyColumns.length > 0">
-          <div v-if="isCardExpanded(row[rowKey] ?? idx)" class="mobile-record-card__grid mobile-record-card__grid--extra">
+          <div v-if="isCardExpanded(row[rowKey] ?? idx)" class="grid grid-cols-1 min-[360px]:grid-cols-2 gap-2 p-2 bg-surface-inset rounded border border-border-subtle">
             <div
               v-for="col in extraBodyColumns"
               :key="col.key"
-              class="mobile-record-card__field"
+              class="flex flex-col gap-0.5 min-w-0"
             >
-              <span class="mobile-record-card__label">{{ col.label }}</span>
-              <div class="mobile-record-card__val">
+              <span class="text-[10px] font-semibold uppercase tracking-wider text-ink-tertiary">{{ col.label }}</span>
+              <div class="text-xs text-ink min-w-0 break-words">
                 <slot :name="`cell-${col.key}`" :row="row" :value="row[col.key]">
                   {{ row[col.key] ?? '—' }}
                 </slot>
@@ -114,7 +114,7 @@
 
           <button
             type="button"
-            class="mobile-record-card__expand-btn"
+            class="inline-flex items-center justify-center gap-1 w-full py-1.5 px-2 text-xs font-semibold text-ink-secondary bg-surface-inset border border-border-subtle rounded cursor-pointer hover:bg-surface-hover transition-colors"
             @click.stop="toggleCardExpand(row[rowKey] ?? idx)"
           >
             <span>{{ isCardExpanded(row[rowKey] ?? idx) ? 'Hide details' : `More details (${extraBodyColumns.length})` }}</span>
@@ -126,7 +126,7 @@
         </template>
 
         <!-- Card Actions Footer -->
-        <div v-if="hasActionsColumn" class="mobile-record-card__actions" @click.stop>
+        <div v-if="hasActionsColumn" class="flex items-center justify-end flex-wrap gap-1.5 pt-2 border-t border-border-subtle [&>div]:flex [&>div]:flex-wrap [&>div]:justify-end [&>div]:gap-1.5 [&>div]:w-full" @click.stop>
           <slot v-if="$slots['cell-actions']" name="cell-actions" :row="row" :value="row.actions" />
           <slot v-else-if="$slots.actions" name="actions" :row="row" />
         </div>
@@ -134,13 +134,17 @@
     </div>
 
     <!-- Standard Desktop/Tablet Table (and Mobile when mobileMode === 'table' or loading/empty) -->
-    <div class="app-table-scroll" :class="{ 'hide-on-mobile-cards': !loading && !error && sortedRows.length > 0 && mobileMode === 'cards' }">
-      <table class="app-table">
-        <thead>
+    <div
+      class="w-full overflow-x-auto"
+      :class="[!loading && !error && sortedRows.length > 0 && mobileMode === 'cards' ? 'hidden md:block' : '']"
+    >
+      <table class="w-full border-collapse text-xs sm:text-sm">
+        <thead class="sticky top-0 z-10 bg-surface-inset border-b border-border-subtle">
           <tr>
-            <th v-if="selectable" class="app-table__th-select">
+            <th v-if="selectable" class="w-9 pl-3.5 pr-1 py-2.5 bg-surface-inset shadow-[inset_0_-1px_0_var(--border-subtle,#e5e7eb)]">
               <input
                 type="checkbox"
+                class="rounded border-border-default text-ink focus:ring-0 focus:outline-none"
                 :checked="allSelected"
                 aria-label="Select all rows"
                 @change="toggleSelectAll"
@@ -150,55 +154,64 @@
               v-for="col in normalizedColumns"
               :key="col.key"
               :style="col.width ? `width:${col.width}` : undefined"
+              class="sticky top-0 bg-surface-inset shadow-[inset_0_-1px_0_var(--border-subtle,#e5e7eb)] py-2.5 px-3 sm:px-4 text-[11px] font-semibold text-ink-tertiary uppercase tracking-wider whitespace-nowrap select-none"
               :class="[
-                col.align ? `text-${col.align}` : '',
-                col.key === 'actions' ? 'app-table__th-actions' : '',
-                col.sortable ? 'app-table__th-sortable' : '',
+                col.align ? `text-${col.align}` : 'text-left',
+                col.key === 'actions' && 'text-right',
+                col.sortable && 'cursor-pointer hover:text-ink hover:bg-surface-hover transition-colors',
               ]"
               @click="col.sortable ? toggleSort(col.key) : undefined"
             >
-              <div class="app-table__th-inner" :class="{ 'justify-end': col.key === 'actions' || col.align === 'right' }">
+              <div
+                class="inline-flex items-center gap-1 w-full"
+                :class="(col.key === 'actions' || col.align === 'right') ? 'justify-end' : col.align === 'center' ? 'justify-center' : 'justify-start'"
+              >
                 <span>{{ col.label }}</span>
-                <span v-if="col.sortable" class="app-table__sort-icon">
+                <span v-if="col.sortable" class="inline-flex items-center">
                   <UIcon
                     v-if="sortKey === col.key"
                     :name="sortOrder === 'asc' ? 'i-heroicons-chevron-up' : 'i-heroicons-chevron-down'"
-                    class="w-3.5 h-3.5 text-gray-900"
+                    class="w-3.5 h-3.5 text-ink"
                   />
                   <UIcon
                     v-else
                     name="i-heroicons-chevron-up-down"
-                    class="w-3.5 h-3.5 text-gray-400"
+                    class="w-3.5 h-3.5 text-ink-tertiary"
                   />
                 </span>
               </div>
             </th>
           </tr>
         </thead>
-        <tbody>
+        <tbody class="divide-y divide-border-subtle">
           <template v-if="loading">
-            <tr v-for="i in skeletonRows" :key="`sk-${i}`" class="skeleton-row">
-              <td v-if="selectable"><div class="skeleton-cell" style="width: 16px;" /></td>
-              <td v-for="col in normalizedColumns" :key="col.key">
-                <div class="skeleton-cell" :style="col.key === 'actions' ? 'width: 60%; margin-left: auto;' : ''" />
+            <tr v-for="i in skeletonRows" :key="`sk-${i}`" class="animate-pulse">
+              <td v-if="selectable" class="p-2.5 sm:px-4">
+                <div class="w-4 h-4 bg-surface-active rounded" />
+              </td>
+              <td v-for="col in normalizedColumns" :key="col.key" class="p-2.5 sm:px-4">
+                <div
+                  class="h-3.5 bg-surface-active rounded"
+                  :class="col.key === 'actions' ? 'w-3/5 ml-auto' : 'w-3/4'"
+                />
               </td>
             </tr>
           </template>
           <tr v-else-if="error">
-            <td :colspan="normalizedColumns.length + (selectable ? 1 : 0)" class="empty-cell">
-              <div class="empty-state">
-                <UIcon name="i-heroicons-exclamation-triangle" class="empty-state__icon text-amber-600" />
-                <span class="empty-state__title">{{ error }}</span>
+            <td :colspan="normalizedColumns.length + (selectable ? 1 : 0)" class="text-center py-10 px-4 text-ink-tertiary">
+              <div class="flex flex-col items-center justify-center gap-1.5">
+                <UIcon name="i-heroicons-exclamation-triangle" class="w-7 h-7 text-status-amber mb-0.5" />
+                <span class="text-xs sm:text-sm font-medium text-ink-secondary">{{ error }}</span>
                 <BaseButton v-if="onRetry" size="sm" variant="default" icon="i-heroicons-arrow-path" label="Retry" @click="onRetry" />
               </div>
             </td>
           </tr>
           <tr v-else-if="!sortedRows.length">
-            <td :colspan="normalizedColumns.length + (selectable ? 1 : 0)" class="empty-cell">
-              <div class="empty-state">
-                <UIcon :name="emptyIcon || emptyState?.icon || 'i-heroicons-inbox'" class="empty-state__icon" />
-                <span class="empty-state__title">{{ emptyTitle || emptyState?.label || emptyText || 'No records found.' }}</span>
-                <span v-if="emptyState?.description || (emptyTitle && emptyText)" class="empty-state__desc">
+            <td :colspan="normalizedColumns.length + (selectable ? 1 : 0)" class="text-center py-10 px-4 text-ink-tertiary">
+              <div class="flex flex-col items-center justify-center gap-1.5">
+                <UIcon :name="emptyIcon || emptyState?.icon || 'i-heroicons-inbox'" class="w-7 h-7 text-ink-tertiary mb-0.5" />
+                <span class="text-xs sm:text-sm font-medium text-ink-secondary">{{ emptyTitle || emptyState?.label || emptyText || 'No records found.' }}</span>
+                <span v-if="emptyState?.description || (emptyTitle && emptyText)" class="text-xs text-ink-tertiary max-w-[360px]">
                   {{ emptyState?.description || emptyText }}
                 </span>
                 <slot name="empty-action" />
@@ -209,13 +222,14 @@
             <tr
               v-for="(row, idx) in sortedRows"
               :key="row[rowKey] ?? idx"
-              class="table-row"
-              :class="{ 'is-clickable': rowClickable }"
+              class="hover:bg-surface-hover transition-colors"
+              :class="rowClickable && 'cursor-pointer'"
               @click="rowClickable ? $emit('row-click', row) : undefined"
             >
-              <td v-if="selectable" class="app-table__td-select" @click.stop>
+              <td v-if="selectable" class="w-9 pl-3.5 pr-1 py-2.5" @click.stop>
                 <input
                   type="checkbox"
+                  class="rounded border-border-default text-ink focus:ring-0 focus:outline-none"
                   :checked="isRowSelected(row[rowKey] ?? idx)"
                   :aria-label="`Select row ${idx + 1}`"
                   @change="toggleRowSelect(row[rowKey] ?? idx)"
@@ -224,13 +238,14 @@
               <td
                 v-for="col in normalizedColumns"
                 :key="col.key"
+                class="py-2.5 px-3 sm:px-4 text-ink align-middle"
                 :class="[
                   col.align ? `text-${col.align}` : '',
-                  col.key === 'actions' ? 'actions-cell' : '',
+                  col.key === 'actions' && 'text-right whitespace-nowrap',
                 ]"
               >
                 <template v-if="col.key === 'actions'">
-                  <div class="actions-cell__inner">
+                  <div class="inline-flex items-center justify-end gap-1">
                     <slot v-if="$slots['cell-actions']" name="cell-actions" :row="row" :value="row[col.key]" />
                     <slot v-else-if="$slots.actions" name="actions" :row="row" />
                   </div>
@@ -246,7 +261,7 @@
         </tbody>
       </table>
     </div>
-    <div v-if="$slots.footer" class="app-table-footer">
+    <div v-if="$slots.footer" class="p-2.5 sm:px-4 border-t border-border-subtle bg-surface-inset">
       <slot name="footer" />
     </div>
   </div>
@@ -411,383 +426,4 @@ const sortedRows = computed<any[]>(() => {
   })
 })
 </script>
-
-<style scoped>
-.app-table-wrap {
-  width: 100%;
-}
-
-/* Mobile Toolbar & Cards hidden on >=768px */
-.app-table-mobile-bar,
-.app-table-mobile-cards {
-  display: none;
-}
-
-@media (max-width: 767px) {
-  .app-table-mobile-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    padding: 8px 12px;
-    background: var(--surface-inset, #f8fafc);
-    border-bottom: 1px solid var(--border-subtle, #e5e7eb);
-    flex-wrap: wrap;
-  }
-
-  .app-table-mobile-cards {
-    display: flex;
-    flex-direction: column;
-    divide-y: 1px solid var(--border-subtle, #e5e7eb);
-  }
-
-  .app-table-scroll.hide-on-mobile-cards {
-    display: none;
-  }
-}
-
-.app-table-mobile-sort {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  min-width: 0;
-  flex: 1;
-}
-
-.app-table-mobile-sort__select {
-  height: 28px;
-  padding: 0 8px;
-  font-size: 11.5px;
-  font-weight: 500;
-  color: var(--text-secondary, #475569);
-  background: var(--surface-card, #ffffff);
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  border-radius: var(--radius-md, 6px);
-  max-width: 185px;
-  min-width: 0;
-}
-
-.app-table-mobile-sort__dir {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-md, 6px);
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  background: var(--surface-card, #ffffff);
-  color: var(--text-primary, #0f172a);
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.app-table-view-switch {
-  display: inline-flex;
-  align-items: center;
-  background: var(--surface-card, #ffffff);
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  border-radius: var(--radius-md, 6px);
-  padding: 2px;
-  gap: 2px;
-  flex-shrink: 0;
-}
-
-.view-switch-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  height: 24px;
-  padding: 0 8px;
-  font-size: 11px;
-  font-weight: 600;
-  border-radius: 4px;
-  border: none;
-  background: transparent;
-  color: var(--text-tertiary, #64748b);
-  cursor: pointer;
-}
-
-.view-switch-btn.is-active {
-  background: var(--accent-primary, #0f172a);
-  color: #ffffff;
-}
-
-.mobile-record-card {
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--border-subtle, #e5e7eb);
-  background: var(--surface-card, #ffffff);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.mobile-record-card:last-child {
-  border-bottom: none;
-}
-
-.mobile-record-card.is-clickable {
-  cursor: pointer;
-}
-
-.mobile-record-card__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
-}
-
-.mobile-record-card__primary {
-  min-width: 0;
-  flex: 1;
-  font-size: 13px;
-}
-
-.mobile-record-card__status {
-  flex-shrink: 0;
-}
-
-.mobile-record-card__grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px 12px;
-  padding-top: 6px;
-  border-top: 1px dashed var(--border-subtle, #e5e7eb);
-}
-
-.mobile-record-card__grid--extra {
-  background: var(--surface-inset, #f8fafc);
-  padding: 8px 10px;
-  border-radius: var(--radius-md, 6px);
-  border: 1px solid var(--border-subtle, #e5e7eb);
-}
-
-@media (max-width: 359px) {
-  .mobile-record-card__grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-.mobile-record-card__field {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.mobile-record-card__label {
-  font-size: 10px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-tertiary, #64748b);
-}
-
-.mobile-record-card__val {
-  font-size: 12.5px;
-  color: var(--text-primary, #0f172a);
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-.mobile-record-card__expand-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  width: 100%;
-  padding: 5px 8px;
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--text-secondary, #475569);
-  background: var(--surface-inset, #f8fafc);
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  border-radius: var(--radius-md, 6px);
-  cursor: pointer;
-}
-
-.mobile-record-card__actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding-top: 8px;
-  border-top: 1px solid var(--border-subtle, #e5e7eb);
-}
-
-.mobile-record-card__actions :deep(> div) {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 6px;
-  width: 100%;
-}
-
-.app-table-scroll {
-  width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-.app-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-
-.app-table thead {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-.app-table thead tr {
-  border-bottom: 1px solid var(--border-subtle, #e5e7eb);
-  background: var(--surface-inset, #f8fafc);
-}
-
-.app-table th {
-  position: sticky;
-  top: 0;
-  background: var(--surface-inset, #f8fafc);
-  box-shadow: inset 0 -1px 0 var(--border-subtle, #e5e7eb);
-  padding: 10px 16px;
-  text-align: left;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-tertiary, #64748b);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  white-space: nowrap;
-  user-select: none;
-}
-
-.app-table__th-select,
-.app-table__td-select {
-  width: 36px;
-  padding-left: 14px !important;
-  padding-right: 4px !important;
-}
-
-.app-table__th-sortable {
-  cursor: pointer;
-  transition: color 0.12s, background 0.12s;
-}
-
-.app-table__th-sortable:hover {
-  color: var(--text-primary, #0f172a);
-  background: var(--surface-hover, #f1f5f9);
-}
-
-.app-table__th-inner {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.app-table__th-actions {
-  text-align: right !important;
-}
-
-.app-table td {
-  padding: 11px 16px;
-  color: var(--text-primary, #0f172a);
-  border-bottom: 1px solid var(--border-subtle, #e5e7eb);
-  vertical-align: middle;
-}
-
-@media (max-width: 1023px) {
-  .app-table th,
-  .app-table td {
-    padding: 9px 12px;
-  }
-}
-
-.table-row:last-child td {
-  border-bottom: none;
-}
-
-.table-row:hover td {
-  background: var(--surface-hover, #f1f5f9);
-}
-
-.table-row.is-clickable {
-  cursor: pointer;
-}
-
-.actions-cell {
-  text-align: right;
-  white-space: nowrap;
-}
-
-.actions-cell__inner {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 4px;
-}
-
-.empty-cell {
-  text-align: center;
-  padding: 44px 20px !important;
-  color: var(--text-tertiary, #64748b);
-}
-
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
-
-.empty-state__icon {
-  width: 28px;
-  height: 28px;
-  color: var(--text-muted, #94a3b8);
-  margin-bottom: 2px;
-}
-
-.empty-state__title {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-secondary, #475569);
-}
-
-.empty-state__desc {
-  font-size: 12px;
-  color: var(--text-tertiary, #64748b);
-  max-width: 360px;
-}
-
-.skeleton-row td {
-  padding: 12px 16px;
-}
-
-.skeleton-cell {
-  height: 14px;
-  width: 75%;
-  border-radius: var(--radius-sm, 4px);
-  background: linear-gradient(90deg, var(--surface-hover, #f1f5f9) 25%, var(--surface-active, #e2e8f0) 50%, var(--surface-hover, #f1f5f9) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.4s infinite;
-}
-
-.app-table-footer {
-  padding: 11px 16px;
-  border-top: 1px solid var(--border-subtle, #e5e7eb);
-  background: var(--surface-inset, #f8fafc);
-}
-
-@media (max-width: 639px) {
-  .app-table-footer {
-    padding: 10px 12px;
-  }
-}
-
-@keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-</style>
 

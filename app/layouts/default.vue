@@ -1,5 +1,5 @@
 <template>
-  <div class="admin-shell">
+  <div class="admin-shell min-h-screen bg-surface-bg flex">
     <!-- Accessible Skip to Content Link (WCAG 2.1 AA) -->
     <a href="#main-content" class="skip-link">Skip to main content</a>
 
@@ -7,10 +7,13 @@
     <AppSidebar />
 
     <!-- Main Content Area -->
-    <div class="admin-main" :class="{ 'is-sidebar-collapsed': isCollapsed }">
+    <div
+      class="admin-main flex-1 flex flex-col min-w-0 transition-all duration-200"
+      :class="isCollapsed ? 'is-sidebar-collapsed ml-16' : 'ml-60'"
+    >
       <AppHeader />
 
-      <main id="main-content" class="admin-content" tabindex="-1">
+      <main id="main-content" class="admin-content flex-1 p-4 sm:p-6 outline-none overflow-y-auto" tabindex="-1">
         <slot />
       </main>
     </div>

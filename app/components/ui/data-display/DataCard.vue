@@ -1,23 +1,26 @@
 <template>
-  <div class="app-card">
-    <div v-if="title || subtitle || $slots.header || $slots['header-right']" class="app-card__header">
+  <div class="bg-white border border-subtle rounded-lg overflow-hidden shadow-xs">
+    <div
+      v-if="title || subtitle || $slots.header || $slots['header-right']"
+      class="flex items-center justify-between gap-3 px-4 py-3 border-b border-subtle"
+    >
       <slot name="header">
-        <div class="app-card__titles">
-          <div class="app-card__title-row">
-            <UIcon v-if="icon" :name="icon" class="app-card__icon" />
-            <span v-if="title" class="app-card__title">{{ title }}</span>
+        <div class="flex flex-col gap-0.5 min-w-0">
+          <div class="flex items-center gap-2">
+            <UIcon v-if="icon" :name="icon" class="w-4 h-4 text-ink-secondary flex-shrink-0" />
+            <span v-if="title" class="text-sm font-semibold text-ink truncate">{{ title }}</span>
           </div>
-          <p v-if="subtitle" class="app-card__subtitle">{{ subtitle }}</p>
+          <p v-if="subtitle" class="text-xs text-ink-secondary truncate">{{ subtitle }}</p>
         </div>
       </slot>
-      <div v-if="$slots['header-right']" class="app-card__header-right">
+      <div v-if="$slots['header-right']" class="flex items-center gap-2 flex-shrink-0">
         <slot name="header-right" />
       </div>
     </div>
-    <div class="app-card__body" :class="{ 'no-pad': noPad }">
+    <div :class="noPad ? '' : 'p-4'">
       <slot />
     </div>
-    <div v-if="$slots.footer" class="app-card__footer">
+    <div v-if="$slots.footer" class="px-4 py-3 bg-surface-bg/40 border-t border-subtle flex items-center justify-end gap-2">
       <slot name="footer" />
     </div>
   </div>
@@ -31,102 +34,3 @@ defineProps<{
   noPad?: boolean
 }>()
 </script>
-
-<style scoped>
-.app-card {
-  background: var(--surface-card, #ffffff);
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  border-radius: var(--radius-lg, 8px);
-  overflow: hidden;
-  box-shadow: var(--shadow-xs, 0 1px 2px rgba(15, 23, 42, 0.04));
-}
-
-.app-card__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 13px 18px;
-  border-bottom: 1px solid var(--border-subtle, #e5e7eb);
-  flex-wrap: wrap;
-}
-
-.app-card__titles {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.app-card__title-row {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-}
-
-.app-card__icon {
-  width: 16px;
-  height: 16px;
-  color: var(--text-tertiary, #64748b);
-  flex-shrink: 0;
-}
-
-.app-card__title {
-  font-size: 13.5px;
-  font-weight: 600;
-  color: var(--text-primary, #0f172a);
-  letter-spacing: -0.01em;
-}
-
-.app-card__subtitle {
-  font-size: 11.5px;
-  color: var(--text-tertiary, #64748b);
-  margin: 0;
-}
-
-.app-card__header-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.app-card__body {
-  padding: 18px;
-}
-
-.app-card__body.no-pad {
-  padding: 0;
-}
-
-/* Automatic flush table handling when DataTable is the sole child of DataCard */
-.app-card__body > :deep(.app-table-wrap:only-child) {
-  margin: -18px;
-}
-
-.app-card__body.no-pad > :deep(.app-table-wrap:only-child) {
-  margin: 0;
-}
-
-.app-card__footer {
-  padding: 12px 18px;
-  border-top: 1px solid var(--border-subtle, #e5e7eb);
-  background: var(--surface-inset, #f8fafc);
-}
-
-@media (max-width: 639px) {
-  .app-card__header {
-    padding: 11px 14px;
-  }
-  .app-card__body {
-    padding: 14px;
-  }
-  .app-card__body > :deep(.app-table-wrap:only-child) {
-    margin: -14px;
-  }
-  .app-card__footer {
-    padding: 10px 14px;
-  }
-}
-</style>
-

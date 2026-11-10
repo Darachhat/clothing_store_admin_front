@@ -1,33 +1,44 @@
 <template>
-  <div ref="rootRef" class="dd-menu">
-    <div class="dd-menu__trigger" @click="toggle">
+  <div ref="rootRef" class="relative inline-flex">
+    <div class="inline-flex cursor-pointer" @click="toggle">
       <slot name="trigger" :open="open">
         <BaseButton variant="default" size="sm" icon="i-heroicons-ellipsis-horizontal" :label="label" />
       </slot>
     </div>
 
-    <Transition name="dd-fade">
+    <Transition
+      enter-active-class="transition duration-100 ease-out"
+      enter-from-class="scale-95 opacity-0"
+      enter-to-class="scale-100 opacity-100"
+      leave-active-class="transition duration-75 ease-in"
+      leave-from-class="scale-100 opacity-100"
+      leave-to-class="scale-95 opacity-0"
+    >
       <div
         v-if="open"
-        class="dd-menu__panel"
-        :class="`dd-menu__panel--${align}`"
+        class="absolute top-[calc(100%+6px)] min-w-[180px] max-w-[calc(100vw-24px)] p-1 bg-surface-card border border-border-subtle rounded-lg shadow-md z-[60] origin-top"
+        :class="align === 'left' ? 'left-0' : 'right-0'"
         role="menu"
       >
         <slot :close="close">
           <template v-for="(item, idx) in items" :key="idx">
-            <div v-if="item.divider" class="dd-menu__divider" />
+            <div v-if="item.divider" class="h-px my-1 bg-border-subtle" />
             <component
               :is="item.to ? NuxtLinkComp : 'button'"
               v-else
               :to="item.to"
               :type="item.to ? undefined : 'button'"
-              class="dd-menu__item"
-              :class="{ 'is-danger': item.variant === 'danger' }"
+              class="w-full flex items-center gap-2 px-2.5 py-2 text-xs font-normal rounded-md text-left transition-colors"
+              :class="[
+                item.disabled ? 'opacity-50 cursor-not-allowed' :
+                item.variant === 'danger' ? 'text-status-red hover:bg-status-red-bg hover:text-status-red' :
+                'text-ink-secondary hover:bg-surface-hover hover:text-ink'
+              ]"
               :disabled="item.disabled"
               role="menuitem"
               @click="onSelect(item)"
             >
-              <UIcon v-if="item.icon" :name="item.icon" class="w-4 h-4 flex-shrink-0" />
+              <UIcon v-if="item.icon" :name="item.icon" class="w-4 h-4 shrink-0" />
               <span class="truncate">{{ item.label }}</span>
             </component>
           </template>
@@ -90,66 +101,3 @@ onBeforeUnmount(() => {
   document.removeEventListener('keydown', onKey)
 })
 </script>
-
-<style scoped>
-.dd-menu {
-  position: relative;
-  display: inline-flex;
-}
-
-.dd-menu__panel {
-  position: absolute;
-  top: calc(100% + 6px);
-  min-width: 180px;
-  max-width: calc(100vw - 24px);
-  padding: 4px;
-  background: var(--surface-card, #ffffff);
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  border-radius: var(--radius-lg, 8px);
-  box-shadow: var(--shadow-md, 0 4px 12px rgba(15, 23, 42, 0.08));
-  z-index: var(--z-dropdown, 60);
-}
-
-.dd-menu__panel--right { right: 0; }
-.dd-menu__panel--left { left: 0; }
-
-.dd-menu__item {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  font-size: 12.5px;
-  color: var(--text-secondary, #475569);
-  background: transparent;
-  border: none;
-  border-radius: var(--radius-md, 6px);
-  text-align: left;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.dd-menu__item:hover:not(:disabled) {
-  background: var(--surface-hover, #f1f5f9);
-  color: var(--text-primary, #0f172a);
-}
-
-.dd-menu__item.is-danger { color: var(--status-red, #b91c1c); }
-.dd-menu__item:disabled { opacity: 0.5; cursor: not-allowed; }
-
-.dd-menu__divider {
-  height: 1px;
-  margin: 4px 0;
-  background: var(--border-subtle, #e5e7eb);
-}
-
-.dd-fade-enter-active,
-.dd-fade-leave-active {
-  transition: opacity 0.12s ease;
-}
-
-.dd-fade-enter-from,
-.dd-fade-leave-to {
-  opacity: 0;
-}
-</style>

@@ -1,9 +1,15 @@
 <template>
-  <div class="app-form-actions" :class="[`align-${align || 'end'}`, { 'no-border': noBorder }]">
-    <div v-if="$slots.left" class="app-form-actions__left">
+  <div
+    class="flex items-center gap-2 flex-wrap pt-3.5"
+    :class="[
+      noBorder ? '' : 'border-t border-subtle',
+      align === 'start' ? 'justify-start' : align === 'between' ? 'justify-between' : 'justify-end'
+    ]"
+  >
+    <div v-if="$slots.left" class="flex items-center gap-2 mr-auto">
       <slot name="left" />
     </div>
-    <div class="app-form-actions__right">
+    <div class="flex items-center gap-2">
       <slot>
         <BaseButton
           v-if="showCancel"
@@ -50,47 +56,3 @@ defineEmits<{
   submit: []
 }>()
 </script>
-
-<style scoped>
-.app-form-actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  flex-wrap: wrap;
-  padding-top: 14px;
-  margin-top: 4px;
-  border-top: 1px solid var(--border-subtle, #e5e7eb);
-}
-
-.app-form-actions.no-border {
-  border-top: none;
-  padding-top: 4px;
-}
-
-.app-form-actions.align-start {
-  justify-content: flex-start;
-}
-
-.app-form-actions.align-between {
-  justify-content: space-between;
-}
-
-.app-form-actions__left,
-.app-form-actions__right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-@media (max-width: 420px) {
-  .app-form-actions__right {
-    width: 100%;
-  }
-  .app-form-actions__right :deep(> *) {
-    flex: 1 1 auto;
-  }
-}
-</style>
-

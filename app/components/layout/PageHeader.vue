@@ -1,20 +1,27 @@
 <template>
-  <header class="app-page-header">
-    <div class="app-page-header__left">
+  <header class="flex flex-col sm:flex-row sm:items-start justify-between gap-3.5 mb-2">
+    <div class="flex flex-col gap-0.5 min-w-0 flex-1">
       <Breadcrumb v-if="breadcrumbs && breadcrumbs.length" :items="breadcrumbs" />
-      <NuxtLink v-else-if="backTo" :to="backTo" class="back-link">
+      <NuxtLink
+        v-else-if="backTo"
+        :to="backTo"
+        class="inline-flex items-center gap-1.5 text-xs font-medium text-ink-secondary hover:text-ink transition-colors mb-1"
+      >
         <UIcon name="i-heroicons-arrow-left" class="w-3.5 h-3.5" />
         <span>{{ backLabel || 'Back' }}</span>
       </NuxtLink>
 
-      <div class="app-page-header__title-row">
-        <h1 class="page-title">{{ title }}</h1>
+      <div class="flex items-center gap-2 flex-wrap">
+        <h1 class="text-xl sm:text-2xl font-bold text-ink tracking-tight">{{ title }}</h1>
         <slot name="badge" />
       </div>
-      <p v-if="description" class="page-subtitle">{{ description }}</p>
+      <p v-if="description" class="text-xs sm:text-sm text-ink-secondary mt-0.5">{{ description }}</p>
     </div>
 
-    <div v-if="$slots.actions || $slots.secondary || primaryLabel" class="app-page-header__actions">
+    <div
+      v-if="$slots.actions || $slots.secondary || primaryLabel"
+      class="flex items-center gap-2 flex-wrap sm:flex-nowrap flex-shrink-0 w-full sm:w-auto"
+    >
       <slot name="secondary" />
       <slot name="actions">
         <AppButton
@@ -48,87 +55,3 @@ defineProps<{
 
 defineEmits(['primary-click'])
 </script>
-
-<style scoped>
-.app-page-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 14px;
-  flex-wrap: wrap;
-}
-
-.app-page-header__left {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-  flex: 1 1 260px;
-}
-
-.app-page-header__title-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.app-page-header__actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  flex-shrink: 0;
-}
-
-@media (max-width: 639px) {
-  .app-page-header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
-  }
-
-  .app-page-header__left {
-    flex: 1 1 auto;
-  }
-
-  .app-page-header__actions {
-    width: 100%;
-    justify-content: flex-start;
-  }
-}
-
-.app-breadcrumbs {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 12px;
-  margin-bottom: 4px;
-  flex-wrap: wrap;
-}
-
-.app-breadcrumb-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--text-tertiary, #64748b);
-  text-decoration: none;
-  font-weight: 500;
-  transition: color 0.12s;
-}
-
-.app-breadcrumb-link:hover {
-  color: var(--text-primary, #0f172a);
-}
-
-.app-breadcrumb-current {
-  color: var(--text-primary, #0f172a);
-  font-weight: 600;
-}
-
-.app-breadcrumb-sep {
-  width: 12px;
-  height: 12px;
-  color: var(--text-muted, #94a3b8);
-}
-</style>

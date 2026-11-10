@@ -1,8 +1,8 @@
 <template>
-  <div class="app-filter-bar">
-    <div class="app-filter-bar__controls">
+  <div class="bg-surface-card border border-border-subtle rounded-lg p-2.5 sm:p-3 flex flex-col gap-2.5 shadow-2xs">
+    <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-2.5">
       <!-- Reusable Centralized SearchBar -->
-      <div v-if="searchable" class="app-filter-search">
+      <div v-if="searchable" class="relative flex-1 sm:min-w-[200px] w-full sm:w-auto">
         <SearchBar
           :model-value="search"
           :placeholder="searchPlaceholder || 'Search or scan barcode / QR...'"
@@ -17,16 +17,16 @@
       </div>
 
       <!-- Custom Filter Controls Slot (Supports both default slot and #filters slot) -->
-      <div v-if="$slots.default || $slots.filters" class="app-filter-bar__slots">
+      <div v-if="$slots.default || $slots.filters" class="grid grid-cols-1 min-[420px]:grid-cols-2 sm:flex sm:flex-row sm:items-center gap-2 [&>*]:w-full sm:[&>*]:w-auto">
         <slot />
         <slot name="filters" />
       </div>
 
       <!-- Right Side Result Count & Reset -->
-      <div v-if="totalCount !== undefined || $slots.right" class="app-filter-bar__right">
-        <span v-if="totalCount !== undefined" class="app-filter-count">
-          Showing <strong>{{ shownCount !== undefined ? shownCount : totalCount }}</strong>
-          <template v-if="shownCount !== undefined && shownCount !== totalCount"> of <strong>{{ totalCount }}</strong></template>
+      <div v-if="totalCount !== undefined || $slots.right" class="flex items-center justify-between sm:justify-end gap-2.5 sm:ml-auto w-full sm:w-auto">
+        <span v-if="totalCount !== undefined" class="text-xs text-ink-tertiary whitespace-nowrap">
+          Showing <strong class="text-ink font-semibold">{{ shownCount !== undefined ? shownCount : totalCount }}</strong>
+          <template v-if="shownCount !== undefined && shownCount !== totalCount"> of <strong class="text-ink font-semibold">{{ totalCount }}</strong></template>
           {{ resolvedCountLabel }}
         </span>
         <slot name="right" />
@@ -34,8 +34,8 @@
     </div>
 
     <!-- Active Filter Chips (Using Reusable FilterChip) -->
-    <div v-if="(resolvedChips.length > 0) || hasActiveSearch" class="app-filter-chips">
-      <span class="app-filter-chips__label">Active filters:</span>
+    <div v-if="(resolvedChips.length > 0) || hasActiveSearch" class="flex items-center gap-1.5 flex-wrap pt-2 border-t border-border-subtle">
+      <span class="text-[11px] font-semibold text-ink-tertiary mr-0.5">Active filters:</span>
 
       <FilterChip
         v-if="hasActiveSearch"
@@ -52,7 +52,11 @@
         @remove="$emit('remove-chip', chip.key)"
       />
 
-      <button type="button" class="app-filter-chips__clear-all" @click="$emit('clear-all')">
+      <button
+        type="button"
+        class="text-xs font-semibold text-ink-secondary hover:text-ink underline px-1.5 py-0.5 rounded transition-colors focus-visible:outline-2 focus-visible:outline-ink cursor-pointer"
+        @click="$emit('clear-all')"
+      >
         Clear all
       </button>
     </div>
@@ -96,141 +100,4 @@ const resolvedChips = computed<FilterChipItem[]>(() => props.chips || props.acti
 const resolvedCountLabel = computed<string>(() => props.countLabel || props.resultLabel || 'records')
 const hasActiveSearch = computed(() => Boolean(props.search && props.search.trim().length > 0))
 </script>
-
-<style scoped>
-.app-filter-bar {
-  background: var(--surface-card, #ffffff);
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  border-radius: var(--radius-lg, 8px);
-  padding: 12px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  box-shadow: var(--shadow-xs, 0 1px 2px rgba(15, 23, 42, 0.04));
-}
-
-.app-filter-bar__controls {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.app-filter-search {
-  position: relative;
-  flex: 1 1 220px;
-  min-width: 180px;
-  display: flex;
-  align-items: center;
-}
-
-.app-filter-bar__slots {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-@media (max-width: 639px) {
-  .app-filter-bar {
-    padding: 10px 12px;
-  }
-
-  .app-filter-bar__controls {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
-  }
-
-  .app-filter-search {
-    flex: 1 1 auto;
-    min-width: 0;
-    width: 100%;
-  }
-
-  .app-filter-bar__slots {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
-    gap: 8px;
-    width: 100%;
-  }
-
-  .app-filter-bar__slots :deep(> *) {
-    width: 100% !important;
-    min-width: 0 !important;
-  }
-
-  .app-filter-bar__right {
-    margin-left: 0 !important;
-    justify-content: space-between;
-    width: 100%;
-  }
-}
-
-@media (max-width: 374px) {
-  .app-filter-bar__slots {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-.app-filter-bar__right {
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.app-filter-count {
-  font-size: 12px;
-  color: var(--text-tertiary, #64748b);
-  white-space: nowrap;
-}
-
-.app-filter-count strong {
-  color: var(--text-primary, #0f172a);
-  font-weight: 600;
-}
-
-.app-filter-chips {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-  padding-top: 8px;
-  border-top: 1px solid var(--border-subtle, #e5e7eb);
-}
-
-.app-filter-chips__label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-tertiary, #64748b);
-  margin-right: 2px;
-}
-
-.app-filter-chips__clear-all {
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--text-secondary, #475569);
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 2px 6px;
-  text-decoration: underline;
-  border-radius: 4px;
-  transition: color 0.15s ease;
-}
-
-.app-filter-chips__clear-all:hover {
-  color: var(--text-primary, #0f172a);
-}
-
-.app-filter-chips__clear-all:focus-visible {
-  outline: 2px solid #111827;
-  outline-offset: 2px;
-}
-
-.app-filter-chips__clear-all:hover {
-  color: var(--text-primary, #0f172a);
-}
-</style>
 

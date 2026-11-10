@@ -1,5 +1,5 @@
 <template>
-  <div class="filter-dropdown" :style="minWidth ? { minWidth } : undefined">
+  <div class="min-w-0 sm:min-w-[145px] w-full sm:w-auto" :style="minWidth ? { minWidth } : undefined">
     <BaseSelect
       :model-value="modelValue"
       :options="options"
@@ -33,17 +33,3 @@ function onUpdate(val: any) {
   emit('change', val)
 }
 </script>
-
-<style scoped>
-.filter-dropdown {
-  min-width: 145px;
-}
-
-@media (max-width: 639px) {
-  .filter-dropdown {
-    min-width: 0 !important;
-    width: 100%;
-  }
-}
-</style>
-

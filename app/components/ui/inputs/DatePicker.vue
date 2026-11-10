@@ -1,10 +1,10 @@
 <template>
-  <div class="date-picker-group">
-    <label v-if="label" :for="id" class="date-picker-label">
+  <div class="flex flex-col gap-1.5 min-w-0">
+    <label v-if="label" :for="id" class="text-xs font-medium text-ink-secondary leading-tight">
       {{ label }}
-      <span v-if="required" class="required">*</span>
+      <span v-if="required" class="text-status-red ml-0.5">*</span>
     </label>
-    <div class="date-picker-wrap" :class="[`date-picker-wrap--${size || 'md'}`, { 'has-error': !!error }]">
+    <div class="relative w-full">
       <input
         :id="id"
         :type="mode || 'date'"
@@ -13,13 +13,19 @@
         :max="max"
         :disabled="disabled"
         :required="required"
-        class="date-picker-input"
+        class="w-full rounded-md border border-border-subtle bg-surface-card text-ink placeholder:text-ink-tertiary focus:border-border-default focus:outline-none transition-colors disabled:opacity-55 disabled:cursor-not-allowed disabled:bg-surface-inset"
+        :class="[
+          size === 'sm' ? 'h-7.5 text-xs px-2' :
+          size === 'lg' ? 'h-10 text-sm px-3' :
+          'h-9 text-xs sm:text-sm px-2.5',
+          error ? 'bg-status-red-bg border-border-default' : 'hover:border-border-default'
+        ]"
         @input="onInput"
         @change="onInput"
       />
     </div>
-    <p v-if="error" class="date-picker-error">{{ error }}</p>
-    <p v-else-if="hint" class="date-picker-hint">{{ hint }}</p>
+    <p v-if="error" class="text-[11px] text-status-red m-0">{{ error }}</p>
+    <p v-else-if="hint" class="text-[11px] text-ink-tertiary m-0">{{ hint }}</p>
   </div>
 </template>
 
@@ -49,77 +55,4 @@ function onInput(event: Event) {
   emit('change', val)
 }
 </script>
-
-<style scoped>
-.date-picker-group {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  min-width: 0;
-}
-
-.date-picker-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-secondary, #475569);
-  line-height: 1.3;
-}
-
-.required {
-  color: var(--status-red, #b91c1c);
-  margin-left: 2px;
-}
-
-.date-picker-input {
-  width: 100%;
-  min-height: var(--input-height-md, 36px);
-  padding: 6px 10px;
-  font-family: var(--font-body);
-  font-size: 13px;
-  color: var(--text-primary, #0f172a);
-  background: var(--surface-input, #ffffff);
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  border-radius: var(--radius-md, 6px);
-  outline: none;
-  transition: border-color 0.12s, background 0.12s;
-}
-
-.date-picker-wrap--sm .date-picker-input {
-  min-height: var(--input-height-sm, 30px);
-  padding: 4px 8px;
-  font-size: 12px;
-}
-
-.date-picker-input:hover:not(:disabled) {
-  border-color: var(--border-default, #d1d5db);
-}
-
-.date-picker-input:focus {
-  border-color: var(--border-strong, #9ca3af);
-  background: var(--surface-card, #ffffff);
-}
-
-.date-picker-input:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-  background: var(--surface-inset, #f8fafc);
-}
-
-.has-error .date-picker-input {
-  border-color: var(--border-strong, #9ca3af);
-  background: var(--status-red-bg, #fef2f2);
-}
-
-.date-picker-error {
-  font-size: 11px;
-  color: var(--status-red, #b91c1c);
-  margin: 0;
-}
-
-.date-picker-hint {
-  font-size: 11px;
-  color: var(--text-tertiary, #64748b);
-  margin: 0;
-}
-</style>
 

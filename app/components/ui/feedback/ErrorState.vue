@@ -1,11 +1,11 @@
 <template>
-  <div class="app-error-state">
-    <div class="app-error-state__icon">
+  <div class="flex flex-col items-center justify-center text-center p-8 gap-2 bg-white border border-subtle rounded-lg">
+    <div class="w-10 h-10 rounded-lg bg-status-red-bg text-status-red border border-subtle flex items-center justify-center mb-1">
       <UIcon name="i-heroicons-exclamation-triangle" class="w-5 h-5" />
     </div>
-    <h4 class="app-error-state__title">{{ title || 'Unable to load data' }}</h4>
-    <p v-if="message" class="app-error-state__msg">{{ message }}</p>
-    <div class="app-error-state__actions">
+    <h4 class="text-sm font-semibold text-ink m-0">{{ title || 'Unable to load data' }}</h4>
+    <p v-if="message" class="text-xs text-ink-secondary max-w-sm m-0 leading-relaxed">{{ message }}</p>
+    <div class="mt-2">
       <AppButton
         size="sm"
         variant="default"
@@ -25,50 +25,3 @@ defineProps<{
 
 defineEmits(['retry'])
 </script>
-
-<style scoped>
-.app-error-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 36px 20px;
-  gap: 6px;
-  background: var(--surface-card, #ffffff);
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  border-radius: var(--radius-lg, 8px);
-}
-
-.app-error-state__icon {
-  width: 38px;
-  height: 38px;
-  border-radius: var(--radius-lg, 8px);
-  background: var(--status-red-bg, #fef2f2);
-  color: var(--status-red, #b91c1c);
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 4px;
-}
-
-.app-error-state__title {
-  font-size: 13.5px;
-  font-weight: 600;
-  color: var(--text-primary, #0f172a);
-  margin: 0;
-}
-
-.app-error-state__msg {
-  font-size: 12px;
-  color: var(--text-secondary, #475569);
-  margin: 0;
-  max-width: 420px;
-}
-
-.app-error-state__actions {
-  margin-top: 8px;
-}
-</style>
-

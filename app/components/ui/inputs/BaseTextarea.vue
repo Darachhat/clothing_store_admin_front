@@ -1,8 +1,8 @@
 <template>
-  <div class="app-textarea-group">
-    <label v-if="label" :for="id" class="app-textarea-label">
+  <div class="flex flex-col gap-1.5 min-w-0">
+    <label v-if="label" :for="id" class="text-xs font-semibold text-ink-secondary leading-tight">
       {{ label }}
-      <span v-if="required" class="required">*</span>
+      <span v-if="required" class="text-status-red ml-0.5">*</span>
     </label>
     <textarea
       :id="id"
@@ -13,13 +13,18 @@
       :readonly="readonly"
       :required="required"
       :maxlength="maxlength"
-      class="app-textarea"
-      :class="{ 'has-error': !!error, 'font-mono': mono }"
+      :aria-invalid="!!error"
+      :aria-describedby="error && id ? `${id}-error` : hint && id ? `${id}-hint` : undefined"
+      class="w-full p-3 bg-white border rounded-md text-sm text-ink placeholder:text-ink-tertiary outline-none transition-colors shadow-xs resize-y disabled:bg-surface-bg disabled:opacity-50 disabled:cursor-not-allowed"
+      :class="[
+        error ? 'border-status-red focus:border-status-red focus:ring-1 focus:ring-status-red' : 'border-subtle focus:border-brand-900 focus:ring-1 focus:ring-brand-900',
+        mono ? 'font-mono' : ''
+      ]"
       @input="$emit('update:modelValue', ($event.target as HTMLTextAreaElement).value)"
       @blur="$emit('blur', $event)"
     />
-    <p v-if="error" class="app-textarea-error">{{ error }}</p>
-    <p v-else-if="hint" class="app-textarea-hint">{{ hint }}</p>
+    <p v-if="error" :id="id ? `${id}-error` : undefined" class="text-xs text-status-red m-0" role="alert">{{ error }}</p>
+    <p v-else-if="hint" :id="id ? `${id}-hint` : undefined" class="text-xs text-ink-tertiary m-0">{{ hint }}</p>
   </div>
 </template>
 
@@ -44,82 +49,3 @@ defineEmits<{
   'blur': [event: FocusEvent]
 }>()
 </script>
-
-<style scoped>
-.app-textarea-group {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  min-width: 0;
-}
-
-.app-textarea-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-secondary, #475569);
-  line-height: 1.3;
-}
-
-.required {
-  color: var(--status-red, #b91c1c);
-  margin-left: 2px;
-}
-
-.app-textarea {
-  width: 100%;
-  min-height: 72px;
-  padding: 8px 11px;
-  font-family: var(--font-body);
-  font-size: 13px;
-  line-height: 1.45;
-  color: var(--text-primary, #0f172a);
-  background: var(--surface-input, #ffffff);
-  border: 1px solid var(--border-subtle, #e5e7eb);
-  border-radius: var(--radius-md, 6px);
-  outline: none;
-  resize: vertical;
-  transition: border-color 0.12s, background 0.12s;
-}
-
-.app-textarea.font-mono {
-  font-family: var(--font-mono);
-  font-size: 12px;
-}
-
-.app-textarea::placeholder {
-  color: var(--text-muted, #94a3b8);
-}
-
-.app-textarea:hover:not(:disabled) {
-  border-color: var(--border-default, #d1d5db);
-}
-
-.app-textarea:focus {
-  border-color: var(--border-strong, #9ca3af);
-  background: var(--surface-card, #ffffff);
-}
-
-.app-textarea:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-  background: var(--surface-inset, #f8fafc);
-}
-
-.app-textarea.has-error {
-  border-color: var(--border-strong, #9ca3af);
-  background: var(--status-red-bg, #fef2f2);
-}
-
-.app-textarea-error {
-  font-size: 11px;
-  color: var(--status-red, #b91c1c);
-  margin: 0;
-}
-
-.app-textarea-hint {
-  font-size: 11px;
-  color: var(--text-tertiary, #64748b);
-  margin: 0;
-}
-</style>
-
