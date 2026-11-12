@@ -1,28 +1,106 @@
 <template>
   <div class="page-root">
-    <!-- Header -->
-    <AppPageHeader
-      title="Staff &amp; User Accounts"
-      description="Manage account identities, verified phone numbers, Telegram linking, and multi-role assignments."
-      :breadcrumbs="[{ label: 'Administration' }, { label: 'Users' }]"
-    >
-      <template #actions>
-        <AppButton
-          label="My Identity & Security"
-          variant="default"
-          size="sm"
-          icon="i-heroicons-finger-print"
+    <!-- Account & Security Profile Banner (Reference Screenshot 5 Layout) -->
+    <div class="bg-navy text-white rounded-xl p-5 sm:p-6 shadow-card flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div class="flex items-center gap-4 min-w-0">
+        <div class="w-14 h-14 rounded-full bg-white text-ink font-medium text-xl flex items-center justify-center shrink-0 border-2 border-border-subtle">
+          {{ getInitials(authStore.currentUser?.full_name || authStore.currentUser?.username || 'Admin') }}
+        </div>
+        <div class="min-w-0 space-y-1">
+          <div class="flex items-center gap-2 flex-wrap">
+            <h1 class="text-xl sm:text-2xl font-medium text-white truncate">
+              {{ authStore.currentUser?.full_name || authStore.currentUser?.username || 'Administrator' }}
+            </h1>
+            <span class="w-5 h-5 rounded-full bg-status-green-bg text-white inline-flex items-center justify-center shrink-0" title="Verified Account">
+              <UIcon name="i-heroicons-check" class="w-3.5 h-3.5" />
+            </span>
+          </div>
+          <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm text-white/80 font-normal">
+            <span class="inline-flex items-center gap-1">
+              <UIcon name="i-heroicons-phone" class="w-3.5 h-3.5" />
+              <span>{{ authStore.currentUser?.phone_number || '(+855) Verified Staff' }}</span>
+            </span>
+            <span>&bull;</span>
+            <span class="inline-flex items-center gap-1">
+              <UIcon name="i-heroicons-envelope" class="w-3.5 h-3.5" />
+              <span>{{ authStore.currentUser?.email || 'admin@clothingstore.local' }}</span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2 shrink-0">
+        <button
+          type="button"
+          class="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-navy-deep text-white border border-border-strong text-sm font-medium hover:opacity-90 transition-opacity cursor-pointer"
           @click="openSelfSecurityModal"
-        />
-        <AppButton
-          label="Add User"
-          variant="primary"
-          size="sm"
-          icon="i-heroicons-plus"
+        >
+          <UIcon name="i-heroicons-finger-print" class="w-4 h-4" />
+          <span>My Identity &amp; Security</span>
+        </button>
+        <button
+          type="button"
+          class="inline-flex items-center gap-1.5 h-9 px-3.5 rounded-lg bg-white text-ink text-sm font-medium hover:bg-surface-inset transition-colors cursor-pointer"
           @click="openCreateModal"
-        />
-      </template>
-    </AppPageHeader>
+        >
+          <UIcon name="i-heroicons-plus" class="w-4 h-4" />
+          <span>Add User</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 3 Quick Account & Security Navigation Cards (Reference Screenshot 5) -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+      <button
+        type="button"
+        class="bg-surface-card border border-border-subtle rounded-xl p-4 shadow-card flex items-center justify-between gap-3 text-left hover:bg-surface-hover transition-colors cursor-pointer"
+        @click="openSelfSecurityModal"
+      >
+        <div class="flex items-center gap-3.5 min-w-0">
+          <div class="w-11 h-11 rounded-xl bg-navy text-white flex items-center justify-center shrink-0">
+            <UIcon name="i-heroicons-user" class="w-5 h-5" />
+          </div>
+          <div class="min-w-0">
+            <div class="text-sm font-medium text-ink">Account Information</div>
+            <div class="text-xs text-ink-secondary truncate">Personal profile &amp; contact details</div>
+          </div>
+        </div>
+        <UIcon name="i-heroicons-chevron-right" class="w-4 h-4 text-ink-tertiary shrink-0" />
+      </button>
+
+      <NuxtLink
+        to="/roles"
+        class="bg-surface-card border border-border-subtle rounded-xl p-4 shadow-card flex items-center justify-between gap-3 text-left hover:bg-surface-hover transition-colors no-underline"
+      >
+        <div class="flex items-center gap-3.5 min-w-0">
+          <div class="w-11 h-11 rounded-xl bg-navy text-white flex items-center justify-center shrink-0">
+            <UIcon name="i-heroicons-squares-2x2" class="w-5 h-5" />
+          </div>
+          <div class="min-w-0">
+            <div class="text-sm font-medium text-ink">Roles &amp; Permissions</div>
+            <div class="text-xs text-ink-secondary truncate">RBAC policies &amp; store access control</div>
+          </div>
+        </div>
+        <UIcon name="i-heroicons-chevron-right" class="w-4 h-4 text-ink-tertiary shrink-0" />
+      </NuxtLink>
+
+      <button
+        type="button"
+        class="bg-surface-card border border-border-subtle rounded-xl p-4 shadow-card flex items-center justify-between gap-3 text-left hover:bg-surface-hover transition-colors cursor-pointer"
+        @click="openSelfSecurityModal"
+      >
+        <div class="flex items-center gap-3.5 min-w-0">
+          <div class="w-11 h-11 rounded-xl bg-status-green-bg text-white flex items-center justify-center shrink-0">
+            <UIcon name="i-heroicons-shield-check" class="w-5 h-5" />
+          </div>
+          <div class="min-w-0">
+            <div class="text-sm font-medium text-ink">Connected Identities</div>
+            <div class="text-xs text-ink-secondary truncate">Phone OTP, Telegram Login &amp; Security</div>
+          </div>
+        </div>
+        <UIcon name="i-heroicons-chevron-right" class="w-4 h-4 text-ink-tertiary shrink-0" />
+      </button>
+    </div>
 
     <!-- Search & Filter Bar -->
     <AppCard>
@@ -94,19 +172,21 @@
       >
         <!-- 1. Account Identity -->
         <template #cell-username="{ row }">
-          <div class="flex items-center gap-2.5">
-            <div class="a-avatar">{{ getInitials(row.full_name || row.username) }}</div>
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-full bg-navy text-white text-xs font-medium flex items-center justify-center shrink-0">
+              {{ getInitials(row.full_name || row.username) }}
+            </div>
             <div>
               <div class="flex items-center gap-1.5">
-                <p class="font-medium text-gray-900 dark:text-white">{{ row.full_name }}</p>
+                <p class="font-medium text-ink">{{ row.full_name }}</p>
                 <span
                   v-if="row.employee_code"
-                  class="text-[11px] font-mono px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300"
+                  class="text-[11px] font-mono px-1.5 py-0.5 rounded bg-surface-inset border border-border-subtle text-ink-secondary"
                 >
                   {{ row.employee_code }}
                 </span>
               </div>
-              <p class="text-xs text-gray-500 font-mono">@{{ row.username }} &middot; {{ row.email }}</p>
+              <p class="text-xs text-ink-secondary font-mono">@{{ row.username }} &middot; {{ row.email }}</p>
             </div>
           </div>
         </template>

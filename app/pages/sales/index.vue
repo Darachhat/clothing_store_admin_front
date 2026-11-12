@@ -21,6 +21,11 @@
       :chips="activeChips"
       :shown-count="paginatedSales.length"
       :total-count="filteredSales.length"
+      :summary-items="[
+        { label: 'Total Revenue', value: `$${totalSalesRevenue}` },
+        { label: 'Invoices', value: filteredSales.length },
+        { label: 'Completed', value: completedSalesCount },
+      ]"
       count-label="sales"
       @submit="fetchSales"
       @remove-chip="removeChip"
@@ -70,15 +75,26 @@
         }"
       >
         <template #cell-invoice_number="{ row }">
-          <NuxtLink :to="`/sales/${row.id}`" class="mono font-semibold text-gray-900 hover:underline">
-            {{ row.invoice_number }}
-          </NuxtLink>
+          <div class="flex flex-col gap-0.5 min-w-0">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <NuxtLink :to="`/sales/${row.id}`" class="mono font-medium text-ink hover:underline">
+                {{ row.invoice_number }}
+              </NuxtLink>
+              <span class="text-xs text-ink-secondary">
+                ({{ isOnlineOrder(row) ? 'Online Storefront' : 'POS Register' }})
+              </span>
+            </div>
+            <div class="text-xs text-ink-secondary truncate max-w-[380px]">
+              Clothing Store | {{ row.items?.length ? `${row.items.length} item(s)` : 'Standard Retail Sale' }}
+              <template v-if="row.notes"> — {{ row.notes }}</template>
+            </div>
+          </div>
         </template>
 
         <template #cell-channel="{ row }">
           <span
-            class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border border-gray-200 text-xs font-medium"
-            :class="isOnlineOrder(row) ? 'bg-gray-900 text-white' : 'bg-gray-50 text-gray-700'"
+            class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium"
+            :class="isOnlineOrder(row) ? 'bg-navy text-white' : 'bg-surface-inset text-ink border border-border-subtle'"
           >
             <UIcon :name="isOnlineOrder(row) ? 'i-heroicons-globe-alt' : 'i-heroicons-building-storefront'" class="w-3.5 h-3.5" />
             <span>{{ isOnlineOrder(row) ? 'Online Store' : 'POS' }}</span>
@@ -86,9 +102,14 @@
         </template>
 
         <template #cell-total="{ row }">
-          <span class="mono font-semibold text-gray-900">
-            ${{ Number(row.total || 0).toFixed(2) }}
-          </span>
+          <div class="flex flex-col items-end gap-0.5">
+            <span class="mono font-medium text-ink">
+              ${{ Number(row.total || 0).toFixed(2) }}
+            </span>
+            <span class="text-xs text-ink-secondary whitespace-nowrap">
+              Issued - {{ formatDate(row.created_at) }}
+            </span>
+          </div>
         </template>
 
         <template #cell-sale_status="{ row }">
@@ -111,13 +132,13 @@
                 {{ p.payment_method }}: ${{ Number(p.amount).toFixed(2) }}
               </AppBadge>
             </template>
-            <span v-else class="text-xs text-gray-400">—</span>
+            <span v-else class="text-xs text-ink-tertiary">—</span>
           </div>
         </template>
 
         <template #cell-created_at="{ row }">
-          <span class="text-xs text-gray-500">
-            {{ formatDate(row.created_at) }}
+          <span class="text-xs text-ink-secondary whitespace-nowrap">
+            {{ (row.sale_status || row.status || 'COMPLETED') === 'COMPLETED' ? 'Paid - ' : '' }}{{ formatDate(row.created_at) }}
           </span>
         </template>
 
@@ -191,7 +212,7 @@
             <span>Discount</span>
             <span class="mono">-${{ Number(selectedSale.discount_amount).toFixed(2) }}</span>
           </div>
-          <div class="flex justify-between font-bold text-base text-gray-900 pt-1">
+          <div class="flex justify-between font-medium text-base text-gray-900 pt-1">
             <span>Total</span>
             <span class="mono">${{ Number(selectedSale.total || 0).toFixed(2) }}</span>
           </div>
@@ -234,12 +255,20 @@ const selectedSale = ref<any>(null)
 const columns = [
   { key: 'invoice_number', label: 'Invoice #', sortable: true },
   { key: 'channel', label: 'Channel' },
-  { key: 'total', label: 'Total', sortable: true },
+  { key: 'total', label: 'Total ($)', sortable: true, align: 'right' as const },
   { key: 'sale_status', label: 'Status' },
   { key: 'payments', label: 'Payment' },
-  { key: 'created_at', label: 'Date/Time', sortable: true },
+  { key: 'created_at', label: 'Date / Time', sortable: true },
   { key: 'actions', label: 'Actions', align: 'right' as const },
 ]
+
+const totalSalesRevenue = computed(() =>
+  filteredSales.value.reduce((sum, s) => sum + Number(s.total || 0), 0).toFixed(2),
+)
+
+const completedSalesCount = computed(() =>
+  filteredSales.value.filter(s => (s.sale_status || s.status || 'COMPLETED') === 'COMPLETED').length,
+)
 
 function isOnlineOrder(sale: any): boolean {
   return String(sale?.notes || '').includes('[ONLINE STORE]')

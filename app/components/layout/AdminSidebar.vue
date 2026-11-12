@@ -11,30 +11,30 @@
     >
       <div
         v-if="isMobileOpen"
-        class="fixed inset-0 bg-ink/45 backdrop-blur-[1px] z-45 md:hidden no-print"
+        class="fixed inset-0 bg-navy-deep/50 z-45 md:hidden no-print"
         aria-hidden="true"
         @click="closeMobileSidebar"
       />
     </Transition>
 
     <aside
-      class="fixed inset-y-0 left-0 z-50 md:z-30 flex flex-col border-r border-border-subtle bg-surface-card transition-all duration-200 md:static no-print"
+      class="fixed inset-y-0 left-0 z-50 md:z-30 h-dvh flex flex-col shrink-0 bg-navy text-white transition-all duration-200 md:sticky md:top-0 md:self-start no-print"
       :class="[
-        effectiveRail ? 'w-16' : 'w-60',
+        effectiveRail ? 'w-16' : 'w-[248px]',
         isMobileOpen ? 'translate-x-0 shadow-xl' : '-translate-x-full md:translate-x-0',
         customClass,
       ]"
       :aria-label="ariaLabel || 'Main navigation'"
     >
       <!-- ─── Header: Brand Logo & Title ─────────────────────────────── -->
-      <div class="h-14 px-3 flex items-center justify-between border-b border-border-subtle shrink-0">
+      <div class="h-14 px-3 flex items-center justify-between border-b border-white/10 shrink-0">
         <NuxtLink
           to="/dashboard"
           class="flex items-center gap-2.5 min-w-0 no-underline flex-1"
           :title="String(config.public.appName || 'Clothing Store')"
           @click="closeMobileSidebar"
         >
-          <div class="w-8 h-8 rounded-md bg-ink text-white flex items-center justify-center shrink-0 overflow-hidden">
+          <div class="w-9 h-9 rounded-md bg-white/10 text-white flex items-center justify-center shrink-0 overflow-hidden">
             <img
               v-if="brand.logo_url"
               :src="brand.logo_url"
@@ -44,10 +44,10 @@
             <UIcon v-else name="i-heroicons-building-storefront" class="w-4 h-4 text-white" />
           </div>
           <div v-if="!effectiveRail" class="flex flex-col min-w-0">
-            <span class="font-semibold text-xs text-ink block truncate font-khmer">
+            <span class="font-medium text-[15px] text-white block truncate font-khmer">
               {{ displayName }}
             </span>
-            <span v-if="branchName" class="text-[10px] text-ink-tertiary block truncate leading-tight">
+            <span v-if="branchName" class="text-[11px] text-white/60 block truncate leading-tight">
               {{ branchName }}
             </span>
           </div>
@@ -57,7 +57,7 @@
         <button
           v-if="collapsible"
           type="button"
-          class="hidden md:inline-flex items-center justify-center w-7 h-7 rounded border border-border-subtle bg-surface-card text-ink-secondary hover:bg-surface-hover hover:text-ink cursor-pointer shrink-0"
+          class="hidden md:inline-flex items-center justify-center w-7 h-7 rounded-md text-white/70 hover:bg-white/10 hover:text-white cursor-pointer shrink-0"
           :aria-label="effectiveRail ? 'Expand sidebar' : 'Collapse sidebar'"
           :title="effectiveRail ? 'Expand sidebar' : 'Collapse sidebar'"
           @click="toggleCollapse"
@@ -71,7 +71,7 @@
         <!-- Mobile Close Drawer Button -->
         <button
           type="button"
-          class="md:hidden inline-flex items-center justify-center w-8 h-8 rounded border border-border-subtle bg-surface-card text-ink-secondary hover:bg-surface-hover hover:text-ink cursor-pointer shrink-0"
+          class="md:hidden inline-flex items-center justify-center w-9 h-9 rounded-md text-white/80 hover:bg-white/10 hover:text-white cursor-pointer shrink-0"
           aria-label="Close navigation menu"
           @click="closeMobileSidebar"
         >
@@ -82,20 +82,20 @@
       <!-- ─── Navigation Sections ────────────────────────────────────── -->
       <nav class="flex-1 overflow-y-auto px-2 py-3 flex flex-col gap-0.5" :aria-label="ariaLabel || 'Main navigation'">
         <template v-for="(section, idx) in filteredNavSections" :key="section.title">
-          <div v-if="!effectiveRail" class="px-2 pt-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-ink-tertiary select-none">
+          <div v-if="!effectiveRail" class="px-3 pt-4 pb-1 text-[11px] font-medium uppercase tracking-wider text-white/50 select-none">
             {{ section.title }}
           </div>
-          <div v-else-if="idx > 0" class="h-px my-2 bg-border-subtle mx-2" />
+          <div v-else-if="idx > 0" class="h-px my-2 bg-white/10 mx-2" />
 
           <NuxtLink
             v-for="item in section.items"
             :key="item.to"
             :to="item.to"
-            class="flex items-center gap-2.5 px-2.5 py-2 rounded-md text-xs font-medium transition-colors"
+            class="flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-colors"
             :class="[
               isActive(item.to, item.exact)
-                ? 'bg-ink text-white font-semibold'
-                : 'text-ink-secondary hover:bg-surface-hover hover:text-ink',
+                ? 'bg-navy-deep text-gold font-medium'
+                : 'text-white/80 hover:bg-white/10 hover:text-white',
               effectiveRail && 'justify-center px-0'
             ]"
             :title="effectiveRail ? `${section.title}: ${item.label}${item.shortcut ? ` [${item.shortcut}]` : ''}` : undefined"
@@ -103,34 +103,34 @@
           >
             <UIcon :name="item.icon" class="w-4 h-4 shrink-0" />
             <span v-show="!effectiveRail" class="truncate flex-1">{{ item.label }}</span>
-            <span v-if="!effectiveRail && item.badge" class="text-[10px] font-semibold bg-ink text-white px-1.5 py-0.5 rounded-full">{{ item.badge }}</span>
-            <span v-else-if="!effectiveRail && item.shortcut" class="text-[10px] font-mono bg-surface-hover text-ink-tertiary px-1 py-0.5 rounded">{{ item.shortcut }}</span>
+            <span v-if="!effectiveRail && item.badge" class="text-xs font-medium bg-gold text-navy-deep px-1.5 py-0.5 rounded-full">{{ item.badge }}</span>
+            <span v-else-if="!effectiveRail && item.shortcut" class="text-[10px] font-mono bg-white/10 text-white/70 px-1 py-0.5 rounded">{{ item.shortcut }}</span>
           </NuxtLink>
         </template>
       </nav>
 
       <!-- ─── Bottom Footer Actions ──────────────────────────────────── -->
-      <div class="p-2 border-t border-border-subtle flex flex-col gap-1 shrink-0" :class="[effectiveRail && 'items-center']">
+      <div class="p-2 border-t border-white/10 flex flex-col gap-1 shrink-0" :class="[effectiveRail && 'items-center']">
         <div
           class="flex items-center gap-2 p-1.5 rounded-md mb-1 w-full"
           :class="[effectiveRail ? 'justify-center p-0' : '']"
           :title="effectiveRail ? `${userName} (${userRole})` : undefined"
         >
-          <div class="w-7 h-7 rounded-full bg-ink text-white flex items-center justify-center text-[11px] font-bold shrink-0">
+          <div class="w-8 h-8 rounded-full bg-action text-white flex items-center justify-center text-sm font-medium shrink-0">
             {{ userInitials }}
           </div>
           <div v-show="!effectiveRail" class="min-w-0 flex-1">
-            <div class="text-xs font-semibold text-ink truncate" :title="userName">
+            <div class="text-[15px] font-medium text-white truncate" :title="userName">
               {{ userName }}
             </div>
-            <div class="text-[10.5px] text-ink-tertiary truncate">
+            <div class="text-[11px] text-white/60 truncate">
               {{ userRole }}
             </div>
           </div>
           <button
             v-if="!effectiveRail && showShortcuts"
             type="button"
-            class="w-6.5 h-6.5 rounded flex items-center justify-center cursor-pointer text-ink-tertiary hover:bg-surface-hover hover:text-ink shrink-0"
+            class="w-7 h-7 rounded-md flex items-center justify-center cursor-pointer text-white/70 hover:bg-white/10 hover:text-white shrink-0"
             title="Keyboard Shortcuts [?]"
             @click="$emit('shortcuts')"
           >
@@ -140,7 +140,7 @@
 
         <button
           type="button"
-          class="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-xs font-medium transition-colors text-status-red hover:bg-status-red-bg cursor-pointer"
+          class="w-full flex items-center gap-2.5 px-3 py-2 rounded-md text-sm font-medium transition-colors text-white/80 hover:bg-white/10 hover:text-white cursor-pointer"
           :class="[effectiveRail && 'justify-center px-0']"
           :title="effectiveRail ? t('common.sign_out', 'Sign out') : undefined"
           @click="onLogout"
@@ -260,12 +260,24 @@ function toggleCollapse() {
 
 const filteredNavSections = computed(() => {
   const sections = unref(navSections) || []
-  return sections
+  const filtered = sections
     .map(sec => ({
       ...sec,
       items: sec.items.filter(item => !item.permission || authStore.hasPermission(item.permission)),
     }))
     .filter(sec => sec.items.length > 0)
+  // On dev showcase routes without an active auth session, display all nav sections for visual inspection
+  if (filtered.length === 0 && route.path.startsWith('/dev')) {
+    return [
+      ...sections,
+      {
+        key: 'dev',
+        title: 'Dev',
+        items: [{ label: 'Components', to: '/dev/components', icon: 'i-heroicons-swatch', exact: true }],
+      },
+    ]
+  }
+  return filtered
 })
 
 const branchName = computed(() => {

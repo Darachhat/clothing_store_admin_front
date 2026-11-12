@@ -86,7 +86,7 @@
 
         <template #cell-quantity="{ row }">
           <span
-            class="font-bold tabular-nums"
+            class="font-medium tabular-nums"
             :class="row.quantity <= 0 ? 'text-status-red' : row.quantity <= (row.reorder_level || 5) ? 'text-status-amber' : 'text-status-green'"
           >
             {{ row.quantity }}

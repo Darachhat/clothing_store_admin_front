@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col gap-1.5 min-w-0">
     <div v-if="label || $slots.label || $slots['label-right']" class="flex items-center justify-between gap-2">
-      <label v-if="label || $slots.label" :for="htmlFor" class="text-xs font-semibold text-ink-secondary leading-tight">
+      <label v-if="label || $slots.label" :for="htmlFor" class="text-sm font-normal text-ink-secondary leading-tight">
         <slot name="label">{{ label }}</slot>
         <span v-if="required" class="text-status-red ml-0.5">*</span>
       </label>
@@ -39,4 +39,3 @@ defineProps<{
   error?: string
 }>()
 </script>
-

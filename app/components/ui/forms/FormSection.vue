@@ -2,7 +2,7 @@
   <section class="flex flex-col gap-3" :class="{ 'pt-3.5 border-t border-subtle': bordered }">
     <div v-if="title || description || $slots.header" class="flex items-start justify-between gap-3 flex-wrap">
       <div class="flex flex-col gap-0.5">
-        <h4 v-if="title" class="text-xs font-bold uppercase tracking-wider text-ink-secondary m-0">{{ title }}</h4>
+        <h4 v-if="title" class="text-sm font-medium uppercase tracking-wider text-ink-secondary m-0">{{ title }}</h4>
         <p v-if="description" class="text-xs text-ink-tertiary m-0">{{ description }}</p>
       </div>
       <div v-if="$slots['header-right']">

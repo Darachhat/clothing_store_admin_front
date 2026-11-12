@@ -117,7 +117,7 @@
 
         <template #cell-quantity="{ row }">
           <span
-            class="font-bold text-sm mono"
+            class="font-medium text-sm mono"
             :class="Number(row.quantity ?? row.quantity_on_hand ?? 0) <= (row.reorder_level || 5) ? 'text-red-600' : 'text-gray-900'"
           >
             {{ row.quantity ?? row.quantity_on_hand ?? 0 }}

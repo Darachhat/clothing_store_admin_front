@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col gap-1.5 min-w-0">
-    <label v-if="label" :for="id" class="text-xs font-semibold text-ink-secondary leading-tight">
+    <label v-if="label" :for="id" class="text-sm font-normal text-ink-secondary leading-tight">
       {{ label }}
       <span v-if="required" class="text-status-red ml-0.5">*</span>
     </label>
@@ -17,7 +17,7 @@
       :aria-describedby="error && id ? `${id}-error` : hint && id ? `${id}-hint` : undefined"
       class="w-full p-3 bg-white border rounded-md text-sm text-ink placeholder:text-ink-tertiary outline-none transition-colors shadow-xs resize-y disabled:bg-surface-bg disabled:opacity-50 disabled:cursor-not-allowed"
       :class="[
-        error ? 'border-status-red focus:border-status-red focus:ring-1 focus:ring-status-red' : 'border-subtle focus:border-brand-900 focus:ring-1 focus:ring-brand-900',
+        error ? 'border-status-red focus:border-status-red focus:ring-1 focus:ring-status-red' : 'border-border-default hover:border-border-strong focus:border-action focus:ring-[3px] focus:ring-action/20',
         mono ? 'font-mono' : ''
       ]"
       @input="$emit('update:modelValue', ($event.target as HTMLTextAreaElement).value)"

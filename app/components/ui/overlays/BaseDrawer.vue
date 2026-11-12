@@ -10,21 +10,21 @@
     >
       <div
         v-if="modelValue"
-        class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex justify-end z-50"
+        class="fixed inset-0 bg-navy-deep/50 flex justify-end z-50"
         role="dialog"
         aria-modal="true"
         :aria-label="title || 'Detail Drawer'"
         @click.self="close"
       >
         <aside
-          class="bg-white border-l border-subtle shadow-2xl flex flex-col h-full w-full overflow-hidden"
+          class="bg-white border-l border-subtle shadow-modal flex flex-col h-full w-full overflow-hidden"
           :class="sizeClasses"
           :style="width ? `max-width: ${width};` : undefined"
         >
           <header class="flex items-start justify-between gap-3 px-5 py-4 border-b border-subtle flex-shrink-0">
             <div class="flex flex-col gap-0.5 min-w-0">
               <div class="flex items-center gap-2">
-                <h3 class="text-base font-semibold text-ink m-0">{{ title }}</h3>
+                <h3 class="text-lg font-medium text-ink m-0">{{ title }}</h3>
                 <slot name="badge" />
               </div>
               <p v-if="subtitle" class="text-xs text-ink-secondary m-0 mt-0.5">{{ subtitle }}</p>

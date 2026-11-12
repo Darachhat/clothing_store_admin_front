@@ -35,8 +35,8 @@
       <div class="inline-flex items-center bg-surface-card border border-border-subtle rounded p-0.5 gap-0.5 shrink-0" role="group" aria-label="View mode">
         <button
           type="button"
-          class="inline-flex items-center gap-1 h-6 px-2 text-[11px] font-semibold rounded cursor-pointer transition-colors"
-          :class="mobileMode === 'cards' ? 'bg-ink text-white' : 'text-ink-tertiary hover:text-ink'"
+          class="inline-flex items-center gap-1 h-7 px-2.5 text-xs font-medium rounded cursor-pointer transition-colors"
+          :class="mobileMode === 'cards' ? 'bg-action text-white' : 'text-ink-tertiary hover:text-ink'"
           title="Card view"
           @click="mobileMode = 'cards'"
         >
@@ -45,8 +45,8 @@
         </button>
         <button
           type="button"
-          class="inline-flex items-center gap-1 h-6 px-2 text-[11px] font-semibold rounded cursor-pointer transition-colors"
-          :class="mobileMode === 'table' ? 'bg-ink text-white' : 'text-ink-tertiary hover:text-ink'"
+          class="inline-flex items-center gap-1 h-7 px-2.5 text-xs font-medium rounded cursor-pointer transition-colors"
+          :class="mobileMode === 'table' ? 'bg-action text-white' : 'text-ink-tertiary hover:text-ink'"
           title="Table view"
           @click="mobileMode = 'table'"
         >
@@ -69,7 +69,7 @@
         <div v-if="primaryColumn" class="flex items-start justify-between gap-2.5">
           <div class="min-w-0 flex-1 text-xs sm:text-sm font-medium">
             <slot :name="`cell-${primaryColumn.key}`" :row="row" :value="row[primaryColumn.key]">
-              <span class="font-semibold text-ink">{{ row[primaryColumn.key] ?? '—' }}</span>
+              <span class="text-sm font-medium text-ink">{{ row[primaryColumn.key] ?? '—' }}</span>
             </slot>
           </div>
           <div v-if="statusColumn" class="shrink-0">
@@ -86,7 +86,7 @@
             :key="col.key"
             class="flex flex-col gap-0.5 min-w-0"
           >
-            <span class="text-[10px] font-semibold uppercase tracking-wider text-ink-tertiary">{{ col.label }}</span>
+            <span class="text-xs font-normal uppercase tracking-wider text-ink-tertiary">{{ col.label }}</span>
             <div class="text-xs text-ink min-w-0 break-words">
               <slot :name="`cell-${col.key}`" :row="row" :value="row[col.key]">
                 {{ row[col.key] ?? '—' }}
@@ -103,7 +103,7 @@
               :key="col.key"
               class="flex flex-col gap-0.5 min-w-0"
             >
-              <span class="text-[10px] font-semibold uppercase tracking-wider text-ink-tertiary">{{ col.label }}</span>
+              <span class="text-xs font-normal uppercase tracking-wider text-ink-tertiary">{{ col.label }}</span>
               <div class="text-xs text-ink min-w-0 break-words">
                 <slot :name="`cell-${col.key}`" :row="row" :value="row[col.key]">
                   {{ row[col.key] ?? '—' }}
@@ -114,7 +114,7 @@
 
           <button
             type="button"
-            class="inline-flex items-center justify-center gap-1 w-full py-1.5 px-2 text-xs font-semibold text-ink-secondary bg-surface-inset border border-border-subtle rounded cursor-pointer hover:bg-surface-hover transition-colors"
+            class="inline-flex items-center justify-center gap-1 w-full py-1.5 px-2.5 text-sm font-normal text-ink-secondary bg-surface-inset border border-border-subtle rounded cursor-pointer hover:bg-surface-hover transition-colors"
             @click.stop="toggleCardExpand(row[rowKey] ?? idx)"
           >
             <span>{{ isCardExpanded(row[rowKey] ?? idx) ? 'Hide details' : `More details (${extraBodyColumns.length})` }}</span>
@@ -139,9 +139,9 @@
       :class="[!loading && !error && sortedRows.length > 0 && mobileMode === 'cards' ? 'hidden md:block' : '']"
     >
       <table class="w-full border-collapse text-xs sm:text-sm">
-        <thead class="sticky top-0 z-10 bg-surface-inset border-b border-border-subtle">
+        <thead class="sticky top-0 z-10 bg-surface-card">
           <tr>
-            <th v-if="selectable" class="w-9 pl-3.5 pr-1 py-2.5 bg-surface-inset shadow-[inset_0_-1px_0_var(--border-subtle,#e5e7eb)]">
+            <th v-if="selectable" class="w-9 pl-3.5 pr-1 py-3 bg-surface-card shadow-[inset_0_-1px_0_var(--border-subtle,#e2e2e2)]">
               <input
                 type="checkbox"
                 class="rounded border-border-default text-ink focus:ring-0 focus:outline-none"
@@ -151,10 +151,16 @@
               />
             </th>
             <th
+              v-if="showRowIndex"
+              class="w-12 py-3.5 pl-4 pr-2 bg-surface-card shadow-[inset_0_-1px_0_var(--border-subtle,#e2e2e2)] text-left text-sm font-medium text-ink whitespace-nowrap select-none"
+            >
+              #
+            </th>
+            <th
               v-for="col in normalizedColumns"
               :key="col.key"
               :style="col.width ? `width:${col.width}` : undefined"
-              class="sticky top-0 bg-surface-inset shadow-[inset_0_-1px_0_var(--border-subtle,#e5e7eb)] py-2.5 px-3 sm:px-4 text-[11px] font-semibold text-ink-tertiary uppercase tracking-wider whitespace-nowrap select-none"
+              class="sticky top-0 bg-surface-card shadow-[inset_0_-1px_0_var(--border-subtle,#e2e2e2)] py-3.5 px-3 sm:px-4 text-sm font-medium text-ink whitespace-nowrap select-none"
               :class="[
                 col.align ? `text-${col.align}` : 'text-left',
                 col.key === 'actions' && 'text-right',
@@ -189,6 +195,9 @@
               <td v-if="selectable" class="p-2.5 sm:px-4">
                 <div class="w-4 h-4 bg-surface-active rounded" />
               </td>
+              <td v-if="showRowIndex" class="py-3.5 pl-4 pr-2">
+                <div class="w-5 h-3.5 bg-surface-active rounded" />
+              </td>
               <td v-for="col in normalizedColumns" :key="col.key" class="p-2.5 sm:px-4">
                 <div
                   class="h-3.5 bg-surface-active rounded"
@@ -198,7 +207,7 @@
             </tr>
           </template>
           <tr v-else-if="error">
-            <td :colspan="normalizedColumns.length + (selectable ? 1 : 0)" class="text-center py-10 px-4 text-ink-tertiary">
+            <td :colspan="normalizedColumns.length + (selectable ? 1 : 0) + (showRowIndex ? 1 : 0)" class="text-center py-10 px-4 text-ink-tertiary">
               <div class="flex flex-col items-center justify-center gap-1.5">
                 <UIcon name="i-heroicons-exclamation-triangle" class="w-7 h-7 text-status-amber mb-0.5" />
                 <span class="text-xs sm:text-sm font-medium text-ink-secondary">{{ error }}</span>
@@ -207,7 +216,7 @@
             </td>
           </tr>
           <tr v-else-if="!sortedRows.length">
-            <td :colspan="normalizedColumns.length + (selectable ? 1 : 0)" class="text-center py-10 px-4 text-ink-tertiary">
+            <td :colspan="normalizedColumns.length + (selectable ? 1 : 0) + (showRowIndex ? 1 : 0)" class="text-center py-10 px-4 text-ink-tertiary">
               <div class="flex flex-col items-center justify-center gap-1.5">
                 <UIcon :name="emptyIcon || emptyState?.icon || 'i-heroicons-inbox'" class="w-7 h-7 text-ink-tertiary mb-0.5" />
                 <span class="text-xs sm:text-sm font-medium text-ink-secondary">{{ emptyTitle || emptyState?.label || emptyText || 'No records found.' }}</span>
@@ -226,7 +235,7 @@
               :class="rowClickable && 'cursor-pointer'"
               @click="rowClickable ? $emit('row-click', row) : undefined"
             >
-              <td v-if="selectable" class="w-9 pl-3.5 pr-1 py-2.5" @click.stop>
+              <td v-if="selectable" class="w-9 pl-3.5 pr-1 py-3.5" @click.stop>
                 <input
                   type="checkbox"
                   class="rounded border-border-default text-ink focus:ring-0 focus:outline-none"
@@ -235,10 +244,13 @@
                   @change="toggleRowSelect(row[rowKey] ?? idx)"
                 />
               </td>
+              <td v-if="showRowIndex" class="w-12 py-3.5 pl-4 pr-2 text-sm font-normal text-ink-secondary align-top">
+                {{ idx + 1 }}
+              </td>
               <td
                 v-for="col in normalizedColumns"
                 :key="col.key"
-                class="py-2.5 px-3 sm:px-4 text-ink align-middle"
+                class="py-3.5 px-3 sm:px-4 text-ink align-top"
                 :class="[
                   col.align ? `text-${col.align}` : '',
                   col.key === 'actions' && 'text-right whitespace-nowrap',
@@ -287,6 +299,7 @@ const props = withDefaults(defineProps<{
   rowClickable?: boolean
   selectable?: boolean
   selected?: Array<string | number>
+  showRowIndex?: boolean
   defaultMobileMode?: 'cards' | 'table'
 }>(), {
   rowKey: 'id',
@@ -295,6 +308,7 @@ const props = withDefaults(defineProps<{
   rowClickable: false,
   selectable: false,
   selected: () => [],
+  showRowIndex: true,
   defaultMobileMode: 'cards',
 })
 

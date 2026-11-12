@@ -1,5 +1,5 @@
 <template>
-  <nav v-if="items && items.length" class="inline-flex items-center gap-1.5 text-xs mb-1 flex-wrap" aria-label="Breadcrumb">
+  <nav v-if="items && items.length" class="inline-flex items-center gap-1.5 text-sm mb-1 flex-wrap" aria-label="Breadcrumb">
     <template v-for="(crumb, idx) in items" :key="idx">
       <NuxtLink
         v-if="crumb.to"
@@ -9,7 +9,7 @@
         <UIcon v-if="crumb.icon" :name="crumb.icon" class="w-3.5 h-3.5 flex-shrink-0" />
         <span>{{ crumb.label }}</span>
       </NuxtLink>
-      <span v-else class="inline-flex items-center gap-1 text-ink font-semibold">
+      <span v-else class="inline-flex items-center gap-1 text-ink font-medium">
         <UIcon v-if="crumb.icon" :name="crumb.icon" class="w-3.5 h-3.5 flex-shrink-0" />
         <span>{{ crumb.label }}</span>
       </span>

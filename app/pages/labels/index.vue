@@ -69,7 +69,7 @@
                 class="flex items-start justify-between p-3 rounded-lg border text-left transition-all"
                 :class="
                   form.paper_size === preset.id
-                    ? 'bg-gray-900 text-white border-gray-900 dark:bg-white dark:text-gray-900 dark:border-white'
+                    ? 'bg-navy text-white border-border-subtle'
                     : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/60'
                 "
                 @click="applyPreset(preset)"
@@ -124,7 +124,7 @@
               class="flex items-start gap-3 p-3 rounded-lg border text-left transition-all"
               :class="
                 form.code_type === 'BARCODE'
-                  ? 'bg-gray-900 text-white border-gray-900 dark:bg-white dark:text-gray-900 dark:border-white'
+                  ? 'bg-navy text-white border-border-subtle'
                   : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-700 hover:bg-gray-50'
               "
               @click="form.code_type = 'BARCODE'"
@@ -146,7 +146,7 @@
               class="flex items-start gap-3 p-3 rounded-lg border text-left transition-all"
               :class="
                 form.code_type === 'QR'
-                  ? 'bg-gray-900 text-white border-gray-900 dark:bg-white dark:text-gray-900 dark:border-white'
+                  ? 'bg-navy text-white border-border-subtle'
                   : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-700 hover:bg-gray-50'
               "
               @click="form.code_type = 'QR'"

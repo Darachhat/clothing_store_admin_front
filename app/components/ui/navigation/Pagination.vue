@@ -1,7 +1,7 @@
 <template>
-  <div v-if="total > 0" class="flex items-center justify-between gap-3 flex-wrap text-xs text-ink-secondary py-2">
+  <div v-if="total > 0" class="flex items-center justify-between gap-3 flex-wrap text-sm text-ink-secondary py-2">
     <div>
-      Showing <strong class="text-ink font-semibold">{{ startItem }}</strong>–<strong class="text-ink font-semibold">{{ endItem }}</strong> of <strong class="text-ink font-semibold">{{ total }}</strong>
+      Showing <strong class="text-ink font-medium">{{ startItem }}</strong>–<strong class="text-ink font-medium">{{ endItem }}</strong> of <strong class="text-ink font-medium">{{ total }}</strong>
     </div>
 
     <div class="flex items-center gap-2">
@@ -14,7 +14,7 @@
         @click="$emit('update:page', page - 1)"
       />
       <span class="text-xs px-1">
-        Page <strong class="text-ink font-semibold">{{ page }}</strong> of <strong class="text-ink font-semibold">{{ totalPages }}</strong>
+        Page <strong class="text-ink font-medium">{{ page }}</strong> of <strong class="text-ink font-medium">{{ totalPages }}</strong>
       </span>
       <AppButton
         size="xs"

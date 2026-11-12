@@ -1,8 +1,8 @@
 <template>
   <span
-    class="inline-flex items-center gap-1.5 rounded-full border border-subtle font-semibold leading-tight whitespace-nowrap"
+    class="inline-flex items-center gap-1.5 rounded-full font-medium leading-tight whitespace-nowrap"
     :class="[
-      size === 'sm' ? 'px-2 py-0.5 text-[10.5px]' : 'px-2.5 py-1 text-xs',
+      size === 'sm' ? 'px-2.5 py-0.5 text-xs' : 'px-3 py-1 text-sm',
       badgeColorClasses
     ]"
   >
@@ -107,15 +107,15 @@ const normalizedColor = computed(() => {
 const badgeColorClasses = computed(() => {
   switch (normalizedColor.value) {
     case 'green':
-      return 'bg-status-green-bg text-status-green'
+      return 'bg-status-green-bg text-white'
     case 'red':
-      return 'bg-status-red-bg text-status-red'
+      return 'bg-status-red-bg text-white'
     case 'yellow':
-      return 'bg-status-amber-bg text-status-amber'
+      return 'bg-status-amber-bg text-white'
     case 'blue':
-      return 'bg-status-blue-bg text-status-blue'
+      return 'bg-status-blue-bg text-white'
     default:
-      return 'bg-surface-hover text-ink-secondary'
+      return 'bg-ink-secondary text-white'
   }
 })
 

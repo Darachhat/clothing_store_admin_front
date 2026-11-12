@@ -27,7 +27,7 @@
           </div>
 
           <div class="flex-1 min-w-0 flex flex-col gap-0.5">
-            <span class="text-xs sm:text-sm font-semibold text-ink leading-tight">{{ toast.title }}</span>
+            <span class="text-sm font-medium text-ink leading-tight">{{ toast.title }}</span>
             <span v-if="toast.description" class="text-xs text-ink-secondary leading-snug">{{ toast.description }}</span>
           </div>
 
@@ -49,4 +49,3 @@ import { useAppToast } from '~/composables/useAppToast'
 
 const { toasts, dismiss } = useAppToast()
 </script>
-

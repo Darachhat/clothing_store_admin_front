@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col gap-1.5 w-full">
-    <label v-if="label" class="text-xs font-semibold text-ink-secondary flex items-center gap-1">
+    <label v-if="label" class="text-sm font-normal text-ink-secondary flex items-center gap-1">
       {{ label }}
       <span v-if="required" class="text-status-red">*</span>
     </label>
@@ -28,7 +28,7 @@
 
       <button
         type="button"
-        class="w-7 h-7 rounded border border-border-subtle bg-transparent text-ink-secondary flex items-center justify-center hover:bg-status-red-bg hover:text-status-red transition-colors cursor-pointer"
+        class="w-7 h-7 rounded border border-border-subtle bg-transparent text-ink-secondary flex items-center justify-center hover:bg-status-red-bg hover:text-white transition-colors cursor-pointer"
         title="Remove attachment"
         @click="clearFile"
       >
@@ -73,7 +73,7 @@
         </div>
         <div class="flex flex-col gap-0.5">
           <span class="text-xs sm:text-sm text-ink-secondary">
-            <strong class="text-ink font-semibold">Click to upload</strong> or drag and drop
+            <strong class="text-ink font-medium">Click to upload</strong> or drag and drop
           </span>
           <span class="text-[11px] text-ink-tertiary">{{ hint || 'PNG, JPG, WEBP, or PDF up to 10MB' }}</span>
         </div>

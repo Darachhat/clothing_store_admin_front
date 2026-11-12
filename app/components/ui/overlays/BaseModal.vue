@@ -10,20 +10,20 @@
     >
       <div
         v-if="modelValue"
-        class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50"
+        class="fixed inset-0 bg-navy-deep/50 flex items-center justify-center p-4 z-50"
         role="dialog"
         aria-modal="true"
         :aria-label="title || 'Dialog'"
         @click.self="close"
       >
         <div
-          class="bg-white border border-subtle rounded-xl shadow-2xl flex flex-col w-full max-h-[calc(100dvh-32px)] overflow-hidden min-w-0"
+          class="bg-white border border-subtle rounded-xl shadow-modal flex flex-col w-full max-h-[calc(100dvh-32px)] overflow-hidden min-w-0"
           :class="sizeClasses"
         >
           <div v-if="title || $slots.header" class="flex items-start justify-between gap-3 px-5 py-3.5 border-b border-subtle flex-shrink-0">
             <slot name="header">
               <div class="flex flex-col gap-0.5 min-w-0">
-                <h3 class="text-base font-semibold text-ink m-0 leading-snug">{{ title }}</h3>
+                <h3 class="text-lg font-medium text-ink m-0 leading-snug">{{ title }}</h3>
                 <p v-if="description" class="text-xs text-ink-secondary m-0 mt-0.5">{{ description }}</p>
               </div>
             </slot>

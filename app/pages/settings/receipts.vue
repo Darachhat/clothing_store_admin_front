@@ -50,7 +50,7 @@
                 type="button"
                 class="flex items-center justify-center gap-2 p-3 rounded-lg border text-sm font-medium transition-colors"
                 :class="form.paper_width === '80mm'
-                  ? 'border-gray-900 dark:border-white bg-gray-900 text-white dark:bg-white dark:text-gray-900'
+                  ? 'border-border-subtle bg-navy text-white'
                   : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'"
                 @click="form.paper_width = '80mm'"
               >
@@ -61,7 +61,7 @@
                 type="button"
                 class="flex items-center justify-center gap-2 p-3 rounded-lg border text-sm font-medium transition-colors"
                 :class="form.paper_width === '58mm'
-                  ? 'border-gray-900 dark:border-white bg-gray-900 text-white dark:bg-white dark:text-gray-900'
+                  ? 'border-border-subtle bg-navy text-white'
                   : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'"
                 @click="form.paper_width = '58mm'"
               >

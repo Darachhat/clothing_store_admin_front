@@ -1,14 +1,14 @@
 <template>
   <div class="flex flex-col gap-1.5 min-w-0">
-    <label v-if="label" :for="id" class="text-xs font-semibold text-ink-secondary leading-tight">
+    <label v-if="label" :for="id" class="text-sm font-normal text-ink-secondary leading-tight">
       {{ label }}
       <span v-if="required" class="text-status-red ml-0.5">*</span>
     </label>
     <div
       class="relative flex items-center bg-white border rounded-md transition-colors shadow-xs"
       :class="[
-        size === 'sm' ? 'h-[30px] text-xs' : size === 'lg' ? 'h-[40px] text-sm' : 'h-[36px] text-sm',
-        error ? 'border-status-red' : 'border-subtle focus-within:border-brand-900 focus-within:ring-1 focus-within:ring-brand-900',
+        size === 'sm' ? 'h-8 text-xs' : size === 'lg' ? 'h-11 text-sm' : 'h-10 text-sm',
+        error ? 'border-status-red' : 'border-border-default hover:border-border-strong focus-within:border-action focus-within:ring-[3px] focus-within:ring-action/20',
         disabled ? 'bg-surface-bg opacity-50 cursor-not-allowed' : ''
       ]"
     >

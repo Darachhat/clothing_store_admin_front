@@ -34,11 +34,11 @@
             type="button"
             class="flex flex-col items-center justify-center p-3 rounded-lg border text-xs font-medium transition-all"
             :class="currentLocale === loc.code
-              ? 'border-gray-900 dark:border-white bg-gray-900 text-white dark:bg-white dark:text-gray-900 shadow-xs'
+              ? 'border-border-subtle bg-navy text-white shadow-xs'
               : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'"
             @click="setLocale(loc.code)"
           >
-            <span class="font-mono text-[11px] font-bold px-2 py-0.5 rounded border border-gray-200 dark:border-gray-700 mb-1.5">{{ loc.flag }}</span>
+            <span class="font-mono text-[11px] font-medium px-2 py-0.5 rounded border border-gray-200 dark:border-gray-700 mb-1.5">{{ loc.flag }}</span>
             <span class="font-semibold">{{ loc.native }}</span>
             <span class="text-[10px] opacity-75">({{ loc.name }})</span>
             <span v-if="currentLocale === loc.code" class="mt-1.5 inline-flex items-center gap-1 text-[10px] font-medium">
@@ -75,7 +75,7 @@
             </NuxtLink>
             <NuxtLink
               to="/settings/brand"
-              class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md border border-gray-900 dark:border-white bg-gray-900 text-white dark:bg-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors shadow-2xs"
+              class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md border border-border-subtle bg-navy text-white hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors shadow-2xs"
             >
               <UIcon name="i-heroicons-sparkles" class="w-3.5 h-3.5" />
               <span>Manage Logo &amp; Brand (One Stop)</span>
@@ -404,14 +404,14 @@
         </div>
       </template>
       <div class="space-y-3">
-        <div class="flex items-center justify-between p-3 bg-red-50 dark:bg-red-950/30 rounded-lg">
+        <div class="flex items-center justify-between p-3 bg-surface-inset rounded-lg">
           <div>
             <p class="text-sm font-medium text-gray-900 dark:text-white">Clear Transaction History</p>
             <p class="text-xs text-gray-500">Permanently delete all sales records. This cannot be undone.</p>
           </div>
           <BaseButton variant="danger" size="sm" label="Clear History" @click="confirmDanger('clear_history')" />
         </div>
-        <div class="flex items-center justify-between p-3 bg-red-50 dark:bg-red-950/30 rounded-lg">
+        <div class="flex items-center justify-between p-3 bg-surface-inset rounded-lg">
           <div>
             <p class="text-sm font-medium text-gray-900 dark:text-white">Reset Inventory to Zero</p>
             <p class="text-xs text-gray-500">Set all stock levels to 0 for a fresh count.</p>

@@ -19,46 +19,52 @@
 /* ─── Semantic Design Tokens ────────────────────────────────────────────── */
 :root {
   /* Surfaces */
-  --surface-bg:        #F5F5F5;
+  --surface-bg:        #F3F4F4;
   --surface-card:      #FFFFFF;
-  --surface-inset:     #F8FAFC;
-  --surface-input:     #FAFAFA;
-  --surface-hover:     #F0F0F0;
-  --surface-active:    #EAEAEA;
+  --surface-inset:     #F3F4F4;
+  --surface-input:     #FFFFFF;
+  --surface-hover:     #EAECEC;
+  --surface-active:    #DFE2E2;
   --surface:           #FFFFFF;
 
   /* Neutral Borders (Never use colorful borders) */
-  --border-subtle:     #E8E8E8;
-  --border-default:    #D8D8D8;
-  --border-strong:     #BDBDBD;
-  --border:            #E8E8E8;
+  --border-subtle:     #E2E2E2;
+  --border-default:    #C8C8C8;
+  --border-strong:     #8F8F8F;
+  --border:            #E2E2E2;
 
   /* Typography Colors */
-  --text-primary:      #111111;
-  --text-secondary:    #5C5C5C;
-  --text-tertiary:     #9E9E9E;
-  --text-muted:        #94A3B8;
+  --text-primary:      #000000;
+  --text-secondary:    #4A4F58;
+  --text-tertiary:     #5E646E;
+  --text-muted:        #6B7789;
   --text-inverse:      #FFFFFF;
 
-  /* Brand Palette — Minimal Charcoal / Slate */
-  --brand-900:         #111827;
-  --brand-800:         #1F2937;
-  --brand-700:         #374151;
-  --brand-50:          #F9FAFB;
-  --accent-primary:    #111827;
-  --accent-hover:      #1F2937;
-  --accent-subtle:     #F1F5F9;
-  --color-primary:     #111827;
+  /* Brand — Navy chrome, blue primary, gold active accent */
+  --primary:           #000000;
+  --primary-hover:     #1A1A1A;
+  --primary-soft:      #000000;
+  --navy:              #000000;
+  --navy-deep:         #1A1A1A;
+  --gold:              #F5B90F;
+  --brand-900:         var(--primary);
+  --brand-800:         var(--primary-hover);
+  --brand-700:         #262626;
+  --brand-50:          var(--primary-soft);
+  --accent-primary:    var(--primary);
+  --accent-hover:      var(--primary-hover);
+  --accent-subtle:     var(--primary-soft);
+  --color-primary:     var(--primary);
 
   /* Status Colors (Semantic text/bg; borders remain neutral subtle) */
-  --status-green:      #1A7F37;
-  --status-green-bg:   #DCFCE7;
-  --status-amber:      #92400E;
-  --status-amber-bg:   #FEF3C7;
-  --status-red:        #9B1C1C;
-  --status-red-bg:     #FEE2E2;
-  --status-blue:       #1D4ED8;
-  --status-blue-bg:    #DBEAFE;
+  --status-green:      #2A7C13;
+  --status-green-bg:   #2A7C13;
+  --status-amber:      #9A5B00;
+  --status-amber-bg:   #8A5300;
+  --status-red:        #830000;
+  --status-red-bg:     #830000;
+  --status-blue:       #000000;
+  --status-blue-bg:    #000000;
 
   /* Fonts */
   --font-body:    'Inter', 'Kantumruy Pro', 'Battambang Local', ui-sans-serif, system-ui, sans-serif;
@@ -66,21 +72,21 @@
   --font-khmer:   'Kantumruy Pro', 'Battambang', 'Battambang Local', 'Noto Sans Khmer', sans-serif;
 
   /* Layout Metrics */
-  --sidebar-width:           240px;
+  --sidebar-width:           248px;
   --sidebar-width-collapsed: 64px;
   --topbar-height:           56px;
   --radius-sm:               4px;
   --radius-md:               8px;
   --radius-lg:               12px;
+  --radius-xl:               16px;
   --radius-full:             9999px;
 }
-
 /* ─── Base HTML Resets ─────────────────────────────────────────────────── */
 html, body {
   font-family: var(--font-body);
   background-color: var(--surface-bg);
   color: var(--text-primary);
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -113,11 +119,7 @@ html, body {
   }
 
   .admin-main {
-    @apply flex-1 flex flex-col min-w-0 transition-all duration-200 ml-60;
-  }
-
-  .admin-main.is-sidebar-collapsed {
-    @apply ml-16;
+    @apply flex-1 flex flex-col min-w-0 transition-all duration-200;
   }
 
   .admin-content {
@@ -126,7 +128,7 @@ html, body {
 
   .admin-sidebar {
     width: var(--sidebar-width);
-    @apply bg-white border-r border-subtle flex flex-col fixed top-0 left-0 bottom-0 z-40 overflow-hidden transition-all duration-200;
+    @apply bg-navy border-r border-navy-deep flex flex-col fixed top-0 left-0 bottom-0 z-40 overflow-hidden transition-all duration-200;
   }
 
   .admin-sidebar.is-collapsed {
@@ -146,7 +148,7 @@ html, body {
   left: 1rem;
   z-index: 9999;
   padding: 0.5rem 1rem;
-  background-color: #111827;
+  background-color: var(--navy);
   color: #ffffff;
   font-weight: 600;
   font-size: 0.875rem;
@@ -159,13 +161,13 @@ html, body {
 .skip-link:focus,
 .skip-link:focus-visible {
   top: 1rem;
-  outline: 2px solid #111827;
+  outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
 
 /* ─── Accessible Focus Indicators (WCAG 2.1 AA — 3:1 Contrast) ────────── */
 :focus-visible {
-  outline: 2px solid #111827;
+  outline: 2px solid var(--primary);
   outline-offset: 2px;
 }
 
@@ -394,3 +396,7 @@ textarea:focus-visible {
     justify-content: start !important;
   }
 }
+
+/* --- Focus ring on navy surfaces --------------------------------------- */
+aside :focus-visible { outline-color: var(--gold); }
+

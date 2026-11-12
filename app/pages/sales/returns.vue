@@ -60,7 +60,7 @@
         </template>
 
         <template #cell-total_refund="{ row }">
-          <span class="mono font-bold text-red-700">-${{ Number(row.total_refund || 0).toFixed(2) }}</span>
+          <span class="mono font-medium text-red-700">-${{ Number(row.total_refund || 0).toFixed(2) }}</span>
         </template>
 
         <template #cell-status="{ row }">

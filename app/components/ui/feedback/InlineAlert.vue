@@ -1,9 +1,9 @@
 <template>
-  <div v-if="!dismissed" class="flex items-start gap-2.5 p-3 rounded-lg border border-subtle text-xs leading-normal" :class="alertVariantClasses" role="alert">
+  <div v-if="!dismissed" class="flex items-start gap-2.5 p-3 rounded-lg border border-subtle text-sm leading-normal" :class="alertVariantClasses" role="alert">
     <UIcon :name="iconName" class="w-4 h-4 flex-shrink-0 mt-0.5" />
     <div class="flex-1 min-w-0">
-      <p v-if="title" class="m-0 font-semibold text-ink">{{ title }}</p>
-      <p v-if="description" class="m-0 text-ink-secondary mt-0.5">{{ description }}</p>
+      <p v-if="title" class="m-0 text-base font-medium text-white">{{ title }}</p>
+      <p v-if="description" class="m-0 text-white/85 mt-0.5">{{ description }}</p>
       <slot />
     </div>
     <div v-if="$slots.actions" class="flex items-center gap-1.5 flex-shrink-0">
@@ -41,13 +41,13 @@ const dismissed = ref(false)
 const alertVariantClasses = computed(() => {
   switch (props.variant) {
     case 'success':
-      return 'bg-status-green-bg text-status-green'
+      return 'bg-status-green-bg text-white'
     case 'warning':
-      return 'bg-status-amber-bg text-status-amber'
+      return 'bg-status-amber-bg text-white'
     case 'danger':
-      return 'bg-status-red-bg text-status-red'
+      return 'bg-status-red-bg text-white'
     default:
-      return 'bg-status-blue-bg text-status-blue'
+      return 'bg-status-blue-bg text-white'
   }
 })
 

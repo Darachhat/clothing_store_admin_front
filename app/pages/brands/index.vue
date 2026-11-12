@@ -54,7 +54,7 @@
       >
         <template #cell-name="{ row }">
           <div class="flex items-center gap-2.5">
-            <div class="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center text-gray-700 font-bold text-xs border border-gray-200 flex-shrink-0 overflow-hidden">
+            <div class="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center text-gray-700 font-medium text-xs border border-gray-200 flex-shrink-0 overflow-hidden">
               <img
                 v-if="row.logo_url"
                 :src="row.logo_url"

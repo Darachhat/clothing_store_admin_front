@@ -412,7 +412,7 @@
             type="button"
             class="flex-1 py-1.5 px-2 rounded-md transition-all text-center whitespace-nowrap cursor-pointer"
             :class="activePreviewTab === tab.id
-              ? 'bg-gray-900 text-white dark:bg-white dark:text-gray-900 shadow-2xs font-bold'
+              ? 'bg-navy text-white shadow-2xs font-medium'
               : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700'"
             @click="activePreviewTab = tab.id"
           >

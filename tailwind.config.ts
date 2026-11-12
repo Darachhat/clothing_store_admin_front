@@ -28,47 +28,58 @@ export default ({
       colors: {
         // Surfaces
         surface: {
-          bg: '#F5F5F5',      // page canvas / gray wash
+          bg: '#F3F4F4',      // page canvas / gray wash
           card: '#FFFFFF',    // elevated cards, panels
-          input: '#FAFAFA',   // form inputs
-          hover: '#F0F0F0',   // hover state
-          active: '#EAEAEA',  // pressed / active state
+        inset: '#F3F4F4',   // table head, inset panels
+          input: '#FFFFFF',   // form inputs
+          hover: '#EAECEC',   // hover state
+          active: '#DFE2E2',  // pressed / active state
         },
 
         // Borders (neutral only — per AGENTS.md rule: no colorful borders)
-        subtle: '#E8E8E8',    // `border-subtle`  very faint dividers
+        subtle: '#E2E2E2',    // `border-subtle`  very faint dividers
         border: {
-          subtle: '#E8E8E8',
-          default: '#D8D8D8',
-          strong: '#BDBDBD',
+          subtle: '#E2E2E2',
+          default: '#C8C8C8',
+          strong: '#8F8F8F',
         },
 
         // Text / Ink
         ink: {
-          DEFAULT: '#111111',   // body text  (`text-ink`)
-          secondary: '#5C5C5C', // labels, meta
-          tertiary: '#9E9E9E',  // placeholders, hints
+          DEFAULT: '#000000',   // body text  (`text-ink`)
+          secondary: '#4A4F58', // labels, meta
+          tertiary: '#5E646E',  // placeholders, hints
           inverse: '#FFFFFF',   // white text on dark bg
         },
 
-        // Brand palette — charcoal/navy, no rainbow
+        // Brand palette — blue primary (brand-900 === primary), navy chrome, gold active accent
         brand: {
-          50:  '#F9FAFB',
-          700: '#374151',
-          800: '#1F2937',
-          900: '#111827',  // main brand accent  (`bg-brand-900`, `text-brand-900`)
+          50:  '#000000',
+          700: '#262626',
+          800: '#1A1A1A',
+          900: '#000000',  // main brand accent  (`bg-brand-900`, `text-brand-900`)
         },
+        action: {
+          DEFAULT: '#000000',
+          hover: '#1A1A1A',
+          soft: '#000000',
+        },
+        navy: {
+          DEFAULT: '#000000',
+          deep: '#1A1A1A',
+        },
+        gold: '#F5B90F',
 
         // Status — muted, matches --status-* vars
         status: {
-          green:    '#1A7F37',
-          'green-bg': '#DCFCE7',
-          amber:    '#92400E',
-          'amber-bg': '#FEF3C7',
-          red:      '#9B1C1C',
-          'red-bg': '#FEE2E2',
-          blue:     '#1D4ED8',
-          'blue-bg': '#DBEAFE',
+          green:    '#2A7C13',
+          'green-bg': '#2A7C13',
+          amber:    '#9A5B00',
+          'amber-bg': '#8A5300',
+          red:      '#830000',
+          'red-bg': '#830000',
+          blue:     '#000000',
+          'blue-bg': '#000000',
         },
       },
 
@@ -91,10 +102,11 @@ export default ({
 
       // ── Box Shadow ────────────────────────────────────────────────────
       boxShadow: {
-        card: '0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)',
-        modal: '0 20px 25px -5px rgba(0,0,0,0.20)',
+        card: '0 1px 2px rgba(0,0,0,0.05)',
+        menu: '0 8px 24px rgba(0,0,0,0.12)',
+        modal: '0 20px 40px rgba(0,0,0,0.24)',
         header: '0 1px 4px rgba(0,0,0,0.06)',
-        focus: '0 0 0 3px rgba(15,23,42,0.07)',
+        focus: '0 0 0 3px rgba(0,0,0,0.12)',
       },
 
       // ── Width shortcuts ───────────────────────────────────────────────

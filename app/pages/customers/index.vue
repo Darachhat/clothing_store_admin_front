@@ -29,6 +29,10 @@
       :chips="activeChips"
       :shown-count="customers.length"
       :total-count="total"
+      :summary-items="[
+        { label: 'Total Customers', value: total },
+        { label: 'Total Loyalty Points', value: totalPointsBalance },
+      ]"
       count-label="customers"
       @submit="fetchCustomers"
       @remove-chip="statusFilter = ''; fetchCustomers()"
@@ -56,13 +60,21 @@
         }"
       >
         <template #cell-customer_code="{ row }">
-          <code class="mono font-semibold text-gray-900">{{ row.customer_code || row.code || '—' }}</code>
+          <code class="mono font-medium text-ink">{{ row.customer_code || row.code || '—' }}</code>
         </template>
 
         <template #cell-name="{ row }">
-          <NuxtLink :to="`/customers/${row.id}`" class="font-semibold text-gray-900 hover:underline">
-            {{ row.name || row.full_name }}
-          </NuxtLink>
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-full bg-surface-inset border border-border-subtle flex items-center justify-center text-ink-secondary shrink-0">
+              <UIcon name="i-heroicons-user" class="w-5 h-5" />
+            </div>
+            <div class="min-w-0">
+              <NuxtLink :to="`/customers/${row.id}`" class="block text-sm font-medium text-ink hover:underline truncate">
+                {{ row.name || row.full_name }}
+              </NuxtLink>
+              <span class="text-xs text-ink-secondary mono">{{ row.customer_code || row.code || 'Client' }}</span>
+            </div>
+          </div>
         </template>
 
         <template #cell-tier="{ row }">
@@ -70,12 +82,11 @@
             :color="getTierColor(row.loyalty_account?.tier)"
             :label="row.loyalty_account?.tier || 'BRONZE'"
             size="sm"
-            variant="subtle"
           />
         </template>
 
         <template #cell-points="{ row }">
-          <div class="font-semibold mono text-gray-900">
+          <div class="font-medium mono text-ink text-right">
             {{ (row.loyalty_account?.points_balance ?? row.loyalty_points ?? 0).toLocaleString() }} pts
           </div>
         </template>
@@ -246,15 +257,19 @@ const statusOptions = [
 ]
 
 const columns = [
+  { key: 'name', label: 'Customer Representative', sortable: true },
   { key: 'customer_code', label: 'Code', sortable: true },
-  { key: 'name', label: 'Customer Name', sortable: true },
   { key: 'phone', label: 'Phone' },
   { key: 'email', label: 'Email' },
   { key: 'tier', label: 'Tier' },
-  { key: 'points', label: 'Loyalty Points', sortable: true },
+  { key: 'points', label: 'Loyalty Points', sortable: true, align: 'right' as const },
   { key: 'status', label: 'Status' },
   { key: 'actions', label: 'Actions', align: 'right' as const },
 ]
+
+const totalPointsBalance = computed(() =>
+  customers.value.reduce((sum, c) => sum + Number(c.loyalty_account?.points_balance ?? c.loyalty_points ?? 0), 0).toLocaleString(),
+)
 
 const activeChips = computed<FilterChipItem[]>(() => {
   const chips: FilterChipItem[] = []

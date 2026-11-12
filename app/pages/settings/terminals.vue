@@ -88,7 +88,7 @@
     <!-- Operational Consistency Note when Open Shifts > Online Workstations -->
     <div
       v-if="!initialLoading && openShiftsCount > onlineCount"
-      class="bg-status-amber-bg border border-border-subtle rounded-lg p-2.5 sm:p-3.5 text-xs leading-snug"
+      class="bg-surface-inset border border-border-subtle rounded-lg p-2.5 sm:p-3.5 text-xs leading-snug"
     >
       <div class="flex items-start gap-2">
         <UIcon name="i-heroicons-information-circle" class="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
@@ -243,7 +243,7 @@
         <!-- 6. Cashier -->
         <template #cell-cashier_display="{ row }">
           <div v-if="row.active_shift" class="flex items-center gap-2">
-            <span class="w-6.5 h-6.5 rounded-full bg-surface-hover border border-border-subtle text-ink flex items-center justify-center text-[11px] font-bold shrink-0">
+            <span class="w-6.5 h-6.5 rounded-full bg-surface-hover border border-border-subtle text-ink flex items-center justify-center text-[11px] font-medium shrink-0">
               {{ (row.cashier_display || 'C').charAt(0).toUpperCase() }}
             </span>
             <div class="min-w-0">
@@ -515,7 +515,7 @@
               </div>
               <div class="detail-row">
                 <dt>Opening Float (USD)</dt>
-                <dd class="mono font-bold text-emerald-700">${{ Number(inspectedTerminal.active_shift.opening_cash_usd || 0).toFixed(2) }}</dd>
+                <dd class="mono font-medium text-emerald-700">${{ Number(inspectedTerminal.active_shift.opening_cash_usd || 0).toFixed(2) }}</dd>
               </div>
               <div class="detail-row">
                 <dt>Opening Float (KHR)</dt>
@@ -528,7 +528,7 @@
               Loading live shift cash summary...
             </div>
             <div v-else-if="inspectedShiftSummary" class="p-3.5 rounded-lg bg-gray-50 border border-gray-200 space-y-2">
-              <div class="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+              <div class="text-[11px] font-medium uppercase tracking-wider text-gray-500">
                 Live Drawer Cash &amp; Sales Summary
               </div>
               <dl class="detail-list">
@@ -542,7 +542,7 @@
                 </div>
                 <div class="detail-row">
                   <dt>Expected Drawer Cash (USD)</dt>
-                  <dd class="mono font-bold text-gray-900">
+                  <dd class="mono font-medium text-gray-900">
                     ${{ Number(inspectedShiftSummary.expected_cash_usd ?? inspectedTerminal.active_shift.opening_cash_usd ?? 0).toFixed(2) }}
                   </dd>
                 </div>
@@ -587,7 +587,7 @@
       size="sm"
     >
       <form v-if="targetShiftTerminal?.active_shift" class="form-grid" @submit.prevent="handleForceCloseShift">
-        <div class="p-3 rounded-lg bg-status-amber-bg border border-border-subtle">
+        <div class="p-3 rounded-lg bg-surface-inset border border-border-subtle">
           <div class="flex items-start gap-2.5">
             <UIcon name="i-heroicons-exclamation-triangle" class="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
             <div class="text-xs space-y-1">

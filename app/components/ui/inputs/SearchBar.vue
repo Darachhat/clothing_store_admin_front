@@ -23,11 +23,11 @@
       :disabled="disabled"
       :aria-label="ariaLabel || placeholder || 'Search'"
       data-barcode-scanner-target="true"
-      class="w-full rounded-md border border-border-subtle bg-surface-inset text-ink placeholder:text-ink-tertiary focus:border-border-default focus:bg-surface-card focus:outline-none transition-colors [&::-webkit-search-cancel-button]:appearance-none"
+      class="w-full rounded-md border border-border-default bg-surface-card text-ink placeholder:text-ink-tertiary hover:border-border-strong focus:border-action focus:ring-[3px] focus:ring-action/20 focus:outline-none transition-colors [&::-webkit-search-cancel-button]:appearance-none"
       :class="[
-        size === 'sm' ? 'h-7.5 text-xs pl-7.5 pr-14' :
+        size === 'sm' ? 'h-8 text-xs pl-8 pr-14' :
         size === 'lg' ? 'h-10 text-sm pl-9 pr-16' :
-        'h-9 text-xs sm:text-sm pl-8 pr-16'
+        'h-10 text-sm pl-9 pr-16'
       ]"
       @input="onInput"
       @keydown.enter="onEnter"

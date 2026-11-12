@@ -29,45 +29,45 @@
     <!-- Report Sub-Navigation Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
       <NuxtLink to="/reports/sales" class="flex items-center gap-3 p-3.5 bg-surface-card border border-border-subtle rounded-lg no-underline hover:bg-surface-hover transition-colors">
-        <div class="w-9 h-9 rounded-md flex items-center justify-center shrink-0 bg-brand-900/10 text-brand-900">
+        <div class="w-9 h-9 rounded-md flex items-center justify-center shrink-0 bg-status-blue-bg text-white">
           <UIcon name="i-heroicons-chart-bar-square" class="w-4.5 h-4.5" />
         </div>
         <div class="flex flex-col gap-0.5 min-w-0 flex-1">
-          <span class="text-[13px] font-semibold text-ink">Sales Report</span>
-          <span class="text-[11.5px] text-ink-tertiary truncate">Daily, weekly, and monthly revenue & transactions</span>
+          <span class="text-sm font-medium text-ink">Sales Report</span>
+          <span class="text-xs text-ink-tertiary truncate">Daily, weekly, and monthly revenue & transactions</span>
         </div>
         <UIcon name="i-heroicons-chevron-right" class="w-4 h-4 text-ink-tertiary shrink-0" />
       </NuxtLink>
 
       <NuxtLink to="/reports/inventory" class="flex items-center gap-3 p-3.5 bg-surface-card border border-border-subtle rounded-lg no-underline hover:bg-surface-hover transition-colors">
-        <div class="w-9 h-9 rounded-md flex items-center justify-center shrink-0 bg-sky-500/10 text-sky-600">
+        <div class="w-9 h-9 rounded-md flex items-center justify-center shrink-0 bg-navy text-white">
           <UIcon name="i-heroicons-archive-box" class="w-4.5 h-4.5" />
         </div>
         <div class="flex flex-col gap-0.5 min-w-0 flex-1">
-          <span class="text-[13px] font-semibold text-ink">Inventory Report</span>
-          <span class="text-[11.5px] text-ink-tertiary truncate">Stock valuation, SKU coverage, and reorder alerts</span>
+          <span class="text-sm font-medium text-ink">Inventory Report</span>
+          <span class="text-xs text-ink-tertiary truncate">Stock valuation, SKU coverage, and reorder alerts</span>
         </div>
         <UIcon name="i-heroicons-chevron-right" class="w-4 h-4 text-ink-tertiary shrink-0" />
       </NuxtLink>
 
       <NuxtLink to="/reports/purchases" class="flex items-center gap-3 p-3.5 bg-surface-card border border-border-subtle rounded-lg no-underline hover:bg-surface-hover transition-colors">
-        <div class="w-9 h-9 rounded-md flex items-center justify-center shrink-0 bg-amber-500/10 text-amber-600">
+        <div class="w-9 h-9 rounded-md flex items-center justify-center shrink-0 bg-status-amber-bg text-white">
           <UIcon name="i-heroicons-truck" class="w-4.5 h-4.5" />
         </div>
         <div class="flex flex-col gap-0.5 min-w-0 flex-1">
-          <span class="text-[13px] font-semibold text-ink">Purchases Report</span>
-          <span class="text-[11.5px] text-ink-tertiary truncate">Procurement spend and items received by period</span>
+          <span class="text-sm font-medium text-ink">Purchases Report</span>
+          <span class="text-xs text-ink-tertiary truncate">Procurement spend and items received by period</span>
         </div>
         <UIcon name="i-heroicons-chevron-right" class="w-4 h-4 text-ink-tertiary shrink-0" />
       </NuxtLink>
 
       <NuxtLink to="/reports/profit" class="flex items-center gap-3 p-3.5 bg-surface-card border border-border-subtle rounded-lg no-underline hover:bg-surface-hover transition-colors">
-        <div class="w-9 h-9 rounded-md flex items-center justify-center shrink-0 bg-emerald-500/10 text-emerald-600">
+        <div class="w-9 h-9 rounded-md flex items-center justify-center shrink-0 bg-status-green-bg text-white">
           <UIcon name="i-heroicons-banknotes" class="w-4.5 h-4.5" />
         </div>
         <div class="flex flex-col gap-0.5 min-w-0 flex-1">
-          <span class="text-[13px] font-semibold text-ink">Profit &amp; Loss</span>
-          <span class="text-[11.5px] text-ink-tertiary truncate">Gross revenue, expenses, discounts, and net margin</span>
+          <span class="text-sm font-medium text-ink">Profit &amp; Loss</span>
+          <span class="text-xs text-ink-tertiary truncate">Gross revenue, expenses, discounts, and net margin</span>
         </div>
         <UIcon name="i-heroicons-chevron-right" class="w-4 h-4 text-ink-tertiary shrink-0" />
       </NuxtLink>
@@ -146,7 +146,7 @@
             class="flex items-center justify-between py-2.5"
           >
             <div class="flex items-center gap-2.5">
-              <span class="w-6 text-xs font-bold text-ink-tertiary tabular-nums">#{{ Number(idx) + 1 }}</span>
+              <span class="w-6 text-xs font-medium text-ink-tertiary tabular-nums">#{{ Number(idx) + 1 }}</span>
               <div>
                 <p class="text-[13px] font-medium text-ink">{{ prod.name }}</p>
                 <p class="text-[11.5px] text-ink-tertiary">{{ prod.sku }} · {{ prod.color || '—' }} / {{ prod.size || '—' }}</p>

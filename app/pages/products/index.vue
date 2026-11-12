@@ -36,6 +36,11 @@
       :chips="activeChips"
       :shown-count="paginatedProducts.length"
       :total-count="filteredProducts.length"
+      :summary-items="[
+        { label: 'Total Stock', value: totalCatalogStock },
+        { label: 'Products', value: filteredProducts.length },
+        { label: 'Active', value: activeProductsCount },
+      ]"
       count-label="products"
       @submit="fetchProducts"
       @remove-chip="removeChip"
@@ -71,37 +76,42 @@
         }"
       >
         <template #cell-code="{ row }">
-          <code class="mono font-semibold text-gray-800">{{ row.code || row.sku_prefix || '—' }}</code>
+          <code class="mono font-medium text-ink">{{ row.code || row.sku_prefix || '—' }}</code>
         </template>
 
         <template #cell-name="{ row }">
-          <div class="flex items-center gap-2.5">
+          <div class="flex items-center gap-3">
             <img
               v-if="row.image_url"
               :src="row.image_url"
               :alt="row.name"
-              class="w-[34px] h-[34px] rounded-md border border-border-subtle object-cover shrink-0 bg-surface-inset"
+              class="w-9 h-9 rounded-lg border border-border-subtle object-cover shrink-0 bg-surface-inset"
             />
-            <div v-else class="w-[34px] h-[34px] rounded-md border border-border-subtle shrink-0 bg-surface-inset flex items-center justify-center">
-              <UIcon name="i-heroicons-photo" class="w-4 h-4 text-gray-400" />
+            <div v-else class="w-9 h-9 rounded-lg border border-border-subtle shrink-0 bg-surface-inset flex items-center justify-center">
+              <UIcon name="i-heroicons-photo" class="w-4 h-4 text-ink-tertiary" />
             </div>
             <div class="min-w-0">
-              <NuxtLink :to="`/products/${row.id}`" class="block text-[13px] font-semibold text-ink no-underline hover:underline truncate">{{ row.name }}</NuxtLink>
-              <div class="text-[11px] text-ink-tertiary mono">{{ row.slug || row.code || row.sku_prefix || '' }}</div>
+              <NuxtLink :to="`/products/${row.id}`" class="block text-sm font-medium text-ink no-underline hover:underline truncate">{{ row.name }}</NuxtLink>
+              <div class="text-xs text-ink-secondary mono">
+                {{ row.code || row.sku_prefix || 'SKU' }}
+                <template v-if="row.category?.name || row.category_name || categoryMap[row.category_id]">
+                  | {{ row.category?.name || row.category_name || categoryMap[row.category_id] }}
+                </template>
+              </div>
             </div>
           </div>
         </template>
 
         <template #cell-category_name="{ row }">
-          <span>{{ row.category?.name || row.category_name || categoryMap[row.category_id] || '—' }}</span>
+          <span class="text-sm text-ink-secondary">{{ row.category?.name || row.category_name || categoryMap[row.category_id] || '—' }}</span>
         </template>
 
         <template #cell-brand_name="{ row }">
-          <span>{{ row.brand?.name || row.brand_name || brandMap[row.brand_id] || '—' }}</span>
+          <span class="text-sm text-ink-secondary">{{ row.brand?.name || row.brand_name || brandMap[row.brand_id] || '—' }}</span>
         </template>
 
         <template #cell-total_stock="{ row }">
-          <span class="mono font-semibold">{{ row.total_stock ?? 0 }}</span>
+          <span class="mono font-medium text-ink">{{ row.total_stock ?? 0 }}</span>
         </template>
 
         <template #cell-status="{ row }">
@@ -245,6 +255,14 @@ const paginatedProducts = computed(() => {
   const start = (currentPage.value - 1) * pageSize
   return filteredProducts.value.slice(start, start + pageSize)
 })
+
+const totalCatalogStock = computed(() =>
+  filteredProducts.value.reduce((sum, p: any) => sum + Number(p.total_stock ?? 0), 0).toLocaleString(),
+)
+
+const activeProductsCount = computed(() =>
+  filteredProducts.value.filter((p: any) => (p.status_code || p.status || 'ACTIVE') === 'ACTIVE').length,
+)
 
 const activeChips = computed<FilterChipItem[]>(() => {
   const chips: FilterChipItem[] = []

@@ -76,10 +76,10 @@ function onClick(event: MouseEvent) {
 
 const sizeClasses = computed(() => {
   switch (props.size) {
-    case 'xs': return 'px-2 py-1 text-xs min-h-[26px]'
-    case 'sm': return 'px-2.5 py-1 text-xs min-h-[30px]'
-    case 'lg': return 'px-4.5 py-2 text-sm min-h-[40px]'
-    default: return 'px-3.5 py-1.5 text-sm min-h-[36px]'
+    case 'xs': return 'px-2.5 py-1 text-xs min-h-[28px]'
+    case 'sm': return 'px-3 py-1 text-[13px] min-h-[32px]'
+    case 'lg': return 'px-5 py-2 text-sm min-h-[44px]'
+    default: return 'px-4 py-1.5 text-sm min-h-[40px]'
   }
 })
 
@@ -104,7 +104,7 @@ const variantClasses = computed(() => {
     return 'bg-brand-900 text-white border-transparent hover:bg-brand-800'
   }
   if (props.variant === 'outline') {
-    return 'bg-transparent text-ink border-subtle hover:bg-surface-hover'
+    return 'bg-transparent text-ink border-border-default hover:bg-surface-hover'
   }
   if (props.variant === 'ghost') {
     return 'bg-transparent text-ink-secondary border-transparent hover:bg-surface-hover hover:text-ink'
@@ -113,6 +113,6 @@ const variantClasses = computed(() => {
     return 'bg-transparent text-brand-900 border-transparent underline hover:text-brand-800 p-0 min-h-0'
   }
   // default / secondary
-  return 'bg-white text-ink border-subtle hover:bg-surface-hover hover:border-border-default shadow-xs'
+  return 'bg-white text-ink border-border-default hover:bg-surface-hover hover:border-border-strong'
 })
 </script>

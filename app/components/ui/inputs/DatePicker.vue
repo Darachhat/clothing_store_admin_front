@@ -18,7 +18,7 @@
           size === 'sm' ? 'h-7.5 text-xs px-2' :
           size === 'lg' ? 'h-10 text-sm px-3' :
           'h-9 text-xs sm:text-sm px-2.5',
-          error ? 'bg-status-red-bg border-border-default' : 'hover:border-border-default'
+          error ? 'bg-surface-card border-border-strong' : 'hover:border-border-default'
         ]"
         @input="onInput"
         @change="onInput"

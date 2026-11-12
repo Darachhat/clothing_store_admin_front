@@ -78,7 +78,7 @@ const variantClasses = computed(() => {
     case 'outline':
       return 'bg-white text-ink border-subtle hover:bg-surface-hover hover:border-border-default'
     case 'danger':
-      return 'bg-transparent text-status-red border-transparent hover:bg-status-red-bg hover:border-subtle'
+      return 'bg-transparent text-status-red border-transparent hover:bg-status-red-bg hover:text-white hover:border-subtle'
     default:
       return 'bg-transparent text-ink-secondary border-transparent hover:bg-surface-hover hover:text-ink'
   }

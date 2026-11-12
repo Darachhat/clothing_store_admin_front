@@ -47,7 +47,7 @@
 
         <template #cell-quantity="{ row }">
           <span
-            class="font-bold mono"
+            class="font-medium mono"
             :class="Number(row.quantity ?? row.quantity_change ?? 0) > 0 ? 'text-emerald-700' : 'text-red-700'"
           >
             {{ Number(row.quantity ?? row.quantity_change ?? 0) > 0 ? '+' : '' }}{{ row.quantity ?? row.quantity_change ?? 0 }}

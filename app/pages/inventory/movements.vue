@@ -77,7 +77,7 @@
         </template>
 
         <template #cell-quantity_change="{ row }">
-          <span class="mono font-bold" :class="row.quantity_change > 0 ? 'text-emerald-700' : 'text-red-700'">
+          <span class="mono font-medium" :class="row.quantity_change > 0 ? 'text-emerald-700' : 'text-red-700'">
             {{ row.quantity_change > 0 ? `+${row.quantity_change}` : row.quantity_change }}
           </span>
         </template>

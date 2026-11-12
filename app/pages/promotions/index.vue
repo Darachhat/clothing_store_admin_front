@@ -65,7 +65,7 @@
         </template>
 
         <template #cell-discount="{ row }">
-          <span class="font-bold mono text-gray-900">
+          <span class="font-medium mono text-gray-900">
             {{ (row.type || row.discount_type) === 'PERCENTAGE' ? `${row.value ?? row.discount_value}% OFF` : `$${Number(row.value ?? row.discount_value ?? 0).toFixed(2)} OFF` }}
           </span>
         </template>

@@ -71,7 +71,7 @@
     </DataCard>
 
     <DataCard title="Overlays">
-      <div class="showcase-row">
+      <div class="flex flex-wrap items-center gap-2">
         <BaseButton label="Open modal" @click="modalOpen = true" />
         <BaseButton label="Open drawer" @click="drawerOpen = true" />
         <BaseButton label="Confirm dialog" variant="danger" @click="confirmOpen = true" />
@@ -95,7 +95,7 @@
     </DataCard>
 
     <DataCard title="Feedback">
-      <div class="showcase-grid">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
         <InlineAlert variant="info" title="Info" description="Informational message." />
         <InlineAlert variant="success" title="Success" description="Saved successfully." />
         <InlineAlert variant="warning" title="Warning" description="Check this value." />

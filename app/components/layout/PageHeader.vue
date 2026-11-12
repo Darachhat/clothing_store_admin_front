@@ -12,10 +12,10 @@
       </NuxtLink>
 
       <div class="flex items-center gap-2 flex-wrap">
-        <h1 class="text-xl sm:text-2xl font-bold text-ink tracking-tight">{{ title }}</h1>
+        <h1 class="text-2xl sm:text-[26px] font-medium text-ink tracking-tight">{{ title }}</h1>
         <slot name="badge" />
       </div>
-      <p v-if="description" class="text-xs sm:text-sm text-ink-secondary mt-0.5">{{ description }}</p>
+      <p v-if="description" class="text-sm text-ink-secondary mt-1">{{ description }}</p>
     </div>
 
     <div

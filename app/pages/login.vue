@@ -1,66 +1,39 @@
 <template>
-  <div class="flex min-h-[100dvh] bg-surface-bg">
-    <!-- Left panel: branding -->
-    <div class="hidden md:flex flex-col justify-center w-[320px] lg:w-[400px] shrink-0 bg-brand-900 p-8 lg:p-12 text-white">
-      <div class="flex flex-col gap-6">
-        <div class="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center">
-          <img
-            v-if="brand.logo_dark_url || brand.logo_url"
-            :src="brand.logo_dark_url || brand.logo_url"
-            :alt="displayName"
-            class="max-w-full max-h-full object-contain p-1"
-          />
-          <UIcon v-else name="i-heroicons-shield-check" class="w-6 h-6 text-white" />
-        </div>
-        <div>
-          <div class="text-[22px] font-bold text-white tracking-tight mt-1 font-khmer">{{ displayNameKh || displayName }}</div>
-          <div v-if="displayNameKh && displayName !== displayNameKh" class="text-[13px] font-semibold text-white/65 mt-0.5">
-            {{ displayName }}
-          </div>
-        </div>
-        <p class="text-sm text-white/60 leading-relaxed max-w-[52ch]">{{ brand.tagline || 'Admin & Manager portal. Full access to inventory, reports, purchasing, and user management.' }}</p>
-        <div class="flex flex-col gap-2.5 mt-2">
-          <div v-for="feat in features" :key="feat" class="flex items-center gap-2.5 text-[13px] text-white/75">
-            <UIcon name="i-heroicons-check" class="w-3.5 h-3.5 text-white stroke-[2.5]" />
-            {{ feat }}
-          </div>
-        </div>
-      </div>
-    </div>
+  <div class="min-h-[100dvh] bg-surface-bg flex items-center justify-center p-4 sm:p-8 relative overflow-hidden">
+    <div class="absolute inset-x-0 top-0 h-56 bg-navy" aria-hidden="true" />
 
-    <!-- Right panel: form -->
-    <div class="flex-1 flex items-center justify-center p-6 sm:p-8">
-      <div class="w-full max-w-[360px] flex flex-col gap-6">
-        <!-- Mobile Brand Header (visible below 768px) -->
-        <div class="flex md:hidden items-center gap-3 pb-3 border-b border-border-subtle">
-          <div class="w-10 h-10 rounded-lg bg-brand-900 flex items-center justify-center shrink-0">
+    <main class="relative w-full max-w-[440px] bg-surface-card border border-border-subtle rounded-xl shadow-menu">
+      <div class="px-6 sm:px-8 pt-8 pb-6 flex flex-col gap-6">
+        <!-- Brand -->
+        <div class="flex flex-col items-center text-center gap-3">
+          <div class="w-14 h-14 rounded-xl bg-navy flex items-center justify-center overflow-hidden">
             <img
-              v-if="brand.logo_url || brand.logo_dark_url"
-              :src="brand.logo_url || brand.logo_dark_url"
+              v-if="brand.logo_dark_url || brand.logo_url"
+              :src="brand.logo_dark_url || brand.logo_url"
               :alt="displayName"
-              class="max-w-full max-h-full object-contain p-1"
+              class="max-w-full max-h-full object-contain p-1.5"
             />
-            <UIcon v-else name="i-heroicons-shield-check" class="w-5 h-5 text-white" />
+            <UIcon v-else name="i-heroicons-building-storefront" class="w-7 h-7 text-white" />
           </div>
           <div class="min-w-0">
-            <div class="text-[15px] font-bold text-ink truncate font-khmer">{{ displayNameKh || displayName }}</div>
-            <div class="text-[11px] text-ink-secondary truncate">{{ displayName }} • Admin Portal</div>
+            <div class="text-xl font-medium text-ink tracking-tight font-khmer">{{ displayNameKh || displayName }}</div>
+            <div v-if="displayNameKh && displayName !== displayNameKh" class="text-sm text-ink-secondary mt-0.5">{{ displayName }}</div>
           </div>
         </div>
 
         <div class="flex flex-col gap-1">
-          <h1 class="text-[22px] font-bold text-ink tracking-tight">Admin Sign In</h1>
-          <p class="text-[13px] text-ink-secondary">Sign in with your username, verified phone, or linked Telegram account.</p>
+          <h1 class="text-2xl font-medium text-ink tracking-tight">Admin Sign In</h1>
+          <p class="text-sm text-ink-secondary">Sign in with your username, verified phone, or linked Telegram account.</p>
         </div>
 
         <form class="flex flex-col gap-4" @submit.prevent="handleLogin">
-          <div class="flex flex-col gap-1.5 relative">
-            <label class="text-xs font-semibold text-ink tracking-wide" for="username">Username or Verified Phone</label>
+          <div class="flex flex-col gap-1.5">
+            <label class="text-sm font-normal text-ink-secondary" for="username">Username or Verified Phone</label>
             <input
               id="username"
               v-model="form.username"
               type="text"
-              class="h-10 w-full border border-border-subtle rounded-lg px-3 text-sm text-ink bg-surface-card outline-none focus:border-border-default transition-colors placeholder:text-ink-tertiary"
+              class="h-11 w-full border border-border-default rounded-lg px-3 text-sm text-ink bg-surface-card outline-none hover:border-border-strong focus:border-action focus:ring-[3px] focus:ring-action/20 transition-colors placeholder:text-ink-tertiary"
               placeholder="admin or +85569382165"
               autocomplete="username"
               autofocus
@@ -69,47 +42,47 @@
           </div>
 
           <div class="flex flex-col gap-1.5 relative">
-            <label class="text-xs font-semibold text-ink tracking-wide" for="password">Password</label>
+            <label class="text-sm font-normal text-ink-secondary" for="password">Password</label>
             <input
               id="password"
               v-model="form.password"
               :type="showPassword ? 'text' : 'password'"
-              class="h-10 w-full border border-border-subtle rounded-lg px-3 text-sm text-ink bg-surface-card outline-none focus:border-border-default transition-colors placeholder:text-ink-tertiary"
+              class="h-11 w-full border border-border-default rounded-lg pl-3 pr-10 text-sm text-ink bg-surface-card outline-none hover:border-border-strong focus:border-action focus:ring-[3px] focus:ring-action/20 transition-colors placeholder:text-ink-tertiary"
               placeholder="Enter your password"
               autocomplete="current-password"
               required
             />
             <button
               type="button"
-              class="absolute right-2.5 bottom-2.5 text-ink-tertiary hover:text-ink bg-transparent border-0 cursor-pointer p-0 flex"
+              class="absolute right-3 bottom-3 text-ink-tertiary hover:text-ink bg-transparent border-0 cursor-pointer p-0 flex"
               :aria-label="showPassword ? 'Hide password' : 'Show password'"
               @click="showPassword = !showPassword"
             >
-              <UIcon v-if="!showPassword" name="i-heroicons-eye" class="w-4 h-4" />
-              <UIcon v-else name="i-heroicons-eye-slash" class="w-4 h-4" />
+              <UIcon v-if="!showPassword" name="i-heroicons-eye" class="w-5 h-5" />
+              <UIcon v-else name="i-heroicons-eye-slash" class="w-5 h-5" />
             </button>
           </div>
 
-          <div v-if="errorMsg" class="flex items-center gap-1.5 p-2.5 bg-status-red-bg border border-border-subtle rounded-lg text-xs text-status-red">
-            <UIcon name="i-heroicons-exclamation-circle" class="w-4 h-4 flex-shrink-0" />
+          <div v-if="errorMsg" role="alert" class="flex items-center gap-2 p-3 bg-status-red-bg border border-border-subtle rounded-lg text-sm text-white">
+            <UIcon name="i-heroicons-exclamation-circle" class="w-5 h-5 flex-shrink-0" />
             {{ errorMsg }}
           </div>
 
-          <button type="submit" class="h-10 w-full bg-brand-900 text-white border-0 rounded-lg text-sm font-semibold cursor-pointer flex items-center justify-center gap-2 mt-1 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity" :disabled="loading">
+          <button type="submit" class="h-11 w-full bg-navy text-white border-0 rounded-lg text-base font-medium cursor-pointer flex items-center justify-center gap-2 hover:bg-navy-deep disabled:opacity-50 disabled:cursor-not-allowed transition-colors" :disabled="loading">
             <UIcon v-if="loading" name="i-heroicons-arrow-path" class="w-4 h-4 text-white animate-spin" />
             {{ loading ? 'Signing in...' : 'Sign in' }}
           </button>
         </form>
 
         <!-- Telegram Login Section -->
-        <div class="flex items-center gap-2.5 text-[11px] text-ink-tertiary uppercase tracking-wider before:flex-1 before:h-px before:bg-border-subtle after:flex-1 after:h-px after:bg-border-subtle">
-          <span>or</span>
+        <div class="flex items-center gap-3 text-xs text-ink-tertiary before:flex-1 before:h-px before:bg-border-subtle after:flex-1 after:h-px after:bg-border-subtle">
+          <span>or continue with</span>
         </div>
 
-        <div class="flex flex-col gap-2">
+        <div class="flex flex-col gap-2 -mt-2">
           <button
             type="button"
-            class="h-9.5 w-full bg-surface-card text-ink border border-border-subtle rounded-lg text-[13px] font-semibold cursor-pointer flex items-center justify-center gap-2 hover:bg-surface-hover disabled:opacity-50 transition-colors"
+            class="h-11 w-full bg-surface-card text-ink border border-border-default rounded-lg text-base font-medium cursor-pointer flex items-center justify-center gap-2 hover:bg-surface-hover disabled:opacity-50 transition-colors"
             :disabled="loading || appChallengeActive"
             @click="startTelegramAppLogin"
           >
@@ -117,8 +90,8 @@
             <span>{{ appChallengeActive ? 'Waiting for Telegram App...' : 'Open in Telegram App' }}</span>
           </button>
 
-          <div v-if="appChallengeActive" class="p-2.5 border border-border-subtle rounded-lg bg-surface-card flex flex-col gap-2">
-            <div class="flex items-center gap-2 text-xs font-medium text-ink">
+          <div v-if="appChallengeActive" class="p-3 border border-border-subtle rounded-lg bg-surface-inset flex flex-col gap-2">
+            <div class="flex items-center gap-2 text-sm font-medium text-ink">
               <UIcon name="i-heroicons-arrow-path" class="w-4 h-4 animate-spin" />
               <span>{{ appChallengeMessage || 'Confirm login in your Telegram App...' }}</span>
             </div>
@@ -128,14 +101,14 @@
                 :href="appChallengeWebUrl"
                 target="_blank"
                 rel="noopener noreferrer"
-                class="h-8.5 px-3 bg-surface-card text-ink border border-border-subtle rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 no-underline hover:bg-surface-hover"
+                class="h-9 px-3 bg-surface-card text-ink border border-border-default rounded-lg text-[13px] font-semibold flex items-center justify-center gap-1.5 no-underline hover:bg-surface-hover"
               >
                 <UIcon name="i-heroicons-arrow-top-right-on-square" class="w-3.5 h-3.5" />
                 <span>Open in Telegram</span>
               </a>
               <button
                 type="button"
-                class="h-8.5 px-3 bg-surface-card text-ink border border-border-subtle rounded-lg text-xs font-semibold cursor-pointer flex items-center justify-center hover:bg-surface-hover"
+                class="h-9 px-3 bg-surface-card text-ink border border-border-default rounded-lg text-[13px] font-semibold cursor-pointer flex items-center justify-center hover:bg-surface-hover"
                 @click="cancelTelegramAppLogin"
               >
                 <span>Cancel</span>
@@ -143,15 +116,14 @@
             </div>
           </div>
         </div>
-
-        <p class="text-xs text-ink-tertiary text-center">
-          Secure admin access only. Contact your administrator if you need credentials.
-        </p>
       </div>
-    </div>
+
+      <p class="px-6 py-3 text-xs text-ink-tertiary text-center bg-surface-inset border-t border-border-subtle rounded-b-xl">
+        Secure admin access only. Contact your administrator if you need credentials.
+      </p>
+    </main>
   </div>
 </template>
-
 <script setup lang="ts">
 definePageMeta({ layout: false, middleware: ['guest'] })
 
@@ -172,13 +144,6 @@ const appChallengeActive = ref(false)
 const appChallengeMessage = ref('')
 const appChallengeWebUrl = ref('')
 let pollTimer: ReturnType<typeof setInterval> | null = null
-
-const features = [
-  'Full dashboard & analytics',
-  'Inventory & stock management',
-  'Purchase orders & suppliers',
-  'User roles & permissions',
-]
 
 async function verifyPortalRolesAndRedirect() {
   const roles = authStore.user?.roles?.map((r: any) => r.name) ?? []

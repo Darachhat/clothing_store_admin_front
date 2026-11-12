@@ -16,7 +16,7 @@
     >
       <div
         v-if="open"
-        class="absolute top-[calc(100%+6px)] min-w-[180px] max-w-[calc(100vw-24px)] p-1 bg-surface-card border border-border-subtle rounded-lg shadow-md z-[60] origin-top"
+        class="absolute top-[calc(100%+6px)] min-w-[180px] max-w-[calc(100vw-24px)] p-1 bg-surface-card border border-border-subtle rounded-lg shadow-menu z-[60] origin-top"
         :class="align === 'left' ? 'left-0' : 'right-0'"
         role="menu"
       >
@@ -28,10 +28,10 @@
               v-else
               :to="item.to"
               :type="item.to ? undefined : 'button'"
-              class="w-full flex items-center gap-2 px-2.5 py-2 text-xs font-normal rounded-md text-left transition-colors"
+              class="w-full flex items-center gap-2 px-2.5 py-2 text-sm font-normal rounded-md text-left transition-colors"
               :class="[
                 item.disabled ? 'opacity-50 cursor-not-allowed' :
-                item.variant === 'danger' ? 'text-status-red hover:bg-status-red-bg hover:text-status-red' :
+                item.variant === 'danger' ? 'text-status-red hover:bg-status-red-bg hover:text-white' :
                 'text-ink-secondary hover:bg-surface-hover hover:text-ink'
               ]"
               :disabled="item.disabled"

@@ -24,6 +24,11 @@
       :chips="activeChips"
       :shown-count="paginatedPurchases.length"
       :total-count="filteredPurchases.length"
+      :summary-items="[
+        { label: 'Total Cost', value: `$${totalPoValue}` },
+        { label: 'Purchase Orders', value: filteredPurchases.length },
+        { label: 'Received', value: receivedPoCount },
+      ]"
       count-label="purchase orders"
       @remove-chip="removeChip"
       @clear-all="resetFilters"
@@ -70,7 +75,7 @@
         </template>
 
         <template #cell-total_display="{ row }">
-          <span class="mono font-bold">${{ Number(row.total_cost ?? row.total ?? 0).toFixed(2) }}</span>
+          <span class="mono font-medium">${{ Number(row.total_cost ?? row.total ?? 0).toFixed(2) }}</span>
         </template>
 
         <template #cell-status="{ row }">
@@ -291,7 +296,7 @@
           </div>
           <div>
             <span class="text-gray-500">Total:</span>
-            <span class="font-bold ml-2 mono">${{ Number(selectedOrder.total || 0).toFixed(2) }}</span>
+            <span class="font-medium ml-2 mono">${{ Number(selectedOrder.total || 0).toFixed(2) }}</span>
           </div>
         </div>
 
@@ -411,6 +416,14 @@ const paginatedPurchases = computed(() => {
   const start = (currentPage.value - 1) * pageSize
   return filteredPurchases.value.slice(start, start + pageSize)
 })
+
+const totalPoValue = computed(() =>
+  filteredPurchases.value.reduce((sum, p) => sum + Number(p.total_display || 0), 0).toFixed(2),
+)
+
+const receivedPoCount = computed(() =>
+  filteredPurchases.value.filter(p => (p.status_code || p.status) === 'RECEIVED').length,
+)
 
 const activeChips = computed<FilterChipItem[]>(() => {
   const chips: FilterChipItem[] = []

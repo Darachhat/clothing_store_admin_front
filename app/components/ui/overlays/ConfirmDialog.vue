@@ -71,13 +71,13 @@ const isOpen = computed({
 const variantClasses = computed(() => {
   switch (props.variant) {
     case 'warning':
-      return 'bg-status-amber-bg text-status-amber'
+      return 'bg-status-amber-bg text-white'
     case 'primary':
-      return 'bg-status-blue-bg text-status-blue'
+      return 'bg-status-blue-bg text-white'
     case 'default':
       return 'bg-surface-bg text-ink-secondary'
     default:
-      return 'bg-status-red-bg text-status-red'
+      return 'bg-status-red-bg text-white'
   }
 })
 </script>
