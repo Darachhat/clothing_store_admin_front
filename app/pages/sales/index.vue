@@ -93,7 +93,7 @@
 
         <template #cell-channel="{ row }">
           <span
-            class="inline-flex items-center gap-1.5 min-h-[28px] px-3 py-1 rounded-[6px] text-xs font-medium"
+            class="inline-flex items-center gap-1.5 h-7 px-3 py-1 rounded text-xs font-medium"
             :class="isOnlineOrder(row) ? 'bg-navy text-white' : 'bg-surface-inset text-ink border border-border-subtle'"
           >
             <UIcon :name="isOnlineOrder(row) ? 'i-heroicons-globe-alt' : 'i-heroicons-building-storefront'" class="w-3.5 h-3.5" />

@@ -1,8 +1,8 @@
 <template>
   <span
-    class="inline-flex items-center justify-center gap-1.5 rounded-[6px] font-medium leading-normal whitespace-nowrap"
+    class="inline-flex items-center justify-center gap-1.5 rounded font-medium leading-normal whitespace-nowrap"
     :class="[
-      size === 'sm' ? 'min-h-[28px] px-3 py-1 text-xs' : 'min-h-[32px] px-3.5 py-1.5 text-xs sm:text-sm',
+      size === 'sm' ? 'h-7 px-3 py-1 text-xs' : 'h-8 px-3.5 py-1.5 text-xs sm:text-sm',
       badgeColorClasses
     ]"
   >

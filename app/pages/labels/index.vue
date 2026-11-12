@@ -279,14 +279,15 @@
             <!-- Preview Stage -->
             <div class="flex flex-col items-center justify-center p-8 rounded-lg bg-surface-inset border border-border-subtle">
               <div
-                class="kh-product-sticker bg-white text-ink rounded-[2px] shadow-card border border-border-default flex flex-col justify-between overflow-hidden"
+                class="kh-product-sticker bg-white text-ink rounded-none shadow-card border border-border-default flex flex-col justify-between overflow-hidden"
                 :style="{
                   width: `${form.label_width_mm}mm`,
-                  minHeight: `${Math.max(36, Number(form.label_height_mm) || 38)}mm`,
+                  minHeight: `${Math.max(38, Number(form.label_height_mm) || 38)}mm`,
                   transform: 'scale(1.4)',
                   transformOrigin: 'center center',
-                  margin: '26px 0',
-                  padding: isCompactSize ? '2mm 2.2mm' : '2.4mm 2.8mm',
+                  margin: '28px 0',
+                  padding: isCompactSize ? '2.2mm 2.5mm' : '2.6mm 3mm',
+                  borderRadius: '2px',
                 }"
               >
                 <div class="space-y-0.5">

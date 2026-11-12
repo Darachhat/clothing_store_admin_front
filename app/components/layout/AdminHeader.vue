@@ -1,15 +1,29 @@
 <template>
   <header class="admin-topbar">
-    <!-- Left: Mobile Toggle + App Name | Role Context (per Reference Header) -->
+    <!-- Left: Sidebar Collapse Trigger + Store Name | Section > Page Breadcrumb -->
     <div class="flex items-center gap-2.5 min-w-0 flex-1">
+      <!-- Mobile Drawer Trigger (< md) -->
       <button
         type="button"
-        class="md:hidden inline-flex items-center justify-center w-9 h-9 rounded-md border border-border-subtle bg-surface-card text-ink-secondary hover:bg-surface-hover hover:text-ink cursor-pointer shrink-0"
+        class="md:hidden inline-flex items-center justify-center w-9 h-9 rounded-md border border-border-subtle bg-surface-card text-ink-secondary hover:bg-surface-hover hover:text-ink cursor-pointer shrink-0 transition-colors"
         aria-label="Open navigation menu"
         @click="toggleMobileSidebar"
       >
         <UIcon name="i-heroicons-bars-3" class="w-5 h-5" />
       </button>
+
+      <!-- Desktop Sidebar Collapse / Expand Trigger (>= md, Nuxt UI SidebarTrigger pattern) -->
+      <button
+        type="button"
+        class="hidden md:inline-flex items-center justify-center w-8 h-8 rounded-md border border-border-subtle bg-surface-card text-ink-secondary hover:bg-surface-hover hover:text-ink cursor-pointer shrink-0 transition-colors"
+        :aria-label="isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+        :title="isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'"
+        @click="toggleSidebar()"
+      >
+        <UIcon :name="isCollapsed ? 'i-heroicons-bars-3-bottom-left' : 'i-heroicons-view-columns'" class="w-4 h-4" />
+      </button>
+
+      <div class="hidden sm:block h-4 w-px bg-border-subtle shrink-0" />
 
       <nav class="flex items-center gap-2 text-sm min-w-0 overflow-hidden" aria-label="Current section">
         <span class="hidden lg:inline text-ink font-medium whitespace-nowrap font-khmer">{{ displayName }}</span>
@@ -130,11 +144,11 @@
       <div ref="userMenuRef" class="relative">
         <button
           type="button"
-          class="inline-flex items-center gap-1.5 h-9 pl-1 pr-2 sm:pr-2.5 rounded-full border border-border-subtle bg-surface-card cursor-pointer hover:bg-surface-hover transition-colors"
+          class="inline-flex items-center gap-1.5 h-9 pl-1 pr-2 sm:pr-2.5 rounded-md border border-border-subtle bg-surface-card cursor-pointer hover:bg-surface-hover transition-colors"
           aria-label="User account menu"
           @click="userMenuOpen = !userMenuOpen; langMenuOpen = false"
         >
-          <span class="w-7 h-7 rounded-full bg-action text-white inline-flex items-center justify-center text-xs font-medium shrink-0">{{ userInitial }}</span>
+          <span class="w-7 h-7 rounded-md bg-action text-white inline-flex items-center justify-center text-xs font-medium shrink-0">{{ userInitial }}</span>
           <span class="hidden md:inline text-sm font-medium text-ink max-w-[140px] truncate">{{ userName }}</span>
           <UIcon name="i-heroicons-chevron-down" class="w-3.5 h-3.5 text-ink-tertiary shrink-0" />
         </button>
@@ -191,10 +205,10 @@
       <div class="flex flex-col gap-3 -mt-1">
         <!-- All / Unread Pill Tabs + Actions Menu (Screenshot 5 & 6) -->
         <div class="flex items-center justify-between gap-2 pb-2 border-b border-border-subtle">
-          <div class="inline-flex items-center gap-1 p-1 bg-surface-inset rounded-full border border-border-subtle">
+          <div class="inline-flex items-center gap-1 p-0.5 bg-surface-inset rounded-md border border-border-subtle">
             <button
               type="button"
-              class="px-3 py-1 rounded-full text-xs font-medium cursor-pointer transition-colors"
+              class="px-3 py-1 rounded text-xs font-medium cursor-pointer transition-colors"
               :class="notifTab === 'all' ? 'bg-navy text-white' : 'text-ink-secondary hover:text-ink'"
               @click="notifTab = 'all'"
             >
@@ -202,7 +216,7 @@
             </button>
             <button
               type="button"
-              class="px-3 py-1 rounded-full text-xs font-medium cursor-pointer transition-colors"
+              class="px-3 py-1 rounded text-xs font-medium cursor-pointer transition-colors"
               :class="notifTab === 'unread' ? 'bg-navy text-white' : 'text-ink-secondary hover:text-ink'"
               @click="notifTab = 'unread'"
             >
@@ -236,7 +250,7 @@
           <div v-for="i in 5" :key="i" class="h-14 bg-surface-inset animate-pulse rounded-lg" />
         </div>
         <div v-else-if="displayedNotifications.length === 0" class="py-12 text-center">
-          <div class="w-11 h-11 rounded-full bg-surface-inset flex items-center justify-center mx-auto mb-2 text-ink-tertiary">
+          <div class="w-11 h-11 rounded-md bg-surface-inset flex items-center justify-center mx-auto mb-2 text-ink-tertiary">
             <UIcon name="i-heroicons-bell-slash" class="w-5 h-5" />
           </div>
           <p class="text-sm font-medium text-ink m-0">No notifications</p>
@@ -250,11 +264,11 @@
             @click="markRead(item.id)"
           >
             <div class="relative shrink-0">
-              <div class="w-9 h-9 rounded-full bg-navy text-white flex items-center justify-center text-xs font-medium">
+              <div class="w-9 h-9 rounded-md bg-navy text-white flex items-center justify-center text-xs font-medium">
                 {{ (item.actor || 'S').charAt(0).toUpperCase() }}
               </div>
               <span
-                class="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center text-white"
+                class="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded flex items-center justify-center text-white"
                 :class="item.tone === 'green' ? 'bg-status-green-bg' : item.tone === 'red' ? 'bg-status-red-bg' : 'bg-status-amber-bg'"
               >
                 <UIcon :name="item.icon" class="w-2.5 h-2.5" />

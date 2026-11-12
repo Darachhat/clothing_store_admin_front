@@ -10,7 +10,7 @@
             class="inline-flex items-baseline gap-1.5"
           >
             <span class="font-medium text-ink">{{ item.label }}:</span>
-            <span class="font-normal text-ink-secondary mono">{{ item.value }}<template v-if="idx < summaryItems.length - 1">,</template></span>
+            <span class="font-normal text-ink-secondary mono">{{ item.value }}<template v-if="idx < (summaryItems?.length ?? 0) - 1">,</template></span>
           </span>
         </slot>
       </div>

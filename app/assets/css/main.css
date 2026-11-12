@@ -94,11 +94,14 @@ html, body {
   padding: 0;
 }
 
-/* Slim Scrollbar */
-::-webkit-scrollbar        { width: 6px; height: 6px; }
-::-webkit-scrollbar-track  { background: transparent; }
-::-webkit-scrollbar-thumb  { background: var(--border-default); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
+/* Hide all scrollbars — keep scroll functionality */
+* {
+  scrollbar-width: none;       /* Firefox */
+  -ms-overflow-style: none;    /* IE / Edge */
+}
+*::-webkit-scrollbar {
+  display: none;               /* Chrome / Safari / Opera */
+}
 
 /* ─── Tailwind Component Layer (Layout Utilities) ───────────────────────── */
 @layer components {

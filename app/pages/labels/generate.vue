@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="page-root">
     <!-- Header (no-print) -->
     <PageHeader

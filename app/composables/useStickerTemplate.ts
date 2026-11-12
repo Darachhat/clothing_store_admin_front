@@ -118,11 +118,15 @@ export function useStickerTemplate() {
       const settingsApi = useSystemSettingsApi()
       const data = await settingsApi.getStickerSettings()
       if (data && typeof data === 'object') {
-        stickerTemplate.value = {
+        const merged = {
           ...DEFAULT_STICKER_TEMPLATE,
           ...stickerTemplate.value,
           ...data,
         }
+        if (merged.paper_size === 'THERMAL_50x30' && Number(merged.label_height_mm) <= 30) {
+          merged.label_height_mm = 38
+        }
+        stickerTemplate.value = merged
         localStorage.setItem(STORAGE_KEY, JSON.stringify(stickerTemplate.value))
       }
     } catch {
