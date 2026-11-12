@@ -277,40 +277,40 @@
 
           <div class="space-y-4">
             <!-- Preview Stage -->
-            <div class="flex flex-col items-center justify-center p-6 rounded-xl bg-gray-100 dark:bg-gray-900/70 border border-gray-200 dark:border-gray-700">
+            <div class="flex flex-col items-center justify-center p-8 rounded-lg bg-surface-inset border border-border-subtle">
               <div
-                class="kh-product-sticker bg-white text-gray-900 rounded-md shadow-xs border border-gray-300 flex flex-col justify-between overflow-hidden"
+                class="kh-product-sticker bg-white text-ink rounded-[2px] shadow-card border border-border-default flex flex-col justify-between overflow-hidden"
                 :style="{
                   width: `${form.label_width_mm}mm`,
-                  height: `${form.label_height_mm}mm`,
-                  transform: 'scale(1.35)',
+                  minHeight: `${Math.max(36, Number(form.label_height_mm) || 38)}mm`,
+                  transform: 'scale(1.4)',
                   transformOrigin: 'center center',
-                  margin: '18px 0',
-                  padding: isCompactSize ? '1.5mm 1.8mm' : '1.8mm 2.2mm',
+                  margin: '26px 0',
+                  padding: isCompactSize ? '2mm 2.2mm' : '2.4mm 2.8mm',
                 }"
               >
-                <div>
+                <div class="space-y-0.5">
                   <div
                     v-if="form.show_store_header"
-                    class="font-khmer font-bold text-gray-900 truncate pb-0.5 mb-0.5 border-b border-gray-200"
-                    :style="{ fontSize: isCompactSize ? '5pt' : '5.5pt' }"
+                    class="font-khmer font-medium text-ink truncate pb-1 mb-1 border-b border-border-subtle"
+                    :style="{ fontSize: isCompactSize ? '5.5pt' : '6pt' }"
                   >
                     {{ form.store_header || displayNameKh || displayName }}
                   </div>
 
-                  <div class="flex items-baseline justify-between gap-1">
+                  <div class="flex items-baseline justify-between gap-1.5">
                     <div
                       v-if="form.show_product_name"
-                      class="font-khmer font-bold text-gray-900 truncate"
-                      :style="{ fontSize: isCompactSize ? '6.5pt' : '7.2pt' }"
+                      class="font-khmer font-medium text-ink truncate"
+                      :style="{ fontSize: isCompactSize ? '7pt' : '8pt' }"
                     >
                       {{ sampleItem.productName }}
                     </div>
                     <div v-else class="flex-1" />
                     <div
                       v-if="form.show_price_usd"
-                      class="font-extrabold text-gray-900 shrink-0"
-                      :style="{ fontSize: isCompactSize ? '8.5pt' : '9.5pt' }"
+                      class="font-medium text-ink mono shrink-0"
+                      :style="{ fontSize: isCompactSize ? '9.5pt' : '10.5pt' }"
                     >
                       ${{ Number(sampleItem.priceUsd || 0).toFixed(2) }}
                     </div>
@@ -318,51 +318,51 @@
 
                   <div
                     v-if="form.show_sku || form.show_khr"
-                    class="flex items-center justify-between gap-1 text-gray-700"
-                    :style="{ fontSize: isCompactSize ? '4.8pt' : '5.3pt' }"
+                    class="flex items-center justify-between gap-1 text-ink-secondary"
+                    :style="{ fontSize: isCompactSize ? '5.2pt' : '5.8pt' }"
                   >
                     <span v-if="form.show_sku" class="font-mono truncate">SKU: {{ sampleItem.sku }}</span>
                     <span v-else />
-                    <span v-if="form.show_khr" class="font-khmer font-semibold shrink-0">
+                    <span v-if="form.show_khr" class="font-khmer font-medium shrink-0">
                       {{ samplePriceKhr }} ៛
                     </span>
                   </div>
 
                   <div
                     v-if="form.show_variant_attrs"
-                    class="font-khmer text-gray-900 truncate"
-                    :style="{ fontSize: isCompactSize ? '4.8pt' : '5.3pt' }"
+                    class="font-khmer text-ink truncate"
+                    :style="{ fontSize: isCompactSize ? '5.2pt' : '5.8pt' }"
                   >
-                    ពណ៌: <strong>{{ sampleItem.color }}</strong> &nbsp; ទំហំ: <strong>{{ sampleItem.size }}</strong>
+                    ពណ៌: <span class="font-medium">{{ sampleItem.color }}</span> &nbsp; ទំហំ: <span class="font-medium">{{ sampleItem.size }}</span>
                   </div>
                 </div>
 
                 <!-- Barcode / QR Zone -->
-                <div class="flex flex-col items-center justify-end pt-0.5">
+                <div class="flex flex-col items-center justify-end pt-1">
                   <img
                     v-if="form.code_type === 'QR'"
                     :src="generateQrSvgDataUri(sampleItem.barcode || sampleItem.sku)"
                     alt="Sample QR"
-                    style="width: 9.5mm; height: 9.5mm; object-fit: contain;"
+                    style="width: 11mm; height: 11mm; object-fit: contain;"
                   />
                   <img
                     v-else
                     :src="generateBarcodeSvgDataUri(sampleItem.barcode || sampleItem.sku)"
                     alt="Sample Barcode"
-                    style="width: 94%; height: 7.5mm; object-fit: contain;"
+                    style="width: 96%; height: 9.5mm; object-fit: contain;"
                   />
                   <div
-                    class="font-mono font-bold text-gray-900 tracking-wider text-center leading-none mt-0.5"
-                    :style="{ fontSize: isCompactSize ? '5pt' : '5.5pt' }"
+                    class="font-mono font-medium text-ink tracking-wider text-center leading-none mt-1"
+                    :style="{ fontSize: isCompactSize ? '5.5pt' : '6pt' }"
                   >
                     {{ sampleItem.barcode || sampleItem.sku }}
                   </div>
                 </div>
               </div>
 
-              <p class="text-[11px] text-gray-500 mt-2 text-center">
-                Scaled 1.35× for screen clarity • Actual print output:
-                <span class="font-mono font-semibold">{{ form.label_width_mm }}mm × {{ form.label_height_mm }}mm</span>
+              <p class="text-xs text-ink-secondary mt-3 text-center">
+                Scaled 1.4× for screen clarity • Actual print output:
+                <span class="font-mono font-medium text-ink">{{ form.label_width_mm }}mm × {{ form.label_height_mm }}mm</span>
               </p>
             </div>
 

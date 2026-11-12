@@ -94,9 +94,10 @@ export default ({
       // ── Border Radius ─────────────────────────────────────────────────
       borderRadius: {
         sm: '4px',   // `rounded-sm`
-        md: '8px',   // `rounded-md`  (also Tailwind default)
-        lg: '12px',  // `rounded-lg`
-        xl: '16px',  // `rounded-xl`
+        DEFAULT: '6px',
+        md: '6px',   // `rounded-md`
+        lg: '8px',   // `rounded-lg`
+        xl: '12px',  // `rounded-xl`
         full: '9999px',
       },
 

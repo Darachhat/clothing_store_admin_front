@@ -347,17 +347,17 @@ const loadingVariants = ref(true)
 const generating = ref(false)
 
 const paperPresetOptions = [
-  { label: 'Thermal Sticker Roll — 50 × 30 mm (Default)', value: 'THERMAL_50x30' },
-  { label: 'Thermal Sticker Roll — 40 × 30 mm (Compact)', value: 'THERMAL_40x30' },
-  { label: 'Thermal Sticker Roll — 60 × 40 mm (Large)', value: 'THERMAL_60x40' },
-  { label: 'A4 Sticker Sheet (Grid — 4 Columns • 50 × 30 mm)', value: 'A4' },
-  { label: 'A5 Sticker Sheet (Grid — 3 Columns)', value: 'A5' },
+  { label: 'Thermal Sticker Roll — 50 × 38 mm (Default)', value: 'THERMAL_50x30' },
+  { label: 'Thermal Sticker Roll — 40 × 32 mm (Compact)', value: 'THERMAL_40x30' },
+  { label: 'Thermal Sticker Roll — 60 × 45 mm (Large)', value: 'THERMAL_60x40' },
+  { label: 'A4 Sticker Sheet (Grid — 4 Columns • 48 × 36 mm)', value: 'A4' },
+  { label: 'A5 Sticker Sheet (Grid — 3 Columns • 45 × 34 mm)', value: 'A5' },
 ]
 
 const settings = reactive({
   paper_size: 'THERMAL_50x30',
   label_width_mm: 50,
-  label_height_mm: 30,
+  label_height_mm: 38,
   columns: 1,
   code_type: 'BARCODE',
   show_khr: false,
@@ -371,23 +371,23 @@ const isThermalRollMode = computed(() =>
 function onPresetChange(preset: string) {
   if (preset === 'THERMAL_50x30') {
     settings.label_width_mm = 50
-    settings.label_height_mm = 30
+    settings.label_height_mm = 38
     settings.columns = 1
   } else if (preset === 'THERMAL_40x30') {
     settings.label_width_mm = 40
-    settings.label_height_mm = 30
+    settings.label_height_mm = 32
     settings.columns = 1
   } else if (preset === 'THERMAL_60x40') {
     settings.label_width_mm = 60
-    settings.label_height_mm = 40
+    settings.label_height_mm = 45
     settings.columns = 1
   } else if (preset === 'A4') {
     settings.label_width_mm = 48
-    settings.label_height_mm = 30
+    settings.label_height_mm = 36
     settings.columns = 4
   } else if (preset === 'A5') {
     settings.label_width_mm = 45
-    settings.label_height_mm = 28
+    settings.label_height_mm = 34
     settings.columns = 3
   }
 }

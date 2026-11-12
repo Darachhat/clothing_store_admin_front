@@ -116,8 +116,8 @@
           to="/sales"
           class="rounded-lg border border-border-subtle px-4 py-3 grid grid-cols-12 items-center hover:bg-surface-hover transition-colors no-underline"
         >
-          <div class="col-span-6 sm:col-span-7 flex items-center gap-2.5 min-w-0">
-            <span class="px-2.5 py-0.5 rounded-md bg-navy text-white text-xs font-medium shrink-0">POS</span>
+          <div class="col-span-6 sm:col-span-7 flex items-center gap-3 min-w-0">
+            <span class="min-h-[28px] px-3 py-1 rounded-[6px] bg-navy text-white text-xs font-medium inline-flex items-center justify-center shrink-0">POS</span>
             <span class="text-sm font-normal text-ink truncate">In-Store POS &amp; Online Storefront Revenue</span>
           </div>
           <div class="col-span-3 sm:col-span-2 text-right text-sm font-normal text-ink mono">
@@ -133,8 +133,8 @@
           to="/inventory"
           class="rounded-lg border border-border-subtle px-4 py-3 grid grid-cols-12 items-center hover:bg-surface-hover transition-colors no-underline"
         >
-          <div class="col-span-6 sm:col-span-7 flex items-center gap-2.5 min-w-0">
-            <span class="px-2.5 py-0.5 rounded-md bg-status-green-bg text-white text-xs font-medium shrink-0">INV</span>
+          <div class="col-span-6 sm:col-span-7 flex items-center gap-3 min-w-0">
+            <span class="min-h-[28px] px-3 py-1 rounded-[6px] bg-status-green-bg text-white text-xs font-medium inline-flex items-center justify-center shrink-0">INV</span>
             <span class="text-sm font-normal text-ink truncate">Warehouse Inventory &amp; Active Catalog SKUs</span>
           </div>
           <div class="col-span-3 sm:col-span-2 text-right text-sm font-normal text-ink mono">
@@ -150,9 +150,9 @@
           to="/inventory?low_stock_only=true"
           class="rounded-lg border border-border-subtle px-4 py-3 grid grid-cols-12 items-center hover:bg-surface-hover transition-colors no-underline"
         >
-          <div class="col-span-6 sm:col-span-7 flex items-center gap-2.5 min-w-0">
+          <div class="col-span-6 sm:col-span-7 flex items-center gap-3 min-w-0">
             <span
-              class="px-2.5 py-0.5 rounded-md text-white text-xs font-medium shrink-0"
+              class="min-h-[28px] px-3 py-1 rounded-[6px] text-white text-xs font-medium inline-flex items-center justify-center shrink-0"
               :class="kpis.outOfStockCount > 0 ? 'bg-status-red-bg' : 'bg-navy'"
             >
               ALT

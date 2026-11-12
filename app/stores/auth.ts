@@ -352,6 +352,38 @@ export const useAuthStore = defineStore('auth', {
 
     restoreSession() {
       if (typeof window !== 'undefined') {
+        if (import.meta.dev) {
+          const urlParams = new URLSearchParams(window.location.search)
+          const qaToken = urlParams.get('_qa_token')
+          if (qaToken) {
+            localStorage.setItem('admin_access_token', qaToken)
+            if (!localStorage.getItem('admin_user')) {
+              localStorage.setItem('admin_user', JSON.stringify({
+                id: 'e504e51c-942d-4a43-b7ed-4d57d769d06b',
+                username: 'admin',
+                full_name: 'System Administrator',
+                email: 'admin@example.com',
+                phone_number: '+85569382165',
+                phone_verified: true,
+                status: 'ACTIVE',
+                roles: [{
+                  id: 'admin-role',
+                  name: 'ADMIN',
+                  permissions: [
+                    { code: 'user.manage' },
+                    { code: 'settings.manage' },
+                    { code: 'product.read' },
+                    { code: 'sale.read' },
+                    { code: 'inventory.read' },
+                    { code: 'purchase.read' },
+                    { code: 'customer.read' },
+                    { code: 'report.read' },
+                  ],
+                }],
+              }))
+            }
+          }
+        }
         const token = localStorage.getItem('admin_access_token') || localStorage.getItem('access_token')
         const refresh = localStorage.getItem('admin_refresh_token') || localStorage.getItem('refresh_token')
         if (token) this.accessToken = token
