@@ -7,7 +7,7 @@
         { label: 'Catalog', to: '/products' },
         { label: 'Categories' },
       ]"
-      primary-label="Add Category"
+      primary-label="Add CATEGORY_MODEL"
       primary-icon="i-heroicons-plus"
       @primary-click="openCreateModal"
     >
@@ -104,13 +104,13 @@
     <!-- Create / Edit Modal -->
     <AppModal
       v-model="showModal"
-      :title="isEditing ? 'Edit Category' : 'Create New Category'"
+      :title="isEditing ? 'Edit CATEGORY_MODEL' : 'Create New CATEGORY_MODEL'"
       size="md"
     >
       <form class="form-grid" @submit.prevent="handleSubmit">
         <div class="form-field">
           <label class="field-label">
-            Category Name <span class="required">*</span>
+            CATEGORY_MODEL Name <span class="required">*</span>
           </label>
           <AppInput
             v-model="form.name"
@@ -121,7 +121,7 @@
 
         <div class="form-field">
           <label class="field-label">
-            Category Code / Slug
+            CATEGORY_MODEL Code / Slug
           </label>
           <AppInput
             v-model="form.slug"
@@ -131,12 +131,12 @@
 
         <div class="form-field">
           <label class="field-label">
-            Parent Category (Optional Hierarchy)
+            Parent CATEGORY_MODEL (Optional Hierarchy)
           </label>
           <AppSelect
             v-model="form.parent_id"
             :options="parentCategoryOptions"
-            placeholder="None (Top-Level Category)"
+            placeholder="None (Top-Level CATEGORY_MODEL)"
           />
         </div>
 
@@ -147,7 +147,7 @@
           <AppTextarea
           v-model="form.description"
           rows="3"
-          placeholder="Category overview, styling notes, or placement notes..."
+          placeholder="CATEGORY_MODEL overview, styling notes, or placement notes..."
         />
         </div>
 
@@ -189,7 +189,7 @@
             type="submit"
             variant="primary"
             :loading="isSubmitting"
-            :label="isEditing ? 'Save Changes' : 'Create Category'"
+            :label="isEditing ? 'Save Changes' : 'Create CATEGORY_MODEL'"
           />
         </div>
       </form>
@@ -198,9 +198,9 @@
     <!-- Delete Confirmation Modal -->
     <AppConfirmDialog
       v-model="showDeleteModal"
-      title="Delete Category"
+      title="Delete CATEGORY_MODEL"
       variant="danger"
-      confirm-label="Delete Category"
+      confirm-label="Delete CATEGORY_MODEL"
       :loading="isDeleting"
       :message="`Are you sure you want to delete category &quot;${selectedCategory?.name}&quot;?`"
       consequence="Products assigned to this category will need to be reclassified."
@@ -213,7 +213,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useCatalogApi } from '~/composables/useApi'
 import { useAppToast } from '~/composables/useAppToast'
-import type { Category } from '~/types'
+import type { CATEGORY_MODEL } from '~/types'
 import type { FilterChipItem } from '~/types'
 
 definePageMeta({ middleware: ['auth'] })
@@ -222,7 +222,7 @@ useHead({ title: 'Categories — Clothing Store Admin' })
 const { listCategories, createCategory, updateCategory, deleteCategory } = useCatalogApi()
 const { addToast } = useAppToast()
 
-const categories = ref<Category[]>([])
+const categories = ref<CATEGORY_MODEL[]>([])
 const loading = ref(false)
 const isSubmitting = ref(false)
 const isDeleting = ref(false)
@@ -232,10 +232,10 @@ const statusFilter = ref('')
 const showModal = ref(false)
 const showDeleteModal = ref(false)
 const isEditing = ref(false)
-const selectedCategory = ref<Category | null>(null)
+const selectedCategory = ref<CATEGORY_MODEL | null>(null)
 
 const columns = [
-  { key: 'name', label: 'Category', sortable: true },
+  { key: 'name', label: 'CATEGORY_MODEL', sortable: true },
   { key: 'parent', label: 'Parent Hierarchy' },
   { key: 'description', label: 'Description' },
   { key: 'sort_order', label: 'Sort Order', width: '110px', sortable: true },
@@ -270,7 +270,7 @@ const filteredCategories = computed(() => {
 })
 
 const parentCategoryOptions = computed(() => {
-  const options = [{ label: 'None (Top-Level Category)', value: '' }]
+  const options = [{ label: 'None (Top-Level CATEGORY_MODEL)', value: '' }]
   for (const cat of categories.value) {
     if (!isEditing.value || cat.id !== selectedCategory.value?.id) {
       options.push({ label: cat.name, value: cat.id })
@@ -313,7 +313,7 @@ function openCreateModal() {
   showModal.value = true
 }
 
-function openEditModal(category: Category) {
+function openEditModal(category: CATEGORY_MODEL) {
   isEditing.value = true
   selectedCategory.value = category
   form.name = category.name || ''
@@ -325,7 +325,7 @@ function openEditModal(category: Category) {
   showModal.value = true
 }
 
-function confirmDeleteCategory(category: Category) {
+function confirmDeleteCategory(category: CATEGORY_MODEL) {
   selectedCategory.value = category
   showDeleteModal.value = true
 }
@@ -346,10 +346,10 @@ async function handleSubmit() {
 
     if (isEditing.value && selectedCategory.value) {
       await updateCategory(selectedCategory.value.id, payload)
-      addToast({ title: 'Category Updated', description: `Successfully updated ${form.name}`, color: 'green' })
+      addToast({ title: 'CATEGORY_MODEL Updated', description: `Successfully updated ${form.name}`, color: 'green' })
     } else {
       await createCategory(payload)
-      addToast({ title: 'Category Created', description: `Successfully created ${form.name}`, color: 'green' })
+      addToast({ title: 'CATEGORY_MODEL Created', description: `Successfully created ${form.name}`, color: 'green' })
     }
 
     showModal.value = false
@@ -370,7 +370,7 @@ async function handleDeleteCategory() {
   isDeleting.value = true
   try {
     await deleteCategory(selectedCategory.value.id)
-    addToast({ title: 'Category Deleted', description: `${selectedCategory.value.name} was removed`, color: 'green' })
+    addToast({ title: 'CATEGORY_MODEL Deleted', description: `${selectedCategory.value.name} was removed`, color: 'green' })
     showDeleteModal.value = false
     await fetchCategories()
   } catch (err: any) {

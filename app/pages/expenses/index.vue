@@ -146,7 +146,7 @@
     <AppModal v-model="showCreateModal" title="Record New Expense" size="md">
       <form class="form-grid" @submit.prevent="handleCreateExpense">
         <div class="form-field">
-          <label class="field-label">Expense Category <span class="required">*</span></label>
+          <label class="field-label">Expense CATEGORY_MODEL <span class="required">*</span></label>
           <select
             v-model="createForm.category_id"
             required
@@ -262,7 +262,7 @@ const statusOptions = [
 
 const columns = [
   { key: 'expense_number', label: 'Number', sortable: true },
-  { key: 'category', label: 'Category' },
+  { key: 'category', label: 'CATEGORY_MODEL' },
   { key: 'description', label: 'Description' },
   { key: 'amount', label: 'Amount', sortable: true },
   { key: 'payment_method', label: 'Method' },

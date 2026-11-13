@@ -4,7 +4,7 @@
 
     <main class="relative w-full max-w-[440px] bg-surface-card border border-border-subtle rounded-xl shadow-menu">
       <div class="px-6 sm:px-8 pt-8 pb-6 flex flex-col gap-6">
-        <!-- Brand -->
+        <!-- BRAND_MODEL -->
         <div class="flex flex-col items-center text-center gap-3">
           <div class="w-14 h-14 rounded-xl bg-navy flex items-center justify-center overflow-hidden">
             <img

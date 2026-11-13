@@ -28,7 +28,7 @@
       ]"
       :aria-label="ariaLabel || 'Main navigation'"
     >
-      <!-- ─── #header Slot: Brand Identity & Collapse Trigger ────────── -->
+      <!-- ─── #header Slot: BRAND_MODEL Identity & Collapse Trigger ────────── -->
       <div
         data-slot="header"
         class="h-14 px-3 flex items-center justify-between gap-2 border-b border-white/10 shrink-0"

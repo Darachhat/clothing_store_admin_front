@@ -181,7 +181,7 @@
                 @click="syncFromBrand"
               >
                 <UIcon name="i-heroicons-sparkles" class="w-3.5 h-3.5" />
-                <span>Sync Store Name from Brand</span>
+                <span>Sync Store Name from BRAND_MODEL</span>
               </button>
             </div>
           </template>
@@ -534,7 +534,7 @@ function syncFromBrand() {
   const header = displayNameKh.value || displayName.value || DEFAULT_STICKER_TEMPLATE.store_header
   form.store_header = header
   toast.add({
-    title: 'Synced with Brand Profile',
+    title: 'Synced with BRAND_MODEL Profile',
     description: `Store header set to "${header}"`,
     color: 'green',
   })

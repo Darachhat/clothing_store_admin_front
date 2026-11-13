@@ -1,7 +1,7 @@
 // Users & Roles Domain API Service
 import type { AdminApiClient } from '../client'
 import { API_ENDPOINTS } from '../endpoints'
-import type { User, Role, Permission } from '~/types/api.generated'
+import type { User, ROLE_MODEL, PERMISSION_MODEL } from '~/types/api.generated'
 
 export function createUserService(client: AdminApiClient) {
   return {
@@ -27,16 +27,16 @@ export function createUserService(client: AdminApiClient) {
       client.get<any[]>(API_ENDPOINTS.users.roleHistory(id), { limit }),
 
     listRoles: () =>
-      client.get<Role[]>(API_ENDPOINTS.users.roles),
+      client.get<ROLE_MODEL[]>(API_ENDPOINTS.users.roles),
 
     createRole: (body: unknown) =>
-      client.post<Role>(API_ENDPOINTS.users.roles, body),
+      client.post<ROLE_MODEL>(API_ENDPOINTS.users.roles, body),
 
     updateRole: (id: string, body: unknown) =>
-      client.patch<Role>(API_ENDPOINTS.users.roleDetail(id), body),
+      client.patch<ROLE_MODEL>(API_ENDPOINTS.users.roleDetail(id), body),
 
     listPermissions: () =>
-      client.get<Permission[]>(API_ENDPOINTS.users.permissions),
+      client.get<PERMISSION_MODEL[]>(API_ENDPOINTS.users.permissions),
   }
 }
 

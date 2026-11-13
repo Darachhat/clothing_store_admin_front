@@ -185,7 +185,7 @@ export const APP_NAV_SECTIONS: NavSection[] = [
         permission: 'settings.manage',
         children: [
           { label: 'General Settings', to: '/settings', icon: 'i-heroicons-cog-6-tooth', exact: true, permission: 'settings.manage' },
-          { label: 'Brand & Identity', to: '/settings/brand', icon: 'i-heroicons-sparkles', exact: true, permission: 'settings.manage' },
+          { label: 'BRAND_MODEL & Identity', to: '/settings/brand', icon: 'i-heroicons-sparkles', exact: true, permission: 'settings.manage' },
           { label: 'Integrations', to: '/settings/integrations', icon: 'i-heroicons-cpu-chip', exact: true, permission: 'settings.manage' },
           { label: 'Translations CMS', to: '/settings/translations', icon: 'i-heroicons-language', exact: true, permission: 'settings.manage' },
         ],

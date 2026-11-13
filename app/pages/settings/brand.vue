@@ -2,9 +2,9 @@
   <div class="page-root max-w-7xl mx-auto space-y-6 pb-12">
     <!-- Page Header -->
     <PageHeader
-      title="Brand & Identity"
+      title="BRAND_MODEL & Identity"
       description="One-stop management for store logo, brand names, slogans, and official credentials across all receipts, invoices, customer displays, and login portals."
-      :breadcrumbs="[{ label: 'Administration', to: '/dashboard' }, { label: 'System Settings', to: '/settings' }, { label: 'Brand & Identity' }]"
+      :breadcrumbs="[{ label: 'Administration', to: '/dashboard' }, { label: 'System Settings', to: '/settings' }, { label: 'BRAND_MODEL & Identity' }]"
     >
       <template #actions>
         <div class="flex items-center gap-2">
@@ -31,7 +31,7 @@
             <template #icon-left>
               <UIcon name="i-heroicons-check" class="w-4 h-4" />
             </template>
-            <span>Save All Brand Settings</span>
+            <span>Save All BRAND_MODEL Settings</span>
           </AppButton>
         </div>
       </template>
@@ -40,7 +40,7 @@
     <LoadingSkeleton v-if="loading && !isLoaded" variant="card" />
 
     <div v-else class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
-      <!-- ── Left Column: Brand Management Form (7 cols) ────────────────────── -->
+      <!-- ── Left Column: BRAND_MODEL Management Form (7 cols) ────────────────────── -->
       <div class="xl:col-span-7 space-y-6">
         <!-- 1. Logo & Visual Assets Card -->
         <DataCard>
@@ -48,7 +48,7 @@
             <div class="flex items-center justify-between w-full">
               <div class="flex items-center gap-2">
                 <UIcon name="i-heroicons-photo" class="w-4 h-4 text-gray-500" />
-                <h3 class="font-semibold text-gray-900 dark:text-white text-sm">Brand Logo &amp; Visual Marks</h3>
+                <h3 class="font-semibold text-gray-900 dark:text-white text-sm">BRAND_MODEL Logo &amp; Visual Marks</h3>
               </div>
               <span class="text-[11px] text-gray-500">Auto-synced to POS &amp; Invoices</span>
             </div>
@@ -58,7 +58,7 @@
             <!-- Primary Logo -->
             <div class="space-y-2">
               <label class="block text-xs font-semibold text-gray-900 dark:text-gray-100">
-                Primary Brand Logo (Light Surfaces) *
+                Primary BRAND_MODEL Logo (Light Surfaces) *
               </label>
               <p class="text-[11px] text-gray-500 leading-relaxed">
                 Appears on thermal receipts, A4 invoices, admin login, and top customer display bar. Recommended: Transparent PNG or SVG (square or horizontal, min 200x200px).
@@ -70,7 +70,7 @@
                   <img
                     v-if="form.logo_url"
                     :src="form.logo_url"
-                    alt="Brand Logo Preview"
+                    alt="BRAND_MODEL Logo Preview"
                     class="max-w-full max-h-full object-contain"
                   />
                   <div v-else class="flex flex-col items-center justify-center text-center text-gray-400">
@@ -219,12 +219,12 @@
           </div>
         </DataCard>
 
-        <!-- 2. Brand Naming & Typography Section -->
+        <!-- 2. BRAND_MODEL Naming & Typography Section -->
         <DataCard>
           <template #header>
             <div class="flex items-center gap-2">
               <UIcon name="i-heroicons-tag" class="w-4 h-4 text-gray-500" />
-              <h3 class="font-semibold text-gray-900 dark:text-white text-sm">Store Names &amp; Brand Taglines</h3>
+              <h3 class="font-semibold text-gray-900 dark:text-white text-sm">Store Names &amp; BRAND_MODEL Taglines</h3>
             </div>
           </template>
 
@@ -426,7 +426,7 @@
           class="bg-slate-100 dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-800 flex justify-center items-start shadow-inner"
         >
           <div class="w-[300px] bg-white text-gray-900 p-4 rounded-lg border border-gray-300 shadow-sm font-sans space-y-2">
-            <!-- Top Header with Brand Logo -->
+            <!-- Top Header with BRAND_MODEL Logo -->
             <div class="text-center flex flex-col items-center gap-1 pb-2 border-b-2 border-gray-900">
               <div v-if="form.logo_url" class="w-14 h-14 p-1 mb-1 flex items-center justify-center">
                 <img :src="form.logo_url" alt="Receipt Logo" class="max-w-full max-h-full object-contain filter grayscale" />
@@ -502,7 +502,7 @@
           class="bg-slate-100 dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-inner overflow-x-auto"
         >
           <div class="w-full bg-white text-gray-900 p-4 rounded-lg border border-gray-300 shadow-sm space-y-3">
-            <!-- A4 Header with Brand Logo -->
+            <!-- A4 Header with BRAND_MODEL Logo -->
             <div class="flex items-start justify-between pb-3 border-b-2 border-gray-900">
               <div class="flex items-center gap-3">
                 <div class="w-14 h-14 rounded-lg border border-gray-200 bg-gray-50 p-1 flex items-center justify-center flex-shrink-0">
@@ -577,7 +577,7 @@
           v-else
           class="bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm space-y-4"
         >
-          <div class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Sidebar Brand Header Preview</div>
+          <div class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Sidebar BRAND_MODEL Header Preview</div>
           <div class="p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/60 flex items-center gap-2.5">
             <div class="w-8 h-8 rounded-lg bg-gray-900 text-white flex items-center justify-center p-1 flex-shrink-0">
               <img v-if="form.logo_url" :src="form.logo_url" alt="Logo" class="max-w-full max-h-full object-contain filter invert" />
@@ -589,7 +589,7 @@
             </div>
           </div>
 
-          <div class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 pt-2 border-t border-gray-200 dark:border-gray-800">Login Screen Brand Preview</div>
+          <div class="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 pt-2 border-t border-gray-200 dark:border-gray-800">Login Screen BRAND_MODEL Preview</div>
           <div class="p-4 rounded-lg bg-gray-950 text-white text-center space-y-2">
             <div class="w-12 h-12 rounded-xl bg-slate-900 border border-slate-800 mx-auto p-1.5 flex items-center justify-center">
               <img v-if="form.logo_dark_url || form.logo_url" :src="form.logo_dark_url || form.logo_url" alt="Login Logo" class="max-w-full max-h-full object-contain" />
@@ -609,7 +609,7 @@ import { onMounted, ref } from 'vue'
 import { useBrand, type BrandProfile } from '~/composables/useBrand'
 
 definePageMeta({ middleware: ['auth'] })
-useHead({ title: 'Brand & Identity — Clothing Store' })
+useHead({ title: 'BRAND_MODEL & Identity — Clothing Store' })
 
 const toast = useAppToast()
 const { brand, isLoaded, loading, loadBrand, saveBrand, uploadLogo } = useBrand()
@@ -661,7 +661,7 @@ async function handleSave() {
   saving.value = true
   try {
     await saveBrand(form.value)
-    toast.success('Brand identity and logo settings saved! Synchronized across all frontends.')
+    toast.success('BRAND_MODEL identity and logo settings saved! Synchronized across all frontends.')
   } catch (err: any) {
     toast.error(err?.message || 'Failed to save brand settings.')
   } finally {

@@ -10,11 +10,11 @@ import type {
 
 export * from './api.generated'
 
-export type Brand = BRAND_RESPONSE_SCHEMA & {
+export type BRAND_MODEL = BRAND_RESPONSE_SCHEMA & {
   code?: string
 }
 
-export type Category = CATEGORY_RESPONSE_SCHEMA & {
+export type CATEGORY_MODEL = CATEGORY_RESPONSE_SCHEMA & {
   code?: string
 }
 
@@ -23,6 +23,45 @@ export type Customer = CUSTOMER_RESPONSE_SCHEMA & {
   full_name?: string
   loyalty_points?: number
   total_spent?: number
+}
+
+export interface ProductImage {
+  id: string
+  product_id: string
+  variant_id?: string | null
+  image_url: string
+  is_primary: boolean
+  sort_order: number
+  created_at?: string
+}
+
+export interface ProductAttributeValue {
+  id: string
+  attribute_id: string
+  value: string
+  display_value: string
+  sort_order: number
+  status_code: string
+}
+
+export interface ProductAttribute {
+  id: string
+  name: string
+  display_name: string
+  attribute_type: string
+  sort_order: number
+  status_code: string
+  values: ProductAttributeValue[]
+}
+
+export interface ProductAttributeAssignment {
+  id: string
+  attribute_id: string
+  attribute_value_id: string
+  attribute_name?: string | null
+  attribute_display_name?: string | null
+  value?: string | null
+  display_value?: string | null
 }
 
 export type Product = PRODUCT_WITH_VARIANTS_SCHEMA & {
@@ -34,6 +73,11 @@ export type Product = PRODUCT_WITH_VARIANTS_SCHEMA & {
   cost_price?: number | string
   retail_price?: number | string
   variant_count?: number
+  min_price?: number | string | null
+  max_price?: number | string | null
+  tags?: string[]
+  images?: ProductImage[]
+  attribute_assignments?: ProductAttributeAssignment[]
 }
 
 export type ProductVariant = PRODUCT_VARIANT_RESPONSE_SCHEMA & {
@@ -215,5 +259,90 @@ export interface DropdownMenuItem {
   disabled?: boolean
   divider?: boolean
   onSelect?: () => void
+}
+
+// ── Stock Matrix Types ────────────────────────────────────────────────────────
+export interface StockMatrixOption {
+  id: string | null
+  name: string
+  code?: string | null
+  hex_code?: string | null
+}
+
+export interface StockMatrixCell {
+  variant_id: string
+  sku: string
+  barcode?: string | null
+  color_id?: string | null
+  size_id?: string | null
+  status_code: string
+  quantity: number
+  reorder_level: number
+  stock_status: 'IN' | 'LOW' | 'OUT'
+  by_warehouse: Record<string, number>
+}
+
+export interface StockMatrixResponse {
+  product_id: string
+  colors: StockMatrixOption[]
+  sizes: StockMatrixOption[]
+  warehouses: { id: string; name: string }[]
+  cells: StockMatrixCell[]
+  total_quantity: number
+  low_count: number
+  out_count: number
+}
+
+// ── Unified Barcode / QR Scan Lookup Types ───────────────────────────────────
+export interface VariantScanResponse {
+  match_type: 'variant' | 'product'
+  normalized_code: string
+  variant?: ProductVariant | null
+  product?: Product | null
+  variants: ProductVariant[]
+  total_stock: number
+}
+
+// ── Bulk Variant Types ────────────────────────────────────────────────────────
+export interface BulkVariantItem {
+  color_id?: string | null
+  size_id?: string | null
+  sku?: string | null
+  selling_price?: number | null
+  cost_price?: number | null
+  wholesale_price?: number | null
+  barcode?: string | null
+  image_url?: string | null
+  status_code?: string | null
+  initial_stock?: number
+  reorder_level?: number
+}
+
+export interface BulkVariantUpdatePayload {
+  variant_ids?: string[] | null
+  selling_price?: number | null
+  cost_price?: number | null
+  wholesale_price?: number | null
+  status_code?: string | null
+}
+
+export interface BulkVariantCreate {
+  items: BulkVariantItem[]
+  default_selling_price?: number | null
+  default_cost_price?: number | null
+  default_wholesale_price?: number | null
+  warehouse_id?: string | null
+  status_code?: string
+}
+
+export interface BulkVariantSkipped {
+  color_id?: string | null
+  size_id?: string | null
+  reason: string
+}
+
+export interface BulkVariantResponse {
+  created: ProductVariant[]
+  skipped: BulkVariantSkipped[]
 }
 

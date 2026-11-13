@@ -15,119 +15,89 @@
       </template>
     </AppPageHeader>
 
-    <div v-if="loading" class="state-card">Loading product…</div>
+    <div v-if="loading" class="state-card" role="status">
+      <UIcon name="i-heroicons-arrow-path" class="w-4 h-4 animate-spin" />
+      <span>Loading product…</span>
+    </div>
 
-    <form v-else-if="product" class="grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-4 items-start" @submit.prevent="save">
-      <div class="flex flex-col gap-4">
-        <AppCard title="Basic Information">
-          <div class="form-grid">
-            <div class="form-field">
-              <label class="field-label">Product Name <span class="required">*</span></label>
-              <input v-model="form.name" class="field-input" required />
-            </div>
+    <template v-else-if="product">
+      <ProductForm
+        v-model="form"
+        :cancel-to="`/products/${id}`"
+        submit-label="Save Changes"
+        :submitting="saving"
+        @submit="save"
+      />
+    </template>
 
-            <div class="form-field">
-              <label class="field-label">Description</label>
-              <textarea v-model="form.description" class="field-input field-textarea" rows="4" />
-            </div>
-
-            <div class="form-row">
-              <div class="form-field">
-                <label class="field-label">Category</label>
-                <AppSelect v-model="form.category_id" :options="categoryOptions" placeholder="Select category" />
-              </div>
-              <div class="form-field">
-                <label class="field-label">Brand</label>
-                <AppSelect v-model="form.brand_id" :options="brandOptions" placeholder="Select brand" />
-              </div>
-            </div>
-
-            <div class="form-row">
-              <div class="form-field">
-                <label class="field-label">Supplier</label>
-                <AppSelect v-model="form.supplier_id" :options="supplierOptions" placeholder="Select supplier" />
-              </div>
-              <div class="form-field">
-                <label class="field-label">Status</label>
-                <AppSelect v-model="form.status" :options="statusOptions" />
-              </div>
-            </div>
-          </div>
-        </AppCard>
-      </div>
-
-      <div class="product-form-side">
-        <AppCard title="Product Photo">
-          <AppFileUpload
-            v-model="form.image_url"
-            folder="products"
-            label="Product Main Photo"
-            hint="Upload high-res product photo (PNG, JPG, WEBP)"
-          />
-        </AppCard>
-
-        <div class="flex justify-end gap-2">
-          <AppButton type="button" variant="default" label="Cancel" :to="`/products/${id}`" />
-          <AppButton type="submit" variant="primary" label="Save Changes" icon="i-heroicons-check" :loading="saving" />
-        </div>
-      </div>
-    </form>
-
-    <div v-else class="state-card">Product not found.</div>
+    <AppErrorState
+      v-else
+      title="Product not found"
+      :message="loadError || 'The requested product could not be loaded.'"
+      @retry="loadData"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import type { Product, Category, Brand, Supplier } from '~/types'
+import type { Product } from '~/types'
+import type { ProductFormState } from '~/components/modules/catalog/ProductForm.vue'
 
 definePageMeta({ middleware: ['auth'] })
 
 const route = useRoute()
 const id = route.params.id as string
-useHead({ title: 'Edit Product — Clothing Store Admin' })
+useHead({ title: 'Edit Product — KVC Clothing Store Admin' })
 
 const { getProduct, updateProduct } = useProductApi()
-const { listCategories, listBrands } = useCatalogApi()
-const { listSuppliers } = useSupplierApi()
 const { addToast } = useAppToast()
 
 const product = ref<Product | null>(null)
 const loading = ref(true)
 const saving = ref(false)
+const loadError = ref('')
 
-const form = reactive({
+const form = ref<ProductFormState>({
   name: '',
+  code: '',
   description: '',
   category_id: '',
   brand_id: '',
   supplier_id: '',
-  image_url: '' as string | null,
-  status: 'ACTIVE',
+  status_code: 'ACTIVE',
+  image_url: '',
+  tags: [],
+  images: [],
+  attribute_value_ids: [],
 })
+const snapshot = ref('')
 
-const statusOptions = [
-  { label: 'Active', value: 'ACTIVE' },
-  { label: 'Inactive', value: 'INACTIVE' },
-  { label: 'Discontinued', value: 'DISCONTINUED' },
-]
-
-const categoryOptions = ref<{ label: string; value: string }[]>([{ label: 'None', value: '' }])
-const brandOptions = ref<{ label: string; value: string }[]>([{ label: 'None', value: '' }])
-const supplierOptions = ref<{ label: string; value: string }[]>([{ label: 'None', value: '' }])
+const isDirty = computed(() => !!product.value && JSON.stringify(form.value) !== snapshot.value)
 
 async function save() {
+  if (saving.value) return
   saving.value = true
   try {
+    const f = form.value
     await updateProduct(id, {
-      name: form.name.trim(),
-      description: form.description || null,
-      category_id: form.category_id || null,
-      brand_id: form.brand_id || null,
-      supplier_id: form.supplier_id || null,
-      image_url: form.image_url || null,
-      status_code: form.status,
-      status: form.status,
+      name: f.name.trim(),
+      code: f.code?.trim() || null,
+      description: f.description?.trim() || null,
+      category_id: f.category_id || null,
+      brand_id: f.brand_id || null,
+      supplier_id: f.supplier_id || null,
+      image_url: f.image_url || null,
+      status_code: f.status_code,
+      tags: f.tags || [],
+      images: (f.images || []).map((img, idx) => ({
+        image_url: img.image_url,
+        variant_id: img.variant_id || null,
+        is_primary: img.is_primary,
+        sort_order: idx,
+      })),
+      attribute_value_ids: f.attribute_value_ids || [],
     })
+    snapshot.value = JSON.stringify(form.value)
     addToast({ type: 'success', title: 'Product updated' })
     await navigateTo(`/products/${id}`)
   } catch (e: any) {
@@ -137,36 +107,63 @@ async function save() {
   }
 }
 
-onMounted(async () => {
+async function loadData() {
+  loading.value = true
+  loadError.value = ''
   try {
-    const [rawProduct, cats, brands, suppliers] = await Promise.all([
-      getProduct(id),
-      listCategories(),
-      listBrands(),
-      listSuppliers(),
-    ])
-    const p = rawProduct as Product
+    const p = (await getProduct(id)) as Product
     product.value = p
-    if (p) {
-      Object.assign(form, {
-        name: p.name,
-        description: p.description ?? '',
-        category_id: p.category_id ?? '',
-        brand_id: p.brand_id ?? '',
-        supplier_id: p.supplier_id ?? '',
-        image_url: p.image_url ?? '',
-        status: (p as any).status_code || p.status || 'ACTIVE',
-      })
+    const loadedImages = Array.isArray(p.images) && p.images.length > 0
+      ? p.images.map((img, idx) => ({
+          id: img.id,
+          image_url: img.image_url,
+          variant_id: img.variant_id ?? null,
+          is_primary: img.is_primary,
+          sort_order: img.sort_order ?? idx,
+        }))
+      : (p.image_url ? [{ image_url: p.image_url, is_primary: true, sort_order: 0 }] : [])
+
+    const loadedAttrIds = Array.isArray(p.attribute_assignments)
+      ? p.attribute_assignments.map(a => a.attribute_value_id).filter(Boolean)
+      : []
+
+    form.value = {
+      name: p.name,
+      code: p.code ?? '',
+      description: p.description ?? '',
+      category_id: p.category_id ?? '',
+      brand_id: p.brand_id ?? '',
+      supplier_id: (p as any).supplier_id ?? '',
+      status_code: (p as any).status_code || p.status || 'ACTIVE',
+      image_url: p.image_url ?? '',
+      tags: Array.isArray(p.tags) ? [...p.tags] : [],
+      images: loadedImages,
+      attribute_value_ids: loadedAttrIds,
     }
-    const catList = Array.isArray(cats) ? cats : ((cats as any)?.items || [])
-    const brandList = Array.isArray(brands) ? brands : ((brands as any)?.items || [])
-    const supList = Array.isArray(suppliers) ? suppliers : ((suppliers as any)?.items || [])
-    categoryOptions.value = [{ label: 'None', value: '' }, ...(catList as Category[]).map(c => ({ label: c.name, value: c.id }))]
-    brandOptions.value = [{ label: 'None', value: '' }, ...(brandList as Brand[]).map(b => ({ label: b.name, value: b.id }))]
-    supplierOptions.value = [{ label: 'None', value: '' }, ...(supList as Supplier[]).map(s => ({ label: s.name, value: s.id }))]
+    snapshot.value = JSON.stringify(form.value)
+  } catch (e: any) {
+    product.value = null
+    loadError.value = e?.data?.detail ?? e?.message ?? ''
   } finally {
     loading.value = false
   }
-})
-</script>
+}
 
+onBeforeRouteLeave(() => {
+  if (isDirty.value && !saving.value) {
+    return window.confirm('You have unsaved changes. Leave this page without saving?')
+  }
+})
+
+function onBeforeUnload(e: BeforeUnloadEvent) {
+  if (isDirty.value) {
+    e.preventDefault()
+    e.returnValue = ''
+  }
+}
+onMounted(() => {
+  window.addEventListener('beforeunload', onBeforeUnload)
+  loadData()
+})
+onBeforeUnmount(() => window.removeEventListener('beforeunload', onBeforeUnload))
+</script>

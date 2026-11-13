@@ -8,7 +8,7 @@
     >
       <template #actions>
         <AppButton
-          label="Add Role"
+          label="Add ROLE_MODEL"
           variant="primary"
           size="sm"
           icon="i-heroicons-plus"
@@ -66,16 +66,16 @@
       </AppTable>
     </AppCard>
 
-    <!-- Create / Edit Role Modal -->
+    <!-- Create / Edit ROLE_MODEL Modal -->
     <AppModal
       v-model="showCreateModal"
-      :title="editingRoleId ? 'Edit Role & Permissions' : 'Create Custom Role'"
+      :title="editingRoleId ? 'Edit ROLE_MODEL & Permissions' : 'Create Custom ROLE_MODEL'"
       description="Assign granular permission codes to control module and API access."
       size="lg"
     >
       <form class="form-grid" @submit.prevent="handleCreateRole">
         <div class="form-field">
-          <label class="field-label">Role Name <span class="req">*</span></label>
+          <label class="field-label">ROLE_MODEL Name <span class="req">*</span></label>
           <input
             v-model="createForm.name"
             type="text"
@@ -130,7 +130,7 @@
 
         <div class="flex justify-end gap-2 pt-2">
           <AppButton variant="ghost" type="button" label="Cancel" @click="showCreateModal = false" />
-          <AppButton type="submit" variant="primary" label="Save Role" :loading="saving" />
+          <AppButton type="submit" variant="primary" label="Save ROLE_MODEL" :loading="saving" />
         </div>
       </form>
     </AppModal>
@@ -151,7 +151,7 @@ const permissions = ref<any[]>([])
 const permSearch = ref('')
 
 const columns = [
-  { key: 'name', label: 'Role', sortable: true },
+  { key: 'name', label: 'ROLE_MODEL', sortable: true },
   { key: 'description', label: 'Description' },
   { key: 'permissions', label: 'Permissions' },
   { key: 'actions', label: 'Actions' },
@@ -224,10 +224,10 @@ async function handleCreateRole() {
         description: createForm.value.description,
         permission_ids: createForm.value.permission_ids,
       })
-      addToast({ type: 'success', title: 'Role permissions updated' })
+      addToast({ type: 'success', title: 'ROLE_MODEL permissions updated' })
     } else {
       await userApi.createRole(createForm.value)
-      addToast({ type: 'success', title: 'Role created' })
+      addToast({ type: 'success', title: 'ROLE_MODEL created' })
     }
     showCreateModal.value = false
     await fetchRoles()

@@ -358,7 +358,7 @@
           </select>
         </div>
 
-        <!-- Row 4: Brand & Receipt Settings Link -->
+        <!-- Row 4: BRAND_MODEL & Receipt Settings Link -->
         <NuxtLink
           to="/settings/brand"
           class="flex items-center justify-between gap-3 p-4 hover:bg-surface-hover transition-colors no-underline"
@@ -367,7 +367,7 @@
           <div class="flex items-center gap-3 min-w-0">
             <UIcon name="i-heroicons-sparkles" class="w-5 h-5 text-ink-secondary shrink-0" />
             <div class="min-w-0">
-              <div class="text-sm font-medium text-ink">Brand &amp; Identity</div>
+              <div class="text-sm font-medium text-ink">BRAND_MODEL &amp; Identity</div>
               <div class="text-xs text-ink-tertiary">Store name, logo, and receipt header</div>
             </div>
           </div>

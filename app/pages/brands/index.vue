@@ -7,7 +7,7 @@
         { label: 'Catalog', to: '/products' },
         { label: 'Brands' },
       ]"
-      primary-label="Add Brand"
+      primary-label="Add BRAND_MODEL"
       primary-icon="i-heroicons-plus"
       @primary-click="openCreateModal"
     >
@@ -106,13 +106,13 @@
     <!-- Create / Edit Modal -->
     <AppModal
       v-model="showModal"
-      :title="isEditing ? 'Edit Brand' : 'Register New Brand'"
+      :title="isEditing ? 'Edit BRAND_MODEL' : 'Register New BRAND_MODEL'"
       size="md"
     >
       <form class="form-grid" @submit.prevent="handleSubmit">
         <div class="form-field">
           <label class="field-label">
-            Brand Name <span class="required">*</span>
+            BRAND_MODEL Name <span class="required">*</span>
           </label>
           <AppInput
             v-model="form.name"
@@ -123,7 +123,7 @@
 
         <div class="form-field">
           <label class="field-label">
-            Brand Slug / Identifier
+            BRAND_MODEL Slug / Identifier
           </label>
           <AppInput
             v-model="form.slug"
@@ -133,7 +133,7 @@
 
         <div class="form-field">
           <label class="field-label">
-            Brand Logo
+            BRAND_MODEL Logo
           </label>
           <AppFileUpload
             v-model="form.logo_url"
@@ -149,7 +149,7 @@
           <AppTextarea
           v-model="form.description"
           rows="3"
-          placeholder="Brand origin, target demographic, manufacturing quality notes..."
+          placeholder="BRAND_MODEL origin, target demographic, manufacturing quality notes..."
         />
         </div>
 
@@ -177,7 +177,7 @@
             type="submit"
             variant="primary"
             :loading="isSubmitting"
-            :label="isEditing ? 'Save Changes' : 'Register Brand'"
+            :label="isEditing ? 'Save Changes' : 'Register BRAND_MODEL'"
           />
         </div>
       </form>
@@ -186,9 +186,9 @@
     <!-- Delete Confirmation Modal -->
     <AppConfirmDialog
       v-model="showDeleteModal"
-      title="Delete Brand"
+      title="Delete BRAND_MODEL"
       variant="danger"
-      confirm-label="Delete Brand"
+      confirm-label="Delete BRAND_MODEL"
       :loading="isDeleting"
       :message="`Are you sure you want to delete brand &quot;${selectedBrand?.name}&quot;?`"
       consequence="Products linked to this brand will remain in catalog without a brand association."
@@ -201,7 +201,7 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useCatalogApi } from '~/composables/useApi'
 import { useAppToast } from '~/composables/useAppToast'
-import type { Brand } from '~/types'
+import type { BRAND_MODEL } from '~/types'
 import type { FilterChipItem } from '~/types'
 
 definePageMeta({ middleware: ['auth'] })
@@ -210,7 +210,7 @@ useHead({ title: 'Brands — Clothing Store Admin' })
 const { listBrands, createBrand, updateBrand, deleteBrand } = useCatalogApi()
 const { addToast } = useAppToast()
 
-const brands = ref<Brand[]>([])
+const brands = ref<BRAND_MODEL[]>([])
 const loading = ref(false)
 const isSubmitting = ref(false)
 const isDeleting = ref(false)
@@ -220,10 +220,10 @@ const statusFilter = ref('')
 const showModal = ref(false)
 const showDeleteModal = ref(false)
 const isEditing = ref(false)
-const selectedBrand = ref<Brand | null>(null)
+const selectedBrand = ref<BRAND_MODEL | null>(null)
 
 const columns = [
-  { key: 'name', label: 'Brand Name', sortable: true },
+  { key: 'name', label: 'BRAND_MODEL Name', sortable: true },
   { key: 'description', label: 'Description' },
   { key: 'status', label: 'Status', width: '120px' },
 ]
@@ -281,7 +281,7 @@ function openCreateModal() {
   showModal.value = true
 }
 
-function openEditModal(brand: Brand) {
+function openEditModal(brand: BRAND_MODEL) {
   isEditing.value = true
   selectedBrand.value = brand
   form.name = brand.name || ''
@@ -292,7 +292,7 @@ function openEditModal(brand: Brand) {
   showModal.value = true
 }
 
-function confirmDeleteBrand(brand: Brand) {
+function confirmDeleteBrand(brand: BRAND_MODEL) {
   selectedBrand.value = brand
   showDeleteModal.value = true
 }
@@ -312,10 +312,10 @@ async function handleSubmit() {
 
     if (isEditing.value && selectedBrand.value) {
       await updateBrand(selectedBrand.value.id, payload)
-      addToast({ title: 'Brand Updated', description: `Successfully updated ${form.name}`, color: 'green' })
+      addToast({ title: 'BRAND_MODEL Updated', description: `Successfully updated ${form.name}`, color: 'green' })
     } else {
       await createBrand(payload)
-      addToast({ title: 'Brand Created', description: `Successfully registered ${form.name}`, color: 'green' })
+      addToast({ title: 'BRAND_MODEL Created', description: `Successfully registered ${form.name}`, color: 'green' })
     }
 
     showModal.value = false
@@ -336,7 +336,7 @@ async function handleDeleteBrand() {
   isDeleting.value = true
   try {
     await deleteBrand(selectedBrand.value.id)
-    addToast({ title: 'Brand Deleted', description: `${selectedBrand.value.name} was removed`, color: 'green' })
+    addToast({ title: 'BRAND_MODEL Deleted', description: `${selectedBrand.value.name} was removed`, color: 'green' })
     showDeleteModal.value = false
     await fetchBrands()
   } catch (err: any) {

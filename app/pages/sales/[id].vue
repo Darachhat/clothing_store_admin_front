@@ -337,7 +337,7 @@
               v-else
               class="khmer-print-surface kh-a4-sheet bg-white rounded-lg border border-gray-200 shadow-xs text-gray-900"
             >
-              <!-- 1. A4 Header: Brand Identity Left, Invoice Title Right -->
+              <!-- 1. A4 Header: BRAND_MODEL Identity Left, Invoice Title Right -->
               <div class="kh-a4-header">
                 <div class="kh-a4-brand">
                   <img v-if="receiptTemplate.logo_url" :src="receiptTemplate.logo_url" alt="Store Logo" class="h-12 max-w-[140px] object-contain flex-shrink-0" />
@@ -669,7 +669,7 @@
           id="pos-a4-invoice"
           class="khmer-print-surface kh-a4-sheet bg-white text-gray-900"
         >
-          <!-- 1. A4 Header: Brand Identity Left, Invoice Title Right -->
+          <!-- 1. A4 Header: BRAND_MODEL Identity Left, Invoice Title Right -->
           <div class="kh-a4-header">
             <div class="kh-a4-brand">
               <img v-if="receiptTemplate.logo_url" :src="receiptTemplate.logo_url" alt="Store Logo" class="h-12 max-w-[140px] object-contain flex-shrink-0" />

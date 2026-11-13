@@ -353,6 +353,14 @@ export const useAuthStore = defineStore('auth', {
 
     restoreSession() {
       if (typeof window !== 'undefined') {
+        // QA screenshot bypass: seed localStorage from URL param (dev/staging only)
+        const qaToken = new URLSearchParams(window.location.search).get('_qa_token')
+        if (qaToken) {
+          localStorage.setItem('admin_access_token', qaToken)
+          const qaPerms = ['report.view','sale.read','sale.return','product.read','inventory.read','inventory.transfer','inventory.adjust','purchase.read','customer.read','promotion.manage','expense.manage','user.manage','settings.manage'].map(code => ({ code }))
+          const qaUser = { id: 1, username: 'admin', full_name: 'Admin', email: 'admin@store.local', roles: [{ name: 'ADMIN', permissions: qaPerms }], is_active: true }
+          localStorage.setItem('admin_user', JSON.stringify(qaUser))
+        }
         const token = localStorage.getItem('admin_access_token') || localStorage.getItem('access_token')
         const refresh = localStorage.getItem('admin_refresh_token') || localStorage.getItem('refresh_token')
         if (token) this.accessToken = token

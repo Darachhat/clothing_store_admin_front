@@ -65,7 +65,8 @@
                 v-model="settings.code_type"
                 :options="[
                   { label: 'Code-128 Barcode (Standard Retail)', value: 'BARCODE' },
-                  { label: 'QR Code (2D)', value: 'QR' },
+                  { label: 'Code-128 Barcode + QR Code', value: 'BOTH' },
+                  { label: 'QR Code Only (2D)', value: 'QR' },
                 ]"
               />
             </div>
@@ -207,8 +208,9 @@
                 class="kh-product-sticker"
                 :class="`size-${settings.label_width_mm}x${settings.label_height_mm}`"
               >
-                <div class="kh-sticker__store">
-                  {{ settings.store_name_override.trim() || defaultBrandHeader }}
+                <div class="kh-sticker__store flex items-center justify-between gap-1">
+                  <span class="inline-flex items-center px-1 py-0.2 rounded bg-ink text-white font-mono text-[9px] font-bold tracking-wider">KVC</span>
+                  <span class="truncate">{{ settings.store_name_override.trim() || defaultBrandHeader }}</span>
                 </div>
 
                 <div class="kh-sticker__product-name">
@@ -238,6 +240,16 @@
                   </div>
                   <div class="kh-sticker__barcode-text">
                     {{ v.barcode || v.sku }}
+                  </div>
+                </div>
+
+                <div v-else-if="settings.code_type === 'BOTH'" class="kh-sticker__barcode-zone">
+                  <div class="flex items-center justify-between gap-1.5 w-full">
+                    <div class="flex-1 min-w-0 flex flex-col items-center">
+                      <img :src="generateBarcodeSvgDataUri(v.barcode || v.sku)" :alt="v.barcode || v.sku" class="kh-sticker__barcode-img" />
+                      <div class="kh-sticker__barcode-text">{{ v.barcode || v.sku }}</div>
+                    </div>
+                    <img :src="generateQrSvgDataUri(v.qr_reference || v.barcode || v.sku)" :alt="v.sku" class="w-9 h-9 object-contain shrink-0" />
                   </div>
                 </div>
 
@@ -271,8 +283,9 @@
         class="kh-product-sticker"
         :class="`size-${settings.label_width_mm}x${settings.label_height_mm}`"
       >
-        <div class="kh-sticker__store">
-          {{ settings.store_name_override.trim() || 'គឹម វណ្ណាក់ ហាងលក់សម្លៀកបំពាក់ ' }}
+        <div class="kh-sticker__store flex items-center justify-between gap-1">
+          <span class="inline-flex items-center px-1 py-0.2 rounded bg-ink text-white font-mono text-[9px] font-bold tracking-wider">KVC</span>
+          <span class="truncate">{{ settings.store_name_override.trim() || 'គឹម វណ្ណាក់ ហាងលក់សម្លៀកបំពាក់ ' }}</span>
         </div>
 
         <div class="kh-sticker__product-name">
@@ -302,6 +315,16 @@
           </div>
           <div class="kh-sticker__barcode-text">
             {{ v.barcode || v.sku }}
+          </div>
+        </div>
+
+        <div v-else-if="settings.code_type === 'BOTH'" class="kh-sticker__barcode-zone">
+          <div class="flex items-center justify-between gap-1.5 w-full">
+            <div class="flex-1 min-w-0 flex flex-col items-center">
+              <img :src="generateBarcodeSvgDataUri(v.barcode || v.sku)" :alt="v.barcode || v.sku" class="kh-sticker__barcode-img" />
+              <div class="kh-sticker__barcode-text">{{ v.barcode || v.sku }}</div>
+            </div>
+            <img :src="generateQrSvgDataUri(v.qr_reference || v.barcode || v.sku)" :alt="v.sku" class="w-9 h-9 object-contain shrink-0" />
           </div>
         </div>
 

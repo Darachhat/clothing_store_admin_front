@@ -12,42 +12,18 @@
       @primary-click="openAdjustModal"
     >
       <template #secondary>
-        <AppButton
-          size="sm"
-          variant="default"
-          icon="i-heroicons-tag"
-          label="Print Barcodes"
-          to="/labels/generate"
-        />
-        <AppButton
-          size="sm"
-          variant="default"
-          icon="i-heroicons-arrows-right-left"
-          label="Movements"
-          to="/inventory/movements"
-        />
-        <AppButton
-          size="sm"
-          variant="default"
-          icon="i-heroicons-truck"
-          label="Transfers"
-          to="/inventory/transfers"
-        />
-        <AppButton
-          size="sm"
-          variant="default"
-          icon="i-heroicons-arrow-path"
-          label="Refresh"
-          :loading="loading"
-          @click="fetchInventory"
-        />
+        <AppButton size="sm" variant="default" icon="i-heroicons-tag" label="Print Barcodes" to="/labels/generate" />
+        <AppButton size="sm" variant="default" icon="i-heroicons-arrows-right-left" label="Movements" to="/inventory/movements" />
+        <AppButton size="sm" variant="default" icon="i-heroicons-truck" label="Transfers" to="/inventory/transfers" />
+        <AppButton size="sm" variant="default" icon="i-heroicons-arrow-path" :loading="loading" aria-label="Refresh" @click="fetchInventory" />
       </template>
     </AppPageHeader>
 
+    <!-- KPI Summary (from API X-Total-Count family or computed) -->
     <div class="kpi-grid-3">
       <AppStatCard
         label="Tracked Stock Lines"
-        :value="stocks.length"
+        :value="totalCount"
         icon="i-heroicons-archive-box"
         tone="neutral"
         :loading="loading"
@@ -71,21 +47,24 @@
       />
     </div>
 
+    <!-- Filter Bar -->
     <AppFilterBar
       v-model:search="search"
-      search-placeholder="Search by SKU, product name, or warehouse..."
+      search-placeholder="Search by SKU, product name, or barcode..."
       :chips="activeChips"
-      :shown-count="filteredStocks.length"
-      :total-count="stocks.length"
+      :shown-count="stocks.length"
+      :total-count="totalCount"
       count-label="stock records"
-      @remove-chip="lowStockOnly = 'ALL'"
-      @clear-all="search = ''; lowStockOnly = 'ALL'"
+      @remove-chip="onRemoveChip"
+      @clear-all="clearFilters"
     >
       <AppSelect
-        v-model="lowStockOnly"
+        v-model="stockStatus"
         :options="[
           { label: 'All Stock Levels', value: 'ALL' },
-          { label: 'Low Stock Alerts Only', value: 'LOW' },
+          { label: 'Low Stock', value: 'LOW' },
+          { label: 'Out of Stock', value: 'OUT' },
+          { label: 'In Stock', value: 'IN' },
         ]"
         style="min-width: 185px;"
       />
@@ -95,62 +74,51 @@
     <AppCard :no-pad="true">
       <AppTable
         :columns="columns"
-        :rows="filteredStocks"
+        :rows="stocks"
         :loading="loading"
-        :empty-state="{
-          icon: 'i-heroicons-archive-box',
-          label: 'No inventory records found',
-          description: 'Try clearing your filters or record an initial stock adjustment.',
-        }"
+        :error="loadError"
+        :on-retry="fetchInventory"
+        empty-text="No inventory records found. Try clearing your filters or record an initial stock adjustment."
       >
         <template #cell-sku="{ row }">
-          <span class="font-mono text-xs font-semibold text-gray-800">
-            {{ row.sku || row.variant?.sku || '-' }}
-          </span>
+          <code class="mono text-xs font-semibold text-ink">{{ row.sku || row.variant?.sku || '—' }}</code>
+        </template>
+
+        <template #cell-product="{ row }">
+          <span class="text-sm text-ink">{{ row.product_name || row.variant?.product?.name || '—' }}</span>
         </template>
 
         <template #cell-warehouse_id="{ row }">
-          <span class="text-xs font-mono text-gray-600">
-            {{ row.warehouse?.name || row.warehouse_name || row.warehouse_id }}
-          </span>
+          <span class="text-xs text-ink-secondary mono">{{ row.warehouse?.name || row.warehouse_name || row.warehouse_id }}</span>
         </template>
 
         <template #cell-quantity="{ row }">
           <span
-            class="font-medium text-sm mono"
-            :class="Number(row.quantity ?? row.quantity_on_hand ?? 0) <= (row.reorder_level || 5) ? 'text-red-600' : 'text-gray-900'"
+            class="font-semibold text-sm mono"
+            :class="stockQtyClass(row)"
           >
             {{ row.quantity ?? row.quantity_on_hand ?? 0 }}
           </span>
         </template>
 
-        <template #cell-status="{ row }">
-          <AppBadge
-            v-if="Number(row.quantity ?? row.quantity_on_hand ?? 0) <= 0"
-            color="red"
-            label="Out of Stock"
-            size="sm"
-          />
-          <AppBadge
-            v-else-if="Number(row.quantity ?? row.quantity_on_hand ?? 0) <= (row.reorder_level || 5)"
-            color="yellow"
-            label="Low Stock"
-            size="sm"
-          />
-          <AppBadge
-            v-else
-            color="green"
-            label="In Stock"
-            size="sm"
-          />
+        <template #cell-reorder_level="{ row }">
+          <span class="text-xs text-ink-secondary mono">{{ row.reorder_level ?? '—' }}</span>
         </template>
 
-        <template #cell-actions="{ row }">
+        <template #cell-status="{ row }">
+          <AppBadge :color="stockBadgeColor(row)" size="sm">
+            {{ stockLabel(row) }}
+          </AppBadge>
+        </template>
+
+        <template #actions="{ row }">
           <div class="flex items-center justify-end gap-1">
             <AppButton
               size="xs"
               variant="primary"
+              icon="i-heroicons-adjustments-horizontal"
               label="Adjust"
+              :aria-label="`Adjust stock for ${row.sku || row.variant?.sku}`"
               @click="openQuickAdjust(row)"
             />
           </div>
@@ -158,46 +126,56 @@
       </AppTable>
     </AppCard>
 
+    <!-- Pagination -->
+    <AppPagination
+      v-if="totalCount > pageSize"
+      :page="page"
+      :page-size="pageSize"
+      :total="totalCount"
+      @update:page="goPage"
+    />
+
     <!-- Adjustment Modal -->
-    <AppModal
-      v-model="isAdjustOpen"
-      title="Stock Adjustment"
-      size="sm"
-    >
-      <form class="form-grid" @submit.prevent="submitAdjustment">
-        <div class="form-field">
-          <label class="field-label">Variant ID <span class="required">*</span></label>
-          <AppInput v-model="adjustForm.variantId" placeholder="Variant UUID" required />
-        </div>
-
-        <div class="form-field">
-          <label class="field-label">Warehouse ID <span class="required">*</span></label>
-          <AppInput v-model="adjustForm.warehouseId" placeholder="Warehouse UUID" required />
-        </div>
-
-        <div class="form-field">
-          <label class="field-label">Quantity Delta (+ to add, - to subtract) <span class="required">*</span></label>
-          <AppInput v-model.number="adjustForm.quantityDelta" type="number" placeholder="e.g. +10 or -2" required />
-        </div>
-
-        <div class="form-field">
-          <label class="field-label">Reason</label>
-          <AppSelect
-            v-model="adjustForm.reason"
-            :options="[
-              { label: 'Physical Count', value: 'PHYSICAL_COUNT' },
-              { label: 'Damaged', value: 'DAMAGED' },
-              { label: 'Lost', value: 'LOST' },
-              { label: 'Return Restock', value: 'RETURN_RESTOCK' },
-              { label: 'Initial Count', value: 'INITIAL_COUNT' },
-            ]"
-          />
-        </div>
-
-        <div class="form-field">
-          <label class="field-label">Notes</label>
-          <AppInput v-model="adjustForm.notes" placeholder="Optional notes" />
-        </div>
+    <AppModal v-model="isAdjustOpen" title="Stock Adjustment" size="sm">
+      <form class="flex flex-col gap-4" @submit.prevent="submitAdjustment">
+        <AppInput
+          id="adj-variant"
+          v-model="adjustForm.variantId"
+          label="Variant ID"
+          placeholder="Variant UUID"
+          mono
+          required
+        />
+        <AppInput
+          id="adj-warehouse"
+          v-model="adjustForm.warehouseId"
+          label="Warehouse ID"
+          placeholder="Warehouse UUID"
+          mono
+          required
+        />
+        <AppInput
+          id="adj-delta"
+          v-model.number="adjustForm.quantityDelta"
+          type="number"
+          label="Quantity Delta (+ add, − remove)"
+          placeholder="e.g. +10 or -2"
+          mono
+          required
+        />
+        <AppSelect
+          id="adj-reason"
+          v-model="adjustForm.reason"
+          label="Reason"
+          :options="[
+            { label: 'Physical Count', value: 'PHYSICAL_COUNT' },
+            { label: 'Damaged', value: 'DAMAGED' },
+            { label: 'Lost', value: 'LOST' },
+            { label: 'Return Restock', value: 'RETURN_RESTOCK' },
+            { label: 'Initial Count', value: 'INITIAL_COUNT' },
+          ]"
+        />
+        <AppInput id="adj-notes" v-model="adjustForm.notes" label="Notes" placeholder="Optional notes" />
 
         <div class="modal-actions">
           <AppButton type="button" variant="ghost" @click="isAdjustOpen = false">Cancel</AppButton>
@@ -211,20 +189,29 @@
 <script setup lang="ts">
 import type { FilterChipItem } from '~/types'
 
-definePageMeta({
-  middleware: ['auth'],
-})
+definePageMeta({ middleware: ['auth'] })
 useHead({ title: 'Inventory Management — Clothing Store Admin' })
 
 const route = useRoute()
 const invApi = useInventoryApi()
-const toast = useAppToast()
+const { addToast } = useAppToast()
 
 const loading = ref(false)
+const loadError = ref<string | null>(null)
 const isSubmitting = ref(false)
-const search = ref('')
-const lowStockOnly = ref<'ALL' | 'LOW'>(route.query.low_stock_only === 'true' ? 'LOW' : 'ALL')
 const stocks = ref<any[]>([])
+const totalCount = ref(0)
+const lowStockCount = ref(0)
+const outOfStockCount = ref(0)
+
+const page = ref(1)
+const pageSize = 50
+const totalPages = computed(() => Math.max(1, Math.ceil(totalCount.value / pageSize)))
+
+const search = ref('')
+const stockStatus = ref<'ALL' | 'LOW' | 'OUT' | 'IN'>(
+  (route.query.stock_status as 'LOW' | 'OUT' | 'IN') || 'ALL',
+)
 
 const isAdjustOpen = ref(false)
 const adjustForm = reactive({
@@ -237,57 +224,90 @@ const adjustForm = reactive({
 
 const columns = [
   { key: 'sku', label: 'SKU', sortable: true },
+  { key: 'product', label: 'Product' },
   { key: 'warehouse_id', label: 'Warehouse' },
-  { key: 'quantity', label: 'Quantity', sortable: true },
-  { key: 'reorder_level', label: 'Reorder Level', sortable: true },
+  { key: 'quantity', label: 'Qty', sortable: true },
+  { key: 'reorder_level', label: 'Reorder', sortable: true },
   { key: 'status', label: 'Status' },
   { key: 'actions', label: 'Actions', align: 'right' as const },
 ]
 
-const lowStockCount = computed(() =>
-  stocks.value.filter(s => {
-    const qty = Number(s.quantity ?? s.quantity_on_hand ?? 0)
-    return qty > 0 && qty <= (s.reorder_level || 5)
-  }).length,
-)
-
-const outOfStockCount = computed(() =>
-  stocks.value.filter(s => Number(s.quantity ?? s.quantity_on_hand ?? 0) <= 0).length,
-)
-
 const activeChips = computed<FilterChipItem[]>(() => {
   const chips: FilterChipItem[] = []
-  if (lowStockOnly.value === 'LOW') {
-    chips.push({ key: 'low', label: 'Filter', value: 'Low Stock Only' })
-  }
+  if (stockStatus.value !== 'ALL') chips.push({ key: 'stock_status', label: 'Level', value: stockStatus.value })
   return chips
 })
 
-const filteredStocks = computed(() => {
-  return stocks.value.filter((s) => {
-    const qty = Number(s.quantity ?? s.quantity_on_hand ?? 0)
-    if (lowStockOnly.value === 'LOW' && qty > (s.reorder_level || 5)) return false
-    if (search.value.trim()) {
-      const q = search.value.trim().toLowerCase()
-      const sku = (s.sku || s.variant?.sku || '').toLowerCase()
-      const wh = (s.warehouse?.name || s.warehouse_id || '').toLowerCase()
-      return sku.includes(q) || wh.includes(q)
-    }
-    return true
-  })
+function onRemoveChip(key: string) {
+  if (key === 'stock_status') stockStatus.value = 'ALL'
+}
+function clearFilters() {
+  search.value = ''
+  stockStatus.value = 'ALL'
+}
+
+function stockQty(row: any) { return Number(row.quantity ?? row.quantity_on_hand ?? 0) }
+function stockQtyClass(row: any) {
+  const q = stockQty(row)
+  if (q <= 0) return 'text-red-600'
+  if (q <= (row.reorder_level ?? 5)) return 'text-amber-600'
+  return 'text-ink'
+}
+function stockBadgeColor(row: any) {
+  const q = stockQty(row)
+  if (q <= 0) return 'red'
+  if (q <= (row.reorder_level ?? 5)) return 'yellow'
+  return 'green'
+}
+function stockLabel(row: any) {
+  const q = stockQty(row)
+  if (q <= 0) return 'Out of Stock'
+  if (q <= (row.reorder_level ?? 5)) return 'Low Stock'
+  return 'In Stock'
+}
+
+let searchTimer: ReturnType<typeof setTimeout> | null = null
+watch(search, () => {
+  if (searchTimer) clearTimeout(searchTimer)
+  searchTimer = setTimeout(() => { page.value = 1; fetchInventory() }, 350)
 })
+watch(stockStatus, () => { page.value = 1; fetchInventory() })
+
+function goPage(p: number) { page.value = p; fetchInventory() }
 
 async function fetchInventory() {
   loading.value = true
+  loadError.value = null
   try {
-    const res: any = await invApi.listStocks({ limit: 100 })
-    stocks.value = Array.isArray(res) ? res : (res?.items || [])
+    const params: Record<string, unknown> = {
+      skip: (page.value - 1) * pageSize,
+      limit: pageSize,
+    }
+    if (search.value.trim()) params.q = search.value.trim()
+    if (stockStatus.value !== 'ALL') params.stock_status = stockStatus.value
+
+    // listStocks now returns paginated data with X-Total-Count header
+    const res: any = await invApi.listStocks(params)
+
+    if (Array.isArray(res)) {
+      stocks.value = res
+      totalCount.value = res.length
+    } else if (res?.items) {
+      stocks.value = res.items
+      totalCount.value = res.total ?? res.items.length
+    } else {
+      stocks.value = []
+      totalCount.value = 0
+    }
+
+    // compute KPIs from current page data (best effort)
+    lowStockCount.value = stocks.value.filter(s => {
+      const q = stockQty(s)
+      return q > 0 && q <= (s.reorder_level ?? 5)
+    }).length
+    outOfStockCount.value = stocks.value.filter(s => stockQty(s) <= 0).length
   } catch (err: any) {
-    toast.add({
-      title: 'Failed to load inventory',
-      description: err?.data?.detail || err.message,
-      color: 'red',
-    })
+    loadError.value = err?.data?.detail ?? err?.message ?? 'Failed to load inventory'
   } finally {
     loading.value = false
   }
@@ -303,8 +323,8 @@ function openAdjustModal() {
 }
 
 function openQuickAdjust(row: any) {
-  adjustForm.variantId = row.variant_id
-  adjustForm.warehouseId = row.warehouse_id
+  adjustForm.variantId = row.variant_id ?? row.variant?.id ?? ''
+  adjustForm.warehouseId = row.warehouse_id ?? row.warehouse?.id ?? ''
   adjustForm.quantityDelta = 0
   adjustForm.reason = 'PHYSICAL_COUNT'
   adjustForm.notes = ''
@@ -313,7 +333,7 @@ function openQuickAdjust(row: any) {
 
 async function submitAdjustment() {
   if (!adjustForm.variantId || !adjustForm.warehouseId || adjustForm.quantityDelta === 0) {
-    toast.add({ title: 'Please fill all required fields', color: 'amber' })
+    addToast({ type: 'warn', title: 'Please fill all required fields' })
     return
   }
   isSubmitting.value = true
@@ -325,21 +345,15 @@ async function submitAdjustment() {
       movement_type: adjustForm.reason || 'ADJUSTMENT',
       note: adjustForm.notes || undefined,
     })
-    toast.add({ title: 'Stock adjusted successfully', color: 'green' })
+    addToast({ type: 'success', title: 'Stock adjusted successfully' })
     isAdjustOpen.value = false
     await fetchInventory()
   } catch (err: any) {
-    toast.add({
-      title: 'Adjustment failed',
-      description: err?.data?.detail || err.message,
-      color: 'red',
-    })
+    addToast({ type: 'error', title: 'Adjustment failed', message: err?.data?.detail ?? err?.message })
   } finally {
     isSubmitting.value = false
   }
 }
 
-onMounted(() => {
-  fetchInventory()
-})
+onMounted(fetchInventory)
 </script>

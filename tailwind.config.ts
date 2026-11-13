@@ -30,7 +30,7 @@ export default ({
         surface: {
           bg: '#F3F4F4',      // page canvas / gray wash
           card: '#FFFFFF',    // elevated cards, panels
-        inset: '#F3F4F4',   // table head, inset panels
+          inset: '#F3F4F4',   // table head, inset panels
           input: '#FFFFFF',   // form inputs
           hover: '#EAECEC',   // hover state
           active: '#DFE2E2',  // pressed / active state
@@ -52,9 +52,9 @@ export default ({
           inverse: '#FFFFFF',   // white text on dark bg
         },
 
-        // Brand palette — blue primary (brand-900 === primary), navy chrome, gold active accent
+        // BRAND_MODEL palette — blue primary (brand-900 === primary), navy chrome, gold active accent
         brand: {
-          50:  '#000000',
+          50: '#000000',
           700: '#262626',
           800: '#1A1A1A',
           900: '#000000',  // main brand accent  (`bg-brand-900`, `text-brand-900`)
@@ -72,13 +72,13 @@ export default ({
 
         // Status — muted, matches --status-* vars
         status: {
-          green:    '#2A7C13',
+          green: '#2A7C13',
           'green-bg': '#2A7C13',
-          amber:    '#9A5B00',
+          amber: '#9A5B00',
           'amber-bg': '#8A5300',
-          red:      '#830000',
+          red: '#830000',
           'red-bg': '#830000',
-          blue:     '#000000',
+          blue: '#000000',
           'blue-bg': '#000000',
         },
       },

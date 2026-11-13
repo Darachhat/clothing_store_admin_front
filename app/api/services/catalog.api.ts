@@ -2,10 +2,10 @@
 import type { AdminApiClient } from '../client'
 import { API_ENDPOINTS } from '../endpoints'
 import type {
-  Category,
+  CATEGORY_MODEL,
   CategoryCreate,
   CategoryUpdate,
-  Brand,
+  BRAND_MODEL,
   BrandCreate,
   BrandUpdate,
   Color,
@@ -19,25 +19,25 @@ export function createCatalogService(client: AdminApiClient) {
   return {
     // Categories
     listCategories: (params?: Record<string, unknown>) =>
-      client.get<Category[]>(API_ENDPOINTS.catalog.categories, params),
+      client.get<CATEGORY_MODEL[]>(API_ENDPOINTS.catalog.categories, params),
     getCategory: (id: string) =>
-      client.get<Category>(API_ENDPOINTS.catalog.categoryDetail(id)),
+      client.get<CATEGORY_MODEL>(API_ENDPOINTS.catalog.categoryDetail(id)),
     createCategory: (body: CategoryCreate) =>
-      client.post<Category>(API_ENDPOINTS.catalog.categories, body),
+      client.post<CATEGORY_MODEL>(API_ENDPOINTS.catalog.categories, body),
     updateCategory: (id: string, body: CategoryUpdate) =>
-      client.put<Category>(API_ENDPOINTS.catalog.categoryDetail(id), body),
+      client.put<CATEGORY_MODEL>(API_ENDPOINTS.catalog.categoryDetail(id), body),
     deleteCategory: (id: string) =>
       client.delete(API_ENDPOINTS.catalog.categoryDetail(id)),
 
     // Brands
     listBrands: (params?: Record<string, unknown>) =>
-      client.get<Brand[]>(API_ENDPOINTS.catalog.brands, params),
+      client.get<BRAND_MODEL[]>(API_ENDPOINTS.catalog.brands, params),
     getBrand: (id: string) =>
-      client.get<Brand>(API_ENDPOINTS.catalog.brandDetail(id)),
+      client.get<BRAND_MODEL>(API_ENDPOINTS.catalog.brandDetail(id)),
     createBrand: (body: BrandCreate) =>
-      client.post<Brand>(API_ENDPOINTS.catalog.brands, body),
+      client.post<BRAND_MODEL>(API_ENDPOINTS.catalog.brands, body),
     updateBrand: (id: string, body: BrandUpdate) =>
-      client.put<Brand>(API_ENDPOINTS.catalog.brandDetail(id), body),
+      client.put<BRAND_MODEL>(API_ENDPOINTS.catalog.brandDetail(id), body),
     deleteBrand: (id: string) =>
       client.delete(API_ENDPOINTS.catalog.brandDetail(id)),
 

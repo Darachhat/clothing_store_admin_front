@@ -9,16 +9,16 @@ import type {
   ProductVariant,
   ProductPagination,
   Sale,
-  Category,
-  Brand,
+  CATEGORY_MODEL,
+  BRAND_MODEL,
   Color,
   Size,
   Supplier,
   Customer,
   PurchaseOrder,
   User,
-  Role,
-  Permission,
+  ROLE_MODEL,
+  PERMISSION_MODEL,
   Branch,
   Warehouse,
   Promotion,
@@ -32,6 +32,14 @@ import type {
   TranslationItemUpdate,
   TranslationPagination,
   TranslationPurgeResult,
+  StockMatrixResponse,
+  BulkVariantCreate,
+  BulkVariantResponse,
+  BulkVariantUpdatePayload,
+  VariantScanResponse,
+  ProductImage,
+  ProductAttribute,
+  ProductAttributeValue,
 } from '~/types'
 
 export function useApi() {
@@ -62,6 +70,26 @@ export function useProductApi() {
       apiFetch<Product>(API_ENDPOINTS.products.detail(id), { method: 'PUT', body: body as any }),
     deleteProduct: (id: string) =>
       apiFetch(API_ENDPOINTS.products.detail(id), { method: 'DELETE' }),
+    bulkArchiveProducts: (productIds: string[]) =>
+      apiFetch<{ archived_count: number; product_ids: string[] }>(API_ENDPOINTS.products.bulkArchive, {
+        method: 'POST',
+        body: { product_ids: productIds },
+      }),
+    addProductImage: (productId: string, body: { image_url: string; variant_id?: string | null; is_primary?: boolean; sort_order?: number }) =>
+      apiFetch<ProductImage>(API_ENDPOINTS.products.images(productId), { method: 'POST', body }),
+    updateProductImage: (productId: string, imageId: string, body: { image_url?: string; variant_id?: string | null; is_primary?: boolean; sort_order?: number }) =>
+      apiFetch<ProductImage>(API_ENDPOINTS.products.imageDetail(productId, imageId), { method: 'PUT', body }),
+    deleteProductImage: (productId: string, imageId: string) =>
+      apiFetch(API_ENDPOINTS.products.imageDetail(productId, imageId), { method: 'DELETE' }),
+    listProductAttributes: (includeInactive = false) =>
+      apiFetch<ProductAttribute[]>(API_ENDPOINTS.products.attributes, {
+        params: { include_inactive: includeInactive },
+        query: { include_inactive: includeInactive },
+      }),
+    createProductAttribute: (body: { name: string; display_name: string; attribute_type?: string; sort_order?: number }) =>
+      apiFetch<ProductAttribute>(API_ENDPOINTS.products.attributes, { method: 'POST', body }),
+    addProductAttributeValue: (attributeId: string, body: { value: string; display_value: string; sort_order?: number }) =>
+      apiFetch<ProductAttributeValue>(API_ENDPOINTS.products.attributeValues(attributeId), { method: 'POST', body }),
     getVariants: (productId: string) =>
       apiFetch<ProductVariant[]>(API_ENDPOINTS.products.variants(productId)),
     getVariantQr: (variantId: string, format: 'png' | 'svg' = 'svg') =>
@@ -74,6 +102,17 @@ export function useProductApi() {
       apiFetch<ProductVariant>(API_ENDPOINTS.products.byBarcode(barcode)),
     searchBySku: (sku: string) =>
       apiFetch<ProductVariant>(API_ENDPOINTS.products.bySku(sku)),
+    scanCode: (code: string, warehouseId?: string) =>
+      apiFetch<VariantScanResponse>(API_ENDPOINTS.products.variantScan, {
+        params: warehouseId ? { code, warehouse_id: warehouseId } : { code },
+        query: warehouseId ? { code, warehouse_id: warehouseId } : { code },
+      }),
+    getStockMatrix: (productId: string, params?: { warehouse_id?: string }) =>
+      apiFetch<StockMatrixResponse>(API_ENDPOINTS.products.stockMatrix(productId), { params, query: params }),
+    createVariantsBulk: (productId: string, body: BulkVariantCreate) =>
+      apiFetch<BulkVariantResponse>(API_ENDPOINTS.products.variantsBulk(productId), { method: 'POST', body: body as any }),
+    bulkUpdateVariants: (productId: string, body: BulkVariantUpdatePayload) =>
+      apiFetch<ProductVariant[]>(API_ENDPOINTS.products.variantsBulkUpdate(productId), { method: 'PATCH', body: body as any }),
   }
 }
 
@@ -122,6 +161,8 @@ export function useInventoryApi() {
       apiFetch(API_ENDPOINTS.inventory.receiveTransfer(id), { method: 'POST', ...(body ? { body: body as any } : {}) }),
     cancelTransfer: (id: string) =>
       apiFetch(API_ENDPOINTS.inventory.cancelTransfer(id), { method: 'POST' }),
+    updateReorderLevel: (body: { variant_id: string; warehouse_id: string; reorder_level: number }) =>
+      apiFetch(API_ENDPOINTS.inventory.reorderLevel, { method: 'PUT', body: body as any }),
   }
 }
 
@@ -147,20 +188,20 @@ export function useCatalogApi() {
 
   return {
     listCategories: (params?: Record<string, unknown>) =>
-      apiFetch<Category[]>(API_ENDPOINTS.catalog.categories, { params, query: params }),
+      apiFetch<CATEGORY_MODEL[]>(API_ENDPOINTS.catalog.categories, { params, query: params }),
     createCategory: (body: unknown) =>
-      apiFetch<Category>(API_ENDPOINTS.catalog.categories, { method: 'POST', body: body as any }),
+      apiFetch<CATEGORY_MODEL>(API_ENDPOINTS.catalog.categories, { method: 'POST', body: body as any }),
     updateCategory: (id: string, body: unknown) =>
-      apiFetch<Category>(API_ENDPOINTS.catalog.categoryDetail(id), { method: 'PUT', body: body as any }),
+      apiFetch<CATEGORY_MODEL>(API_ENDPOINTS.catalog.categoryDetail(id), { method: 'PUT', body: body as any }),
     deleteCategory: (id: string) =>
       apiFetch(API_ENDPOINTS.catalog.categoryDetail(id), { method: 'DELETE' }),
 
     listBrands: (params?: Record<string, unknown>) =>
-      apiFetch<Brand[]>(API_ENDPOINTS.catalog.brands, { params, query: params }),
+      apiFetch<BRAND_MODEL[]>(API_ENDPOINTS.catalog.brands, { params, query: params }),
     createBrand: (body: unknown) =>
-      apiFetch<Brand>(API_ENDPOINTS.catalog.brands, { method: 'POST', body: body as any }),
+      apiFetch<BRAND_MODEL>(API_ENDPOINTS.catalog.brands, { method: 'POST', body: body as any }),
     updateBrand: (id: string, body: unknown) =>
-      apiFetch<Brand>(API_ENDPOINTS.catalog.brandDetail(id), { method: 'PUT', body: body as any }),
+      apiFetch<BRAND_MODEL>(API_ENDPOINTS.catalog.brandDetail(id), { method: 'PUT', body: body as any }),
     deleteBrand: (id: string) =>
       apiFetch(API_ENDPOINTS.catalog.brandDetail(id), { method: 'DELETE' }),
 
@@ -189,15 +230,24 @@ export function useVariantApi() {
 
   return {
     listVariants: (params?: Record<string, unknown>) =>
-      apiFetch<ProductVariant[]>(API_ENDPOINTS.products.base + '/variants', { params, query: params }),
+      apiFetch<ProductVariant[]>(API_ENDPOINTS.products.variantBase, { params, query: params }),
     getVariant: (id: string) =>
       apiFetch<ProductVariant>(API_ENDPOINTS.products.variantDetail(id)),
     createVariant: (body: unknown) =>
-      apiFetch<ProductVariant>(API_ENDPOINTS.products.base + '/variants', { method: 'POST', body: body as any }),
+      apiFetch<ProductVariant>(API_ENDPOINTS.products.variantBase, { method: 'POST', body: body as any }),
     updateVariant: (id: string, body: unknown) =>
       apiFetch<ProductVariant>(API_ENDPOINTS.products.variantDetail(id), { method: 'PUT', body: body as any }),
+    patchVariantStatus: (id: string, statusCode: string) =>
+      apiFetch<ProductVariant>(API_ENDPOINTS.products.variantStatus(id), { method: 'PATCH', body: { status_code: statusCode } }),
     deleteVariant: (id: string) =>
-      apiFetch(API_ENDPOINTS.products.variantDetail(id), { method: 'DELETE' }),
+      apiFetch<{ deactivated?: boolean; detail?: string; message?: string } | null>(API_ENDPOINTS.products.variantDetail(id), { method: 'DELETE' }),
+    scanVariant: (code: string, warehouseId?: string) =>
+      apiFetch<VariantScanResponse>(API_ENDPOINTS.products.variantScan, {
+        params: warehouseId ? { code, warehouse_id: warehouseId } : { code },
+        query: warehouseId ? { code, warehouse_id: warehouseId } : { code },
+      }),
+    regenerateCodes: (id: string) =>
+      apiFetch<ProductVariant>(API_ENDPOINTS.products.variantRegenerateCodes(id), { method: 'POST' }),
     getQrUrl: (id: string, format: 'png' | 'svg' = 'svg') =>
       `${baseURL}${API_ENDPOINTS.products.qr(id, format)}`,
     getBarcodeUrl: (id: string, format: 'png' | 'svg' = 'svg', writeText = false) =>
@@ -349,13 +399,13 @@ export function useUserApi() {
     getUserRoleHistory: (id: string, limit = 50) =>
       apiFetch<any[]>(API_ENDPOINTS.users.roleHistory(id), { params: { limit }, query: { limit } }),
     listRoles: () =>
-      apiFetch<Role[]>(API_ENDPOINTS.users.roles),
+      apiFetch<ROLE_MODEL[]>(API_ENDPOINTS.users.roles),
     createRole: (body: unknown) =>
-      apiFetch<Role>(API_ENDPOINTS.users.roles, { method: 'POST', body: body as any }),
+      apiFetch<ROLE_MODEL>(API_ENDPOINTS.users.roles, { method: 'POST', body: body as any }),
     updateRole: (id: string, body: unknown) =>
-      apiFetch<Role>(API_ENDPOINTS.users.roleDetail(id), { method: 'PATCH', body: body as any }),
+      apiFetch<ROLE_MODEL>(API_ENDPOINTS.users.roleDetail(id), { method: 'PATCH', body: body as any }),
     listPermissions: () =>
-      apiFetch<Permission[]>(API_ENDPOINTS.users.permissions),
+      apiFetch<PERMISSION_MODEL[]>(API_ENDPOINTS.users.permissions),
   }
 }
 

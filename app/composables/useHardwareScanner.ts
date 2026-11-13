@@ -50,7 +50,9 @@ export function useHardwareScanner(options: HardwareScannerOptions) {
     const inInput = isInputElement(target)
 
     if (inInput && !allowInInputs) {
-      const isScannerInput = target?.getAttribute('data-barcode-scanner-target') === 'true'
+      const isScannerInput =
+        target?.getAttribute('data-barcode-scanner-target') === 'true' ||
+        Boolean(target?.closest?.('[data-barcode-scanner-target="true"]'))
       if (!isScannerInput) {
         buffer = ''
         return

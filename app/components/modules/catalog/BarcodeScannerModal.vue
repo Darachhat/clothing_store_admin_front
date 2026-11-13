@@ -247,6 +247,7 @@ const webcamVideoRef = ref<HTMLVideoElement | null>(null)
 let webcamStream: MediaStream | null = null
 let detectorTimer: ReturnType<typeof setInterval> | null = null
 let pollInterval: ReturnType<typeof setInterval> | null = null
+let ws: WebSocket | null = null
 let lastHandledBarcode = ''
 let lastHandledTime = 0
 
@@ -331,6 +332,41 @@ function onBarcodeReceived(rawBarcode: string, source = 'Scanner') {
   emit('scanned', barcode)
   if (props.autoCloseOnScan) {
     closeModal()
+  }
+}
+
+function connectWebSocket() {
+  if (!sessionId.value || typeof window === 'undefined') return
+  closeWebSocket()
+  const base = apiBase || window.location.origin
+  const wsProto = base.startsWith('https') ? 'wss' : 'ws'
+  const wsHost = base.replace(/^https?:\/\//, '')
+  const wsUrl = `${wsProto}://${wsHost}/api/v1/scanner/ws/${sessionId.value}?client_type=pc`
+  try {
+    ws = new WebSocket(wsUrl)
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data)
+        if (data.type === 'peer_connected' && data.client_type === 'phone') {
+          phoneConnected.value = true
+        } else if (data.type === 'peer_disconnected' && data.client_type === 'phone') {
+          phoneConnected.value = false
+        } else if (data.type === 'barcode_scanned' && data.barcode) {
+          onBarcodeReceived(data.barcode, 'Phone Camera')
+        }
+      } catch {
+        //
+      }
+    }
+  } catch {
+    //
+  }
+}
+
+function closeWebSocket() {
+  if (ws) {
+    try { ws.close() } catch { /* ignore */ }
+    ws = null
   }
 }
 
@@ -481,6 +517,7 @@ watch(() => props.modelValue, async (isOpen) => {
   if (isOpen) {
     initSession()
     await checkDeviceAndCameras()
+    connectWebSocket()
     pollInterval = setInterval(pollSession, 2000)
     if (activeTab.value === 'webcam' && hasLocalCamera.value) {
       await startWebcam()
@@ -493,6 +530,7 @@ watch(() => props.modelValue, async (isOpen) => {
       clearInterval(pollInterval)
       pollInterval = null
     }
+    closeWebSocket()
     stopWebcam()
   }
 })
@@ -512,6 +550,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   if (pollInterval) clearInterval(pollInterval)
+  closeWebSocket()
   stopWebcam()
 })
 </script>

@@ -377,7 +377,7 @@
           </div>
 
           <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Assigned Roles (Multi-Role Supported) *</label>
+            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Assigned Roles (Multi-ROLE_MODEL Supported) *</label>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 p-2.5 border border-gray-200 rounded-md">
               <label
                 v-for="r in roles"
@@ -407,7 +407,7 @@
       </AppCard>
     </AppModal>
 
-    <!-- Edit User & Role Management Modal -->
+    <!-- Edit User & ROLE_MODEL Management Modal -->
     <AppModal v-model="showEditModal" size="lg">
       <AppCard>
         <template #header>
@@ -493,7 +493,7 @@
             <span v-else-if="editForm.unlink_telegram" class="text-xs text-gray-500">Will unlink on save</span>
           </div>
 
-          <!-- Multi-Role Assignment -->
+          <!-- Multi-ROLE_MODEL Assignment -->
           <div>
             <div class="flex flex-wrap items-center justify-between gap-1 mb-1">
               <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">Assigned Roles</label>
@@ -556,13 +556,13 @@
       </AppCard>
     </AppModal>
 
-    <!-- Role & Account Audit History Modal -->
+    <!-- ROLE_MODEL & Account Audit History Modal -->
     <AppModal v-model="showHistoryModal">
       <AppCard>
         <template #header>
           <div class="flex items-center justify-between">
             <div>
-              <h3 class="text-base font-semibold">Role &amp; Account History: @{{ historyUser?.username }}</h3>
+              <h3 class="text-base font-semibold">ROLE_MODEL &amp; Account History: @{{ historyUser?.username }}</h3>
               <p class="text-xs text-gray-500">{{ historyUser?.full_name }}</p>
             </div>
             <AppButton variant="ghost" size="sm" icon="i-heroicons-x-mark" @click="showHistoryModal = false" />
