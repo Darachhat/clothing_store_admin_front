@@ -165,343 +165,376 @@
             </div>
           </template>
 
-          <!-- MATRIX GENERATOR MODE -->
+          <!-- GUIDED COLOR-BY-COLOR BUILDER MODE -->
           <template v-else>
-            <!-- STEP 1: Select Colors & Sizes -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <!-- Colors Selector -->
-              <div class="rounded-lg border border-border-subtle bg-surface-card p-3 flex flex-col gap-2.5">
-                <div class="flex flex-wrap items-center justify-between gap-2">
-                  <span class="text-xs font-semibold text-ink uppercase tracking-wider">1. Select Colors ({{ selectedColors.length }})</span>
-                  <div class="flex flex-wrap items-center gap-2.5 text-xs text-ink-secondary">
-                    <button type="button" class="underline hover:text-ink" @click="selectedColors = rawColors.map(c => c.id)">Select All</button>
-                    <button type="button" class="underline hover:text-ink" @click="selectedColors = []">Clear</button>
+            <!-- SAVED COLORS SUMMARY + "ADD ANOTHER COLOR?" PROMPT -->
+            <div v-if="selectedColors.length > 0" class="flex flex-col gap-3">
+              <!-- Prompt asking if product has another color (shown after saving a color) -->
+              <div
+                v-if="!isBuilderOpen"
+                class="rounded-lg border border-border-default bg-surface-inset p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+              >
+                <div class="flex items-start sm:items-center gap-2.5">
+                  <UIcon name="i-heroicons-check-circle" class="w-5 h-5 text-ink shrink-0 mt-0.5 sm:mt-0" />
+                  <div>
+                    <div class="text-sm font-semibold text-ink">
+                      {{ lastSavedColorName ? `${lastSavedColorName} added!` : 'Color & sizes saved!' }}
+                      Does this product have another color?
+                    </div>
+                    <p class="text-xs text-ink-secondary m-0 mt-0.5">
+                      Click <strong>+ Add Another Color</strong> to choose the next color and its sizes, or scroll down to create the product.
+                    </p>
+                  </div>
+                </div>
+                <AppButton
+                  type="button"
+                  size="sm"
+                  variant="primary"
+                  icon="i-heroicons-plus"
+                  label="Add Another Color"
+                  class="w-full sm:w-auto justify-center shrink-0"
+                  @click="startAddAnotherColor"
+                />
+              </div>
+
+              <!-- Added Colors & Their Sizes/Stock Cards -->
+              <div class="rounded-lg border border-border-subtle bg-surface-card overflow-hidden">
+                <div class="px-3 py-2.5 border-b border-border-subtle bg-surface-inset flex flex-wrap items-center justify-between gap-2">
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs font-semibold text-ink uppercase tracking-wider">
+                      Added Colors &amp; Sizes ({{ selectedColors.length }} Color{{ selectedColors.length === 1 ? '' : 's' }})
+                    </span>
+                    <span class="inline-flex items-center gap-1 rounded border border-border-subtle bg-surface-card px-2 py-0.5 text-xs font-medium text-ink mono">
+                      {{ includedMatrixRows.length }} variants · {{ totalMatrixStock }} pcs
+                    </span>
+                  </div>
+                  <AppButton
+                    v-if="!isBuilderOpen"
+                    type="button"
+                    size="xs"
+                    variant="default"
+                    icon="i-heroicons-plus"
+                    label="Add Another Color"
+                    @click="startAddAnotherColor"
+                  />
+                </div>
+
+                <div class="divide-y divide-border-subtle">
+                  <div
+                    v-for="colorGroup in effectiveColorGroups"
+                    :key="colorGroup.key"
+                    class="p-3 flex flex-col gap-2.5"
+                  >
+                    <div class="flex flex-wrap items-center justify-between gap-2">
+                      <div class="flex items-center gap-2">
+                        <span
+                          v-if="colorGroup.hex"
+                          class="inline-block w-3.5 h-3.5 rounded-full border border-border-subtle shrink-0"
+                          :style="{ background: colorGroup.hex }"
+                        />
+                        <span class="text-sm font-semibold text-ink">{{ colorGroup.name }}</span>
+                        <span class="rounded border border-border-subtle bg-surface-inset px-2 py-0.5 text-[11px] text-ink-secondary mono">
+                          {{ getColorIncludedSizes(colorGroup.key).length }} size{{ getColorIncludedSizes(colorGroup.key).length === 1 ? '' : 's' }} · {{ getColorStockSubtotal(colorGroup.id) }} pcs
+                        </span>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <AppButton
+                          type="button"
+                          size="xs"
+                          variant="default"
+                          icon="i-heroicons-pencil-square"
+                          label="Edit Sizes & Stock"
+                          @click="editAddedColor(colorGroup.key)"
+                        />
+                        <button
+                          type="button"
+                          class="p-1.5 rounded border border-border-subtle text-ink-secondary hover:text-ink"
+                          :title="`Remove ${colorGroup.name}`"
+                          @click="removeAddedColor(colorGroup.key)"
+                        >
+                          <UIcon name="i-heroicons-trash" class="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Selected sizes + inline editable stock for this color -->
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                      <div
+                        v-for="sItem in getColorIncludedSizes(colorGroup.key)"
+                        :key="sItem.id"
+                        class="flex items-center justify-between gap-1.5 rounded-md border border-border-subtle bg-surface-inset px-2.5 py-1.5"
+                      >
+                        <span class="text-xs font-semibold text-ink truncate">{{ sItem.name }}</span>
+                        <div class="inline-flex items-center gap-1 shrink-0">
+                          <span class="text-[11px] text-ink-secondary">Stock:</span>
+                          <input
+                            v-model="getRowOverride(`${colorGroup.key}::${sItem.id}`).initial_stock"
+                            type="number"
+                            min="0"
+                            step="1"
+                            placeholder="0"
+                            :aria-label="`Stock for ${colorGroup.name} size ${sItem.name}`"
+                            class="h-7 w-14 rounded border border-border-subtle bg-surface-card px-1.5 text-xs text-center mono text-ink"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- STEP-BY-STEP BUILDER: 1. CHOOSE/ADD COLOR -> 2. CHOOSE SIZES & STOCK -> SAVE COLOR -->
+            <div
+              v-if="isBuilderOpen || selectedColors.length === 0"
+              class="rounded-lg border border-border-default bg-surface-card overflow-hidden flex flex-col"
+            >
+              <!-- Builder Header -->
+              <div class="px-3.5 py-2.5 border-b border-border-subtle bg-surface-inset flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-ink text-white text-xs font-semibold">
+                    {{ activeBuilderColorId ? '2' : '1' }}
+                  </span>
+                  <span class="text-xs font-semibold text-ink uppercase tracking-wider">
+                    {{ activeBuilderColorId ? `Select Sizes & Stock for ${activeBuilderColorName}` : 'Choose or Add a Color' }}
+                  </span>
+                </div>
+                <button
+                  v-if="selectedColors.length > 0"
+                  type="button"
+                  class="text-xs text-ink-secondary hover:text-ink underline"
+                  @click="cancelColorBuilder"
+                >
+                  Done adding colors
+                </button>
+              </div>
+
+              <div class="p-3.5 flex flex-col gap-4">
+                <!-- STEP 1: Choose or Create a Color -->
+                <div class="flex flex-col gap-2.5">
+                  <div class="flex flex-wrap items-center justify-between gap-2">
+                    <span class="text-xs font-semibold text-ink">
+                      Step 1 — Pick one color to configure its sizes:
+                    </span>
                     <button
                       type="button"
-                      class="inline-flex items-center gap-0.5 font-medium text-ink hover:underline"
+                      class="inline-flex items-center gap-1 text-xs font-medium text-ink hover:underline"
                       @click="showNewColorInput = !showNewColorInput"
                     >
                       <UIcon name="i-heroicons-plus" class="w-3.5 h-3.5" />
                       <span>New Color</span>
                     </button>
                   </div>
-                </div>
 
-                <!-- Inline Quick-Create Color -->
-                <div v-if="showNewColorInput" class="flex flex-wrap items-center gap-1.5 rounded-md border border-border-subtle bg-surface-inset p-2">
-                  <input
-                    v-model="newColorHex"
-                    type="color"
-                    class="w-8 h-8 rounded border border-border-subtle cursor-pointer bg-transparent p-0 shrink-0"
-                    title="Pick color swatch"
-                  />
-                  <AppInput
-                    id="quick-new-color-name"
-                    v-model="newColorName"
-                    class="flex-1 min-w-[140px]"
-                    placeholder="Color name (e.g. Black, Navy)"
-                    @keydown.enter.prevent="handleQuickCreateColor"
-                  />
-                  <AppButton
-                    type="button"
-                    size="xs"
-                    variant="primary"
-                    icon="i-heroicons-check"
-                    label="Add"
-                    :loading="creatingColor"
-                    @click="handleQuickCreateColor"
-                  />
-                </div>
-
-                <div class="flex flex-wrap gap-1.5 max-h-44 overflow-y-auto">
-                  <button
-                    v-for="c in rawColors"
-                    :key="c.id"
-                    type="button"
-                    class="inline-flex items-center gap-1.5 min-h-[34px] px-3 py-1.5 rounded-md text-xs font-medium border transition-colors"
-                    :class="selectedColors.includes(c.id)
-                      ? 'bg-ink text-white border-border-default'
-                      : 'bg-surface-inset text-ink-secondary border-border-subtle hover:text-ink'"
-                    @click="toggleMultiColor(c.id)"
-                  >
-                    <span
-                      v-if="c.hex_code"
-                      class="inline-block w-2.5 h-2.5 rounded-full border border-border-subtle shrink-0"
-                      :style="{ background: c.hex_code }"
+                  <!-- Inline Quick-Create Color -->
+                  <div v-if="showNewColorInput" class="flex flex-wrap items-center gap-1.5 rounded-md border border-border-subtle bg-surface-inset p-2">
+                    <input
+                      v-model="newColorHex"
+                      type="color"
+                      class="w-8 h-8 rounded border border-border-subtle cursor-pointer bg-transparent p-0 shrink-0"
+                      title="Pick color swatch"
                     />
-                    <span>{{ c.name }}</span>
-                  </button>
-                  <p v-if="rawColors.length === 0" class="text-xs text-ink-tertiary italic m-0">
-                    No colors configured yet. Click "+ New Color" above to add one.
-                  </p>
-                </div>
-              </div>
-
-              <!-- Sizes Selector -->
-              <div class="rounded-lg border border-border-subtle bg-surface-card p-3 flex flex-col gap-2.5">
-                <div class="flex flex-wrap items-center justify-between gap-2">
-                  <span class="text-xs font-semibold text-ink uppercase tracking-wider">2. Select Sizes ({{ selectedSizes.length }})</span>
-                  <div class="flex flex-wrap items-center gap-2.5 text-xs text-ink-secondary">
-                    <button type="button" class="underline hover:text-ink" @click="selectedSizes = rawSizes.map(s => s.id)">Select All</button>
-                    <button type="button" class="underline hover:text-ink" @click="selectedSizes = []">Clear</button>
-                    <button
+                    <AppInput
+                      id="quick-new-color-name"
+                      v-model="newColorName"
+                      class="flex-1 min-w-[140px]"
+                      placeholder="Color name (e.g. Black, Navy)"
+                      @keydown.enter.prevent="handleQuickCreateColor"
+                    />
+                    <AppButton
                       type="button"
-                      class="inline-flex items-center gap-0.5 font-medium text-ink hover:underline"
-                      @click="showNewSizeInput = !showNewSizeInput"
+                      size="xs"
+                      variant="primary"
+                      icon="i-heroicons-check"
+                      label="Add & Select Color"
+                      :loading="creatingColor"
+                      @click="handleQuickCreateColor"
+                    />
+                  </div>
+
+                  <div class="flex flex-wrap gap-2 max-h-44 overflow-y-auto">
+                    <button
+                      v-for="c in rawColors"
+                      :key="c.id"
+                      type="button"
+                      class="inline-flex items-center gap-1.5 min-h-[36px] px-3 py-1.5 rounded-md text-xs font-medium border transition-colors"
+                      :class="activeBuilderColorId === c.id
+                        ? 'bg-ink text-white border-border-default shadow-xs'
+                        : selectedColors.includes(c.id)
+                          ? 'bg-surface-card text-ink border-border-default'
+                          : 'bg-surface-inset text-ink-secondary border-border-subtle hover:text-ink'"
+                      @click="selectColorForBuilder(c.id)"
                     >
-                      <UIcon name="i-heroicons-plus" class="w-3.5 h-3.5" />
-                      <span>New Size</span>
+                      <span
+                        v-if="c.hex_code"
+                        class="inline-block w-3 h-3 rounded-full border border-border-subtle shrink-0"
+                        :style="{ background: c.hex_code }"
+                      />
+                      <span>{{ c.name }}</span>
+                      <UIcon
+                        v-if="selectedColors.includes(c.id)"
+                        name="i-heroicons-check-circle"
+                        class="w-3.5 h-3.5 shrink-0"
+                      />
                     </button>
+                    <p v-if="rawColors.length === 0" class="text-xs text-ink-tertiary italic m-0">
+                      No colors configured yet. Click "+ New Color" above to add your first color.
+                    </p>
                   </div>
                 </div>
 
-                <!-- Inline Quick-Create Size -->
-                <div v-if="showNewSizeInput" class="flex flex-wrap items-center gap-1.5 rounded-md border border-border-subtle bg-surface-inset p-2">
-                  <AppInput
-                    id="quick-new-size-name"
-                    v-model="newSizeName"
-                    class="flex-1 min-w-[140px]"
-                    placeholder="Size name (e.g. S, M, L, XL, XXL)"
-                    @keydown.enter.prevent="handleQuickCreateSize"
-                  />
-                  <AppButton
-                    type="button"
-                    size="xs"
-                    variant="primary"
-                    icon="i-heroicons-check"
-                    label="Add"
-                    :loading="creatingSize"
-                    @click="handleQuickCreateSize"
-                  />
-                </div>
-
-                <div class="flex flex-wrap gap-1.5 max-h-44 overflow-y-auto">
-                  <button
-                    v-for="s in rawSizes"
-                    :key="s.id"
-                    type="button"
-                    class="inline-flex items-center justify-center min-h-[34px] min-w-[40px] px-3 py-1.5 rounded-md text-xs font-medium border transition-colors"
-                    :class="selectedSizes.includes(s.id)
-                      ? 'bg-ink text-white border-border-default'
-                      : 'bg-surface-inset text-ink-secondary border-border-subtle hover:text-ink'"
-                    @click="toggleMultiSize(s.id)"
-                  >
-                    <span>{{ s.name }}</span>
-                  </button>
-                  <p v-if="rawSizes.length === 0" class="text-xs text-ink-tertiary italic m-0">
-                    No sizes configured yet. Click "+ New Size" above to add one.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <!-- Matrix Summary & Bulk Controls -->
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 rounded-lg border border-border-subtle bg-surface-inset px-3 py-2.5 text-xs">
-              <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-ink-secondary">
-                <span>
-                  Active Variants: <strong class="text-ink">{{ includedMatrixRows.length }}</strong> of {{ multiGridRows.length }}
-                  ({{ selectedColors.length || 1 }} Color{{ (selectedColors.length || 1) === 1 ? '' : 's' }} × {{ selectedSizes.length || 1 }} Size{{ (selectedSizes.length || 1) === 1 ? '' : 's' }})
-                </span>
-                <span class="hidden sm:inline">·</span>
-                <span>
-                  Total Stock: <strong class="text-ink mono">{{ totalMatrixStock }}</strong> units
-                </span>
-                <span class="hidden md:inline">·</span>
-                <span class="hidden md:inline">SKU: <code class="mono text-ink">{CODE}-{COLOR}-{SIZE}</code></span>
-              </div>
-              <div class="flex flex-wrap items-center gap-1.5">
-                <div class="inline-flex items-center gap-1">
-                  <input
-                    v-model="bulkStock"
-                    type="number"
-                    min="0"
-                    step="1"
-                    placeholder="Qty"
-                    aria-label="Opening stock for all included variants"
-                    class="h-8 w-20 rounded-md border border-border-subtle bg-surface-card px-2 text-xs mono text-ink"
-                    @keydown.enter.prevent="applyBulkStock"
-                  />
-                  <AppButton
-                    type="button"
-                    size="xs"
-                    variant="default"
-                    icon="i-heroicons-archive-box"
-                    label="Set All Stock"
-                    @click="applyBulkStock"
-                  />
-                </div>
-                <AppButton
-                  type="button"
-                  size="xs"
-                  variant="default"
-                  icon="i-heroicons-check-circle"
-                  label="Include All"
-                  @click="setAllMatrixIncluded(true)"
-                />
-                <AppButton
-                  type="button"
-                  size="xs"
-                  variant="default"
-                  icon="i-heroicons-bolt"
-                  label="Set All Active"
-                  @click="setAllMatrixStatus('ACTIVE')"
-                />
-                <AppButton
-                  type="button"
-                  size="xs"
-                  variant="default"
-                  icon="i-heroicons-pause-circle"
-                  label="Set All Inactive"
-                  @click="setAllMatrixStatus('INACTIVE')"
-                />
-              </div>
-            </div>
-
-            <!-- STEP 3: Size Availability & Stock per Color (Works for any Color/Size selection, Responsive Mobile Cards + Desktop Matrix) -->
-            <div
-              v-if="selectedColors.length > 0 || selectedSizes.length > 0"
-              class="rounded-lg border border-border-subtle bg-surface-card overflow-hidden"
-            >
-              <div class="px-3 py-2.5 border-b border-border-subtle bg-surface-inset flex flex-wrap items-center justify-between gap-2">
-                <div>
-                  <div class="text-xs font-semibold text-ink uppercase tracking-wider">3. Size Availability &amp; Opening Stock per Color</div>
-                  <p class="text-xs text-ink-secondary m-0 mt-0.5">
-                    Tick the sizes available for each color and enter the stock quantity (`Qty`). Unticked sizes are skipped.
-                  </p>
-                </div>
-                <span class="inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-surface-card px-2.5 py-1 text-xs font-medium text-ink">
-                  <UIcon name="i-heroicons-cube" class="w-3.5 h-3.5 text-ink-secondary" />
-                  <span>{{ includedMatrixRows.length }} variants · {{ totalMatrixStock }} pcs</span>
-                </span>
-              </div>
-
-              <!-- MOBILE & SMALL TABLET VIEW (< md): Per-Color Cards with 2/3-Column Size + Qty Grid (Zero Horizontal Scroll) -->
-              <div class="md:hidden divide-y divide-border-subtle">
+                <!-- STEP 2: Choose Sizes & Enter Stock for the Selected Color -->
                 <div
-                  v-for="colorGroup in effectiveColorGroups"
-                  :key="colorGroup.key"
-                  class="p-3 flex flex-col gap-2.5"
+                  v-if="activeBuilderColorId"
+                  class="rounded-lg border border-border-subtle bg-surface-inset p-3 flex flex-col gap-3"
                 >
                   <div class="flex flex-wrap items-center justify-between gap-2">
                     <div class="flex items-center gap-2">
                       <span
-                        v-if="colorGroup.hex"
+                        v-if="activeBuilderColorHex"
                         class="inline-block w-3.5 h-3.5 rounded-full border border-border-subtle shrink-0"
-                        :style="{ background: colorGroup.hex }"
+                        :style="{ background: activeBuilderColorHex }"
                       />
-                      <span class="text-xs font-semibold text-ink">{{ colorGroup.name }}</span>
-                      <span class="rounded border border-border-subtle bg-surface-inset px-1.5 py-0.5 text-[11px] text-ink-secondary mono">
-                        {{ getColorActiveCount(colorGroup.id) }}/{{ effectiveSizeGroups.length }} sizes · {{ getColorStockSubtotal(colorGroup.id) }} pcs
+                      <span class="text-xs font-semibold text-ink">
+                        Step 2 — Choose sizes for <strong>{{ activeBuilderColorName }}</strong> &amp; enter stock:
                       </span>
                     </div>
-                    <div class="flex items-center gap-2 text-xs">
+                    <div class="flex flex-wrap items-center gap-2.5 text-xs text-ink-secondary">
+                      <button type="button" class="underline hover:text-ink" @click="setDraftAllSizes(true)">All Sizes</button>
+                      <button type="button" class="underline hover:text-ink" @click="setDraftAllSizes(false)">Clear</button>
                       <button
                         type="button"
-                        class="underline text-ink-secondary hover:text-ink"
-                        @click="setColorSizesIncluded(colorGroup.id, true)"
+                        class="inline-flex items-center gap-0.5 font-medium text-ink hover:underline"
+                        @click="showNewSizeInput = !showNewSizeInput"
                       >
-                        All sizes
-                      </button>
-                      <button
-                        type="button"
-                        class="underline text-ink-secondary hover:text-ink"
-                        @click="setColorSizesIncluded(colorGroup.id, false)"
-                      >
-                        None
+                        <UIcon name="i-heroicons-plus" class="w-3.5 h-3.5" />
+                        <span>New Size</span>
                       </button>
                     </div>
                   </div>
 
-                  <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  <!-- Inline Quick-Create Size -->
+                  <div v-if="showNewSizeInput" class="flex flex-wrap items-center gap-1.5 rounded-md border border-border-subtle bg-surface-card p-2">
+                    <AppInput
+                      id="quick-new-size-name"
+                      v-model="newSizeName"
+                      class="flex-1 min-w-[140px]"
+                      placeholder="Size name (e.g. S, M, L, XL, XXL)"
+                      @keydown.enter.prevent="handleQuickCreateSize"
+                    />
+                    <AppButton
+                      type="button"
+                      size="xs"
+                      variant="primary"
+                      icon="i-heroicons-check"
+                      label="Add & Select Size"
+                      :loading="creatingSize"
+                      @click="handleQuickCreateSize"
+                    />
+                  </div>
+
+                  <!-- Size + Stock Cards Grid -->
+                  <div v-if="rawSizes.length > 0" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
                     <div
-                      v-for="sizeGroup in effectiveSizeGroups"
-                      :key="sizeGroup.key"
-                      class="flex items-center justify-between gap-1.5 rounded-md border border-border-subtle px-2.5 py-1.5 transition-opacity"
-                      :class="getRowOverride(`${colorGroup.key}::${sizeGroup.key}`).included ? 'bg-surface-card' : 'bg-surface-inset opacity-50'"
+                      v-for="s in rawSizes"
+                      :key="s.id"
+                      class="flex items-center justify-between gap-2 rounded-md border px-3 py-2 transition-colors"
+                      :class="getDraftSizeState(s.id).included
+                        ? 'bg-surface-card border-border-default shadow-xs'
+                        : 'bg-surface-card/50 border-border-subtle opacity-65 hover:opacity-100'"
                     >
-                      <label class="inline-flex items-center gap-1.5 text-xs font-medium text-ink cursor-pointer min-w-0">
+                      <label class="inline-flex items-center gap-2 text-xs font-semibold text-ink cursor-pointer flex-1 min-w-0">
                         <input
                           type="checkbox"
-                          v-model="getRowOverride(`${colorGroup.key}::${sizeGroup.key}`).included"
+                          v-model="getDraftSizeState(s.id).included"
                           class="h-4 w-4 rounded border-border-default text-ink cursor-pointer shrink-0"
                         />
-                        <span class="truncate">{{ sizeGroup.name }}</span>
+                        <span class="truncate">{{ s.name }}</span>
                       </label>
-                      <input
-                        v-model="getRowOverride(`${colorGroup.key}::${sizeGroup.key}`).initial_stock"
-                        type="number"
-                        min="0"
-                        step="1"
-                        placeholder="Qty"
-                        :disabled="!getRowOverride(`${colorGroup.key}::${sizeGroup.key}`).included"
-                        :aria-label="`Stock for ${colorGroup.name} size ${sizeGroup.name}`"
-                        class="h-7 w-14 rounded border border-border-subtle bg-surface-inset px-1.5 text-xs text-center mono text-ink disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+
+                      <div v-if="getDraftSizeState(s.id).included" class="inline-flex items-center gap-1.5 shrink-0">
+                        <span class="text-[11px] text-ink-secondary">Stock:</span>
+                        <input
+                          v-model="getDraftSizeState(s.id).stock"
+                          type="number"
+                          min="0"
+                          step="1"
+                          placeholder="0"
+                          :aria-label="`Opening stock for ${activeBuilderColorName} size ${s.name}`"
+                          class="h-8 w-16 rounded-md border border-border-subtle bg-surface-inset px-2 text-xs text-center mono text-ink"
+                          @keydown.enter.prevent="commitActiveColorBuilder()"
+                        />
+                      </div>
+                      <span
+                        v-else
+                        class="text-[11px] text-ink-tertiary cursor-pointer"
+                        @click="getDraftSizeState(s.id).included = true"
+                      >
+                        Tap to select
+                      </span>
+                    </div>
+                  </div>
+                  <p v-else class="text-xs text-ink-tertiary italic m-0">
+                    No sizes configured yet. Click "+ New Size" above to add sizes.
+                  </p>
+
+                  <!-- Quick fill stock for all selected sizes of this color + Save Color button -->
+                  <div class="pt-2 border-t border-border-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                    <div class="flex flex-wrap items-center gap-2 text-xs text-ink-secondary">
+                      <span>
+                        Selected for <strong class="text-ink">{{ activeBuilderColorName }}</strong>:
+                        <strong class="text-ink">{{ activeDraftSelectedCount }}</strong> size{{ activeDraftSelectedCount === 1 ? '' : 's' }}
+                        · <strong class="text-ink mono">{{ activeDraftTotalStock }}</strong> pcs
+                      </span>
+                      <div v-if="activeDraftSelectedCount > 0" class="inline-flex items-center gap-1">
+                        <input
+                          v-model="draftBulkStock"
+                          type="number"
+                          min="0"
+                          step="1"
+                          placeholder="Qty"
+                          aria-label="Set stock for selected sizes of this color"
+                          class="h-7 w-16 rounded border border-border-subtle bg-surface-card px-2 text-xs mono text-ink"
+                          @keydown.enter.prevent="applyDraftBulkStock"
+                        />
+                        <AppButton
+                          type="button"
+                          size="xs"
+                          variant="default"
+                          label="Fill Stock"
+                          @click="applyDraftBulkStock"
+                        />
+                      </div>
+                    </div>
+
+                    <div class="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-2">
+                      <AppButton
+                        v-if="selectedColors.length > 0"
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        label="Cancel"
+                        class="justify-center"
+                        @click="cancelColorBuilder"
+                      />
+                      <AppButton
+                        type="button"
+                        size="sm"
+                        variant="primary"
+                        icon="i-heroicons-check"
+                        :disabled="activeDraftSelectedCount === 0"
+                        :label="`Save ${activeBuilderColorName} (${activeDraftSelectedCount} Size${activeDraftSelectedCount === 1 ? '' : 's'})`"
+                        class="justify-center"
+                        @click="commitActiveColorBuilder()"
                       />
                     </div>
                   </div>
                 </div>
               </div>
-
-              <!-- DESKTOP VIEW (>= md): Structured Color × Size Matrix Table -->
-              <div class="hidden md:block overflow-x-auto">
-                <table class="w-full text-left border-collapse text-xs">
-                  <thead>
-                    <tr class="border-b border-border-subtle text-ink-secondary bg-surface-card">
-                      <th class="py-2 px-3 font-medium sticky left-0 bg-surface-card">Color</th>
-                      <th v-for="sizeGroup in effectiveSizeGroups" :key="sizeGroup.key" class="py-2 px-3 font-medium text-center">
-                        {{ sizeGroup.name }}
-                      </th>
-                      <th class="py-2 px-3 font-medium text-right">Stock</th>
-                      <th class="py-2 px-3 font-medium text-right">All sizes</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-border-subtle">
-                    <tr v-for="colorGroup in effectiveColorGroups" :key="colorGroup.key">
-                      <td class="py-2 px-3 font-medium text-ink whitespace-nowrap sticky left-0 bg-surface-card">
-                        <div class="flex items-center gap-1.5">
-                          <span
-                            v-if="colorGroup.hex"
-                            class="inline-block w-2.5 h-2.5 rounded-full border border-border-subtle shrink-0"
-                            :style="{ background: colorGroup.hex }"
-                          />
-                          <span>{{ colorGroup.name }}</span>
-                        </div>
-                      </td>
-                      <td v-for="sizeGroup in effectiveSizeGroups" :key="sizeGroup.key" class="py-2 px-3 text-center">
-                        <div class="inline-flex items-center gap-1.5">
-                          <input
-                            type="checkbox"
-                            v-model="getRowOverride(`${colorGroup.key}::${sizeGroup.key}`).included"
-                            class="h-4 w-4 rounded border-border-default text-ink cursor-pointer"
-                            :aria-label="`${colorGroup.name} in size ${sizeGroup.name}`"
-                          />
-                          <input
-                            v-model="getRowOverride(`${colorGroup.key}::${sizeGroup.key}`).initial_stock"
-                            type="number"
-                            min="0"
-                            step="1"
-                            placeholder="Qty"
-                            :disabled="!getRowOverride(`${colorGroup.key}::${sizeGroup.key}`).included"
-                            :aria-label="`Stock for ${colorGroup.name} size ${sizeGroup.name}`"
-                            class="h-7 w-16 rounded-md border border-border-subtle bg-surface-card px-2 text-xs mono text-ink disabled:opacity-40 disabled:cursor-not-allowed"
-                          />
-                        </div>
-                      </td>
-                      <td class="py-2 px-3 text-right whitespace-nowrap mono font-medium text-ink">
-                        {{ getColorStockSubtotal(colorGroup.id) }}
-                      </td>
-                      <td class="py-2 px-3 text-right whitespace-nowrap">
-                        <button type="button" class="underline text-ink-secondary hover:text-ink mr-2" @click="setColorSizesIncluded(colorGroup.id, true)">All</button>
-                        <button type="button" class="underline text-ink-secondary hover:text-ink" @click="setColorSizesIncluded(colorGroup.id, false)">None</button>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
             </div>
 
             <!-- STEP 4: Variant Matrix Details (Responsive Mobile Cards + Desktop Table) -->
-            <div v-if="multiGridRows.length > 0" class="rounded-lg border border-border-subtle bg-surface-card overflow-hidden">
+            <div v-if="selectedColors.length > 0 && includedMatrixRows.length > 0" class="rounded-lg border border-border-subtle bg-surface-card overflow-hidden">
               <button
                 type="button"
                 class="w-full px-3 py-2.5 bg-surface-inset border-b border-border-subtle flex items-center justify-between gap-2 text-left hover:bg-surface-hover transition-colors"
@@ -513,11 +546,11 @@
                     class="w-4 h-4 text-ink-secondary shrink-0"
                   />
                   <span class="text-xs font-semibold text-ink uppercase tracking-wider truncate">
-                    4. Variant SKU, Price &amp; Barcode Details ({{ includedMatrixRows.length }} active)
+                    Optional — Customize Individual SKUs, Prices &amp; Barcodes ({{ includedMatrixRows.length }} variants)
                   </span>
                 </div>
                 <span class="text-xs text-ink-secondary shrink-0">
-                  {{ showAdvancedMatrix ? 'Hide details' : 'Customize SKUs / Barcodes' }}
+                  {{ showAdvancedMatrix ? 'Hide details' : 'Show details' }}
                 </span>
               </button>
 
@@ -525,25 +558,19 @@
                 <!-- MOBILE VIEW (< md): Responsive Per-Variant Cards (No Horizontal Scroll) -->
                 <div class="md:hidden divide-y divide-border-subtle max-h-[480px] overflow-y-auto">
                   <div
-                    v-for="row in multiGridRows"
+                    v-for="row in includedMatrixRows"
                     :key="`mob-${row.key}`"
-                    class="p-3 flex flex-col gap-2.5 transition-opacity"
-                    :class="!row.override.included ? 'opacity-45 bg-surface-inset' : 'bg-surface-card'"
+                    class="p-3 flex flex-col gap-2.5 bg-surface-card"
                   >
                     <div class="flex items-center justify-between gap-2">
-                      <label class="inline-flex items-center gap-2 text-xs font-semibold text-ink cursor-pointer">
-                        <input
-                          type="checkbox"
-                          v-model="row.override.included"
-                          class="h-4 w-4 rounded border-border-default text-ink cursor-pointer"
-                        />
+                      <div class="inline-flex items-center gap-2 text-xs font-semibold text-ink">
                         <span
                           v-if="row.colorHex"
                           class="inline-block w-3 h-3 rounded-full border border-border-subtle shrink-0"
                           :style="{ background: row.colorHex }"
                         />
                         <span>{{ row.colorName }} · {{ row.sizeName }}</span>
-                      </label>
+                      </div>
                       <code class="text-[11px] mono text-ink-secondary bg-surface-inset px-1.5 py-0.5 rounded border border-border-subtle">
                         {{ row.override.sku || row.previewSku }}
                       </code>
@@ -622,7 +649,6 @@
                   <table class="w-full text-left border-collapse text-xs">
                     <thead class="bg-surface-inset border-b border-border-subtle text-ink-secondary sticky top-0 z-10">
                       <tr>
-                        <th class="py-2 px-2.5 font-medium w-10 text-center">Inc.</th>
                         <th class="py-2 px-2.5 font-medium">Color</th>
                         <th class="py-2 px-2.5 font-medium">Size</th>
                         <th class="py-2 px-2.5 font-medium min-w-[165px]">SKU</th>
@@ -636,19 +662,10 @@
                     </thead>
                     <tbody class="divide-y divide-border-subtle">
                       <tr
-                        v-for="row in multiGridRows"
+                        v-for="row in includedMatrixRows"
                         :key="row.key"
-                        class="bg-surface-card transition-opacity"
-                        :class="!row.override.included ? 'opacity-45' : ''"
+                        class="bg-surface-card"
                       >
-                        <td class="py-1.5 px-2.5 text-center">
-                          <input
-                            type="checkbox"
-                            v-model="row.override.included"
-                            class="h-4 w-4 rounded border-border-default text-ink cursor-pointer"
-                            :aria-label="`Include ${row.colorName} ${row.sizeName}`"
-                          />
-                        </td>
                         <td class="py-1.5 px-2.5 font-medium text-ink whitespace-nowrap">
                           <div class="flex items-center gap-1.5">
                             <span
@@ -871,6 +888,165 @@ const sizeOptions = ref<SelectOption[]>([])
 const selectedColors = ref<string[]>([])
 const selectedSizes = ref<string[]>([])
 
+// Guided Color-by-Color Builder state
+const isBuilderOpen = ref(true)
+const activeBuilderColorId = ref<string | null>(null)
+const lastSavedColorName = ref('')
+const draftBulkStock = ref<string | number>('')
+
+interface DraftSizeState {
+  included: boolean
+  stock: string | number
+}
+const draftSizeMap = reactive<Record<string, DraftSizeState>>({})
+
+function getDraftSizeState(sizeId: string): DraftSizeState {
+  if (!draftSizeMap[sizeId]) {
+    draftSizeMap[sizeId] = { included: false, stock: '' }
+  }
+  return draftSizeMap[sizeId]!
+}
+
+const activeBuilderColorObj = computed(() =>
+  activeBuilderColorId.value ? rawColors.value.find(c => c.id === activeBuilderColorId.value) : null,
+)
+const activeBuilderColorName = computed(() => activeBuilderColorObj.value?.name || 'Selected Color')
+const activeBuilderColorHex = computed(() => activeBuilderColorObj.value?.hex_code || undefined)
+
+const activeDraftSelectedCount = computed(() =>
+  rawSizes.value.filter(s => getDraftSizeState(s.id).included).length,
+)
+
+const activeDraftTotalStock = computed(() =>
+  rawSizes.value.reduce((sum, s) => {
+    const st = getDraftSizeState(s.id)
+    if (!st.included) return sum
+    return sum + Math.max(0, Math.floor(Number(st.stock) || 0))
+  }, 0),
+)
+
+function selectColorForBuilder(colorId: string) {
+  activeBuilderColorId.value = colorId
+  isBuilderOpen.value = true
+  const alreadySaved = selectedColors.value.includes(colorId)
+  for (const s of rawSizes.value) {
+    const existing = rowOverrides[`${colorId}::${s.id}`]
+    if (alreadySaved && existing) {
+      draftSizeMap[s.id] = {
+        included: existing.included,
+        stock: existing.initial_stock,
+      }
+    } else {
+      draftSizeMap[s.id] = {
+        included: false,
+        stock: '',
+      }
+    }
+  }
+}
+
+function setDraftAllSizes(included: boolean) {
+  for (const s of rawSizes.value) {
+    getDraftSizeState(s.id).included = included
+  }
+}
+
+function applyDraftBulkStock() {
+  const qty = Math.max(0, Math.floor(Number(draftBulkStock.value)))
+  if (!Number.isFinite(qty) || draftBulkStock.value === '') return
+  for (const s of rawSizes.value) {
+    const st = getDraftSizeState(s.id)
+    if (st.included) {
+      st.stock = qty
+    }
+  }
+}
+
+function syncSelectedSizesFromOverrides() {
+  const usedSizeIds = new Set<string>()
+  for (const cId of selectedColors.value) {
+    for (const s of rawSizes.value) {
+      if (rowOverrides[`${cId}::${s.id}`]?.included) {
+        usedSizeIds.add(s.id)
+      }
+    }
+  }
+  selectedSizes.value = rawSizes.value.filter(s => usedSizeIds.has(s.id)).map(s => s.id)
+}
+
+function commitActiveColorBuilder(silent = false): boolean {
+  const cId = activeBuilderColorId.value
+  if (!cId) return false
+  const chosenSizes = rawSizes.value.filter(s => getDraftSizeState(s.id).included)
+  if (chosenSizes.length === 0) {
+    if (!silent) {
+      addToast({
+        type: 'warn',
+        title: 'Select at least one size',
+        message: `Choose one or more sizes for ${activeBuilderColorName.value} before saving.`,
+      })
+    }
+    return false
+  }
+
+  if (!selectedColors.value.includes(cId)) {
+    selectedColors.value.push(cId)
+  }
+
+  for (const s of rawSizes.value) {
+    const draft = getDraftSizeState(s.id)
+    const ov = getRowOverride(`${cId}::${s.id}`)
+    ov.included = draft.included
+    if (draft.included) {
+      ov.initial_stock = draft.stock
+    } else {
+      ov.initial_stock = ''
+    }
+  }
+
+  syncSelectedSizesFromOverrides()
+  lastSavedColorName.value = activeBuilderColorName.value
+  activeBuilderColorId.value = null
+  isBuilderOpen.value = false
+  return true
+}
+
+function startAddAnotherColor() {
+  activeBuilderColorId.value = null
+  isBuilderOpen.value = true
+}
+
+function cancelColorBuilder() {
+  activeBuilderColorId.value = null
+  if (selectedColors.value.length > 0) {
+    isBuilderOpen.value = false
+  }
+}
+
+function editAddedColor(colorId: string) {
+  selectColorForBuilder(colorId)
+}
+
+function removeAddedColor(colorId: string) {
+  const idx = selectedColors.value.indexOf(colorId)
+  if (idx !== -1) {
+    selectedColors.value.splice(idx, 1)
+  }
+  for (const s of rawSizes.value) {
+    if (rowOverrides[`${colorId}::${s.id}`]) {
+      rowOverrides[`${colorId}::${s.id}`]!.included = false
+    }
+  }
+  syncSelectedSizesFromOverrides()
+  if (selectedColors.value.length === 0) {
+    isBuilderOpen.value = true
+  }
+}
+
+function getColorIncludedSizes(colorId: string): Size[] {
+  return rawSizes.value.filter(s => getRowOverride(`${colorId}::${s.id}`).included)
+}
+
 // Quick-create Color / Size inline (so variants can be generated without leaving the page)
 const showNewColorInput = ref(false)
 const newColorName = ref('')
@@ -888,10 +1064,10 @@ async function handleQuickCreateColor() {
     const created = await createColor({ name, hex_code: newColorHex.value }) as Color
     rawColors.value.push(created)
     colorOptions.value.push({ label: created.name, value: created.id })
-    selectedColors.value.push(created.id)
+    selectColorForBuilder(created.id)
     newColorName.value = ''
     showNewColorInput.value = false
-    addToast({ type: 'success', title: 'Color added', message: `${created.name} is now selected.` })
+    addToast({ type: 'success', title: 'Color created', message: `Now choose sizes and stock for ${created.name}.` })
   } catch (e: any) {
     addToast({ type: 'error', title: 'Could not add color', message: e?.data?.detail ?? String(e) })
   } finally {
@@ -907,10 +1083,10 @@ async function handleQuickCreateSize() {
     const created = await createSize({ name, type: 'LETTER', sort_order: rawSizes.value.length + 1 }) as Size
     rawSizes.value.push(created)
     sizeOptions.value.push({ label: created.name, value: created.id })
-    selectedSizes.value.push(created.id)
+    getDraftSizeState(created.id).included = true
     newSizeName.value = ''
     showNewSizeInput.value = false
-    addToast({ type: 'success', title: 'Size added', message: `${created.name} is now selected.` })
+    addToast({ type: 'success', title: 'Size added', message: `${created.name} is now selected for ${activeBuilderColorName.value}.` })
   } catch (e: any) {
     addToast({ type: 'error', title: 'Could not add size', message: e?.data?.detail ?? String(e) })
   } finally {
@@ -1030,7 +1206,7 @@ const rowOverrides = reactive<Record<string, RowOverride>>({})
 function getRowOverride(key: string): RowOverride {
   if (!rowOverrides[key]) {
     rowOverrides[key] = {
-      included: true,
+      included: false,
       sku: '',
       cost_price: '',
       selling_price: '',
@@ -1045,8 +1221,7 @@ function getRowOverride(key: string): RowOverride {
 }
 
 const multiGridRows = computed(() => {
-  const cIds = selectedColors.value.length > 0 ? selectedColors.value : [null]
-  const sIds = selectedSizes.value.length > 0 ? selectedSizes.value : [null]
+  if (selectedColors.value.length === 0 || selectedSizes.value.length === 0) return []
   const rows: {
     key: string
     colorId: string | null
@@ -1058,11 +1233,11 @@ const multiGridRows = computed(() => {
     override: RowOverride
   }[] = []
 
-  for (const cId of cIds) {
-    const colorObj = cId ? rawColors.value.find(c => c.id === cId) : null
-    for (const sId of sIds) {
-      const sizeObj = sId ? rawSizes.value.find(s => s.id === sId) : null
-      const key = `${cId ?? 'null'}::${sId ?? 'null'}`
+  for (const cId of selectedColors.value) {
+    const colorObj = rawColors.value.find(c => c.id === cId)
+    for (const sId of selectedSizes.value) {
+      const sizeObj = rawSizes.value.find(s => s.id === sId)
+      const key = `${cId}::${sId}`
       rows.push({
         key,
         colorId: cId,
@@ -1080,7 +1255,7 @@ const multiGridRows = computed(() => {
 
 const includedMatrixRows = computed(() => multiGridRows.value.filter(r => r.override.included))
 
-const showAdvancedMatrix = ref(true)
+const showAdvancedMatrix = ref(false)
 
 const effectiveColorGroups = computed(() => {
   if (selectedColors.value.length > 0) {
@@ -1336,11 +1511,14 @@ async function submitProduct(shouldPrintSticker = false) {
   }
 
   if (includeInitialVariant.value && variantMode.value === 'multi') {
+    if (isBuilderOpen.value && activeBuilderColorId.value && activeDraftSelectedCount.value > 0) {
+      commitActiveColorBuilder(true)
+    }
     if (includedMatrixRows.value.length === 0) {
       addToast({
         type: 'warn',
-        title: 'No Variants Included',
-        message: 'Include at least one variant combination or uncheck "Generate variants now".',
+        title: 'No Variants Added',
+        message: 'Choose a color, select its sizes, and click Save Color (or uncheck "Generate variants now").',
       })
       return
     }
