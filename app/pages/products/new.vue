@@ -358,9 +358,9 @@
               class="rounded-lg border border-border-subtle bg-surface-card overflow-hidden"
             >
               <div class="px-3 py-2 border-b border-border-subtle bg-surface-inset">
-                <div class="text-xs font-semibold text-ink uppercase tracking-wider">Size Availability per Color</div>
+                <div class="text-xs font-semibold text-ink uppercase tracking-wider">Size Availability &amp; Stock per Color</div>
                 <p class="text-xs text-ink-secondary m-0 mt-0.5">
-                  Tick the sizes sold for each color. Unticked combinations are not created.
+                  Tick the sizes sold for each color and type the opening stock quantity. Unticked combinations are not created.
                 </p>
               </div>
               <div class="overflow-x-auto">
@@ -387,12 +387,24 @@
                         </div>
                       </td>
                       <td v-for="sId in selectedSizes" :key="sId" class="py-2 px-3 text-center">
-                        <input
-                          type="checkbox"
-                          v-model="getRowOverride(`${cId}::${sId}`).included"
-                          class="h-4 w-4 rounded border-border-default text-ink cursor-pointer"
-                          :aria-label="`${rawColors.find(c => c.id === cId)?.name} in size ${rawSizes.find(s => s.id === sId)?.name}`"
-                        />
+                        <div class="inline-flex items-center gap-1.5">
+                          <input
+                            type="checkbox"
+                            v-model="getRowOverride(`${cId}::${sId}`).included"
+                            class="h-4 w-4 rounded border-border-default text-ink cursor-pointer"
+                            :aria-label="`${rawColors.find(c => c.id === cId)?.name} in size ${rawSizes.find(s => s.id === sId)?.name}`"
+                          />
+                          <input
+                            v-model="getRowOverride(`${cId}::${sId}`).initial_stock"
+                            type="number"
+                            min="0"
+                            step="1"
+                            placeholder="Qty"
+                            :disabled="!getRowOverride(`${cId}::${sId}`).included"
+                            :aria-label="`Stock for ${rawColors.find(c => c.id === cId)?.name} size ${rawSizes.find(s => s.id === sId)?.name}`"
+                            class="h-7 w-16 rounded-md border border-border-subtle bg-surface-card px-2 text-xs mono text-ink disabled:opacity-40 disabled:cursor-not-allowed"
+                          />
+                        </div>
                       </td>
                       <td class="py-2 px-3 text-right whitespace-nowrap">
                         <button type="button" class="underline text-ink-secondary hover:text-ink mr-2" @click="setColorSizesIncluded(cId, true)">All</button>
