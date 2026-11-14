@@ -137,12 +137,14 @@
         :loading="loading"
         :error="loadError"
         :on-retry="fetchProducts"
+        :row-clickable="true"
         :empty-state="{
           icon: 'i-heroicons-tag',
           label: 'No products found',
           description: 'Adjust your filters or add a new product to the catalog.',
         }"
         @sort="onSort"
+        @row-click="onRowClick"
       >
         <template #cell-select="{ row }">
           <input
@@ -150,28 +152,33 @@
             class="h-4 w-4 rounded border-border-default text-ink focus:ring-0 cursor-pointer"
             :checked="selectedIds.includes(row.id)"
             :aria-label="`Select ${row.name}`"
+            @click.stop
             @change="toggleSelectRow(row.id)"
           />
         </template>
 
         <template #cell-code="{ row }">
-          <code class="mono font-medium text-ink">{{ row.code || row.sku_prefix || '—' }}</code>
+          <NuxtLink :to="`/products/${row.id}`" class="no-underline hover:underline" @click.stop>
+            <code class="mono font-medium text-ink">{{ row.code || row.sku_prefix || '—' }}</code>
+          </NuxtLink>
         </template>
 
         <template #cell-name="{ row }">
           <div class="flex items-center gap-3">
-            <img
-              v-if="primaryImageOf(row)"
-              :src="primaryImageOf(row)!"
-              :alt="row.name"
-              loading="lazy"
-              class="w-10 h-10 rounded-lg border border-border-subtle object-cover shrink-0 bg-surface-inset"
-            />
-            <div v-else class="w-10 h-10 rounded-lg border border-border-subtle shrink-0 bg-surface-inset flex items-center justify-center">
-              <UIcon name="i-heroicons-photo" class="w-4 h-4 text-ink-tertiary" />
-            </div>
+            <NuxtLink :to="`/products/${row.id}`" class="shrink-0" @click.stop>
+              <img
+                v-if="primaryImageOf(row)"
+                :src="primaryImageOf(row)!"
+                :alt="row.name"
+                loading="lazy"
+                class="w-10 h-10 rounded-lg border border-border-subtle object-cover bg-surface-inset"
+              />
+              <div v-else class="w-10 h-10 rounded-lg border border-border-subtle bg-surface-inset flex items-center justify-center">
+                <UIcon name="i-heroicons-photo" class="w-4 h-4 text-ink-tertiary" />
+              </div>
+            </NuxtLink>
             <div class="min-w-0">
-              <NuxtLink :to="`/products/${row.id}`" class="block text-sm font-medium text-ink no-underline hover:underline truncate">
+              <NuxtLink :to="`/products/${row.id}`" class="block text-sm font-medium text-ink no-underline hover:underline truncate" @click.stop>
                 {{ row.name }}
               </NuxtLink>
               <div class="flex items-center gap-1.5 text-xs text-ink-secondary truncate">
@@ -197,6 +204,7 @@
           <NuxtLink
             :to="`/products/${row.id}?tab=variants`"
             class="inline-flex items-center gap-1 rounded-md border border-border-subtle bg-surface-inset px-2 py-0.5 text-xs font-medium text-ink no-underline hover:bg-surface-hover"
+            @click.stop
           >
             <UIcon name="i-heroicons-squares-2x2" class="w-3.5 h-3.5 text-ink-secondary" />
             <span class="mono">{{ variantCountOf(row) }}</span>
@@ -275,16 +283,18 @@
         >
           <div>
             <div class="relative aspect-[4/3] bg-surface-inset border-b border-border-subtle overflow-hidden">
-              <img
-                v-if="primaryImageOf(row)"
-                :src="primaryImageOf(row)!"
-                :alt="row.name"
-                loading="lazy"
-                class="w-full h-full object-cover"
-              />
-              <div v-else class="w-full h-full flex items-center justify-center">
-                <UIcon name="i-heroicons-photo" class="w-10 h-10 text-ink-tertiary" />
-              </div>
+              <NuxtLink :to="`/products/${row.id}`" class="block w-full h-full">
+                <img
+                  v-if="primaryImageOf(row)"
+                  :src="primaryImageOf(row)!"
+                  :alt="row.name"
+                  loading="lazy"
+                  class="w-full h-full object-cover"
+                />
+                <div v-else class="w-full h-full flex items-center justify-center">
+                  <UIcon name="i-heroicons-photo" class="w-10 h-10 text-ink-tertiary" />
+                </div>
+              </NuxtLink>
 
               <div class="absolute top-2.5 left-2.5 flex items-center gap-2">
                 <input
@@ -292,6 +302,7 @@
                   class="h-4 w-4 rounded border-border-default bg-surface-raised text-ink focus:ring-0 cursor-pointer"
                   :checked="selectedIds.includes(row.id)"
                   :aria-label="`Select ${row.name}`"
+                  @click.stop
                   @change="toggleSelectRow(row.id)"
                 />
                 <code class="rounded-md bg-surface-raised/95 border border-border-subtle px-2 py-0.5 text-[11px] font-semibold mono text-ink">
@@ -324,10 +335,10 @@
                   <div class="text-[11px] text-ink-tertiary uppercase tracking-wider">Price Range</div>
                   <div class="mono text-sm font-semibold text-ink">{{ priceRangeOf(row) }}</div>
                 </div>
-                <div class="text-right">
+                <NuxtLink :to="`/products/${row.id}?tab=variants`" class="text-right no-underline hover:underline">
                   <div class="text-[11px] text-ink-tertiary uppercase tracking-wider">Variants</div>
                   <div class="mono text-sm font-semibold text-ink">{{ variantCountOf(row) }}</div>
-                </div>
+                </NuxtLink>
               </div>
             </div>
           </div>
@@ -335,6 +346,7 @@
           <div class="px-4 py-2.5 bg-surface-inset border-t border-border-subtle flex items-center justify-between gap-1">
             <AppButton size="xs" variant="ghost" icon="i-heroicons-eye" label="Details" :to="`/products/${row.id}`" />
             <div class="flex items-center gap-1">
+              <AppButton size="xs" variant="ghost" icon="i-heroicons-squares-2x2" label="Variants" :to="`/products/${row.id}?tab=variants`" />
               <AppButton size="xs" variant="ghost" icon="i-heroicons-pencil-square" label="Edit" :to="`/products/${row.id}/edit`" />
               <AppButton
                 v-if="statusOf(row) !== 'DISCONTINUED'"
@@ -596,6 +608,11 @@ function onSort({ key, order }: { key: string; order: 'asc' | 'desc' }) {
   if (!serverKey) return
   sortKey.value = serverKey
   sortDirection.value = order
+}
+
+function onRowClick(row: Product) {
+  if (!row?.id) return
+  navigateTo(`/products/${row.id}`)
 }
 
 let requestSeq = 0

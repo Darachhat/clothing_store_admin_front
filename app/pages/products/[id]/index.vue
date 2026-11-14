@@ -36,6 +36,14 @@
           label="Variant Matrix & Stock"
           :to="`/products/${id}/variants`"
         />
+        <AppButton
+          v-if="((product as any).status_code || product.status) !== 'DISCONTINUED'"
+          variant="danger"
+          size="sm"
+          icon="i-heroicons-archive-box"
+          label="Archive"
+          @click="showArchiveModal = true"
+        />
       </template>
     </AppPageHeader>
 
@@ -55,7 +63,7 @@
           :class="activeTab === tab.key
             ? 'bg-ink text-white'
             : 'text-ink-secondary hover:text-ink hover:bg-surface-hover'"
-          @click="activeTab = tab.key"
+          @click="selectTab(tab.key)"
         >
           <UIcon :name="tab.icon" class="w-4 h-4" />
           <span>{{ tab.label }}</span>
@@ -75,8 +83,8 @@
           <AppCard>
             <div class="rounded-lg border border-border-subtle bg-surface-inset overflow-hidden flex items-center justify-center aspect-square">
               <img
-                v-if="primaryImageUrl"
-                :src="primaryImageUrl"
+                v-if="activeOverviewImageUrl"
+                :src="activeOverviewImageUrl"
                 :alt="product.name"
                 class="w-full h-full object-cover"
               />
@@ -89,10 +97,21 @@
                 v-for="img in galleryImages.slice(0, 4)"
                 :key="img.id"
                 type="button"
-                class="aspect-square rounded-md border border-border-subtle overflow-hidden bg-surface-inset"
-                @click="activeTab = 'images'"
+                class="aspect-square rounded-md border border-border-subtle overflow-hidden bg-surface-inset transition-opacity"
+                :class="activeOverviewImageUrl === img.image_url ? 'opacity-100 ring-1 ring-ink' : 'opacity-70 hover:opacity-100'"
+                @click="selectedOverviewImageUrl = img.image_url"
               >
                 <img :src="img.image_url" :alt="product.name" class="w-full h-full object-cover" />
+              </button>
+            </div>
+            <div class="mt-3 pt-2.5 border-t border-border-subtle flex justify-between items-center text-xs">
+              <span class="text-ink-secondary">{{ galleryImages.length }} image(s)</span>
+              <button
+                type="button"
+                class="font-medium text-ink hover:underline bg-transparent border-0 p-0 cursor-pointer"
+                @click="selectTab('images')"
+              >
+                Manage Gallery →
               </button>
             </div>
           </AppCard>
@@ -234,6 +253,12 @@
                 label="Upload Photo"
                 hint="PNG, JPG, WEBP"
               />
+              <AppInput
+                id="new-img-url"
+                v-model="newImageForm.image_url"
+                label="Or Image URL"
+                placeholder="https://... or /uploads/products/..."
+              />
               <AppSelect
                 id="new-img-variant"
                 v-model="newImageForm.variant_id"
@@ -300,6 +325,24 @@
                     <span v-else class="text-xs text-ink-tertiary font-mono">Order #{{ idx + 1 }}</span>
 
                     <div class="flex items-center gap-1">
+                      <AppButton
+                        v-if="galleryImages.length > 1"
+                        size="xs"
+                        variant="ghost"
+                        icon="i-heroicons-chevron-left"
+                        aria-label="Move image earlier"
+                        :disabled="idx === 0 || img.id === 'primary-fallback'"
+                        @click="handleReorderGalleryImage(idx, -1)"
+                      />
+                      <AppButton
+                        v-if="galleryImages.length > 1"
+                        size="xs"
+                        variant="ghost"
+                        icon="i-heroicons-chevron-right"
+                        aria-label="Move image later"
+                        :disabled="idx === galleryImages.length - 1 || img.id === 'primary-fallback'"
+                        @click="handleReorderGalleryImage(idx, 1)"
+                      />
                       <AppButton
                         size="xs"
                         variant="danger"
@@ -507,7 +550,7 @@
           title="Variant Barcodes (Code 128) & QR Codes"
           subtitle="Every variant has a unique Code-128 1D barcode and a stable 2D QR reference. Regenerating codes records an audit log entry."
         >
-          <template #actions>
+          <template #header-right>
             <AppButton
               size="xs"
               variant="primary"
@@ -594,6 +637,17 @@
         :variant="selectedVariant"
         :product-name="product?.name"
       />
+
+      <AppConfirmDialog
+        v-model="showArchiveModal"
+        title="Archive Product"
+        variant="danger"
+        confirm-label="Archive Product"
+        :loading="archiving"
+        :message="`Are you sure you want to archive &quot;${product?.name}&quot;?`"
+        consequence="The product is marked Discontinued and hidden from active POS checkout grids. Variants, stock, and historical sales records are preserved."
+        @confirm="handleArchiveProduct"
+      />
     </template>
 
     <AppErrorState
@@ -611,11 +665,13 @@ import type { Product, ProductVariant, ProductImage, SelectOption } from '~/type
 definePageMeta({ middleware: ['auth'] })
 
 const route = useRoute()
+const router = useRouter()
 const id = route.params.id as string
 useHead({ title: 'Product Detail — KVC Clothing Store Admin' })
 
 const {
   getProduct,
+  deleteProduct,
   addProductImage,
   updateProductImage,
   deleteProductImage,
@@ -637,10 +693,32 @@ const loading = ref(true)
 const loadError = ref('')
 const showStickerModal = ref(false)
 const selectedVariant = ref<ProductVariant | null>(null)
+const showArchiveModal = ref(false)
+const archiving = ref(false)
 const cacheBust = ref(Date.now())
+const selectedOverviewImageUrl = ref<string | null>(null)
 
 type DetailTabKey = 'overview' | 'images' | 'variants' | 'pricing' | 'barcodes'
-const activeTab = ref<DetailTabKey>((route.query.tab as DetailTabKey) || 'overview')
+const VALID_TABS: DetailTabKey[] = ['overview', 'images', 'variants', 'pricing', 'barcodes']
+
+function resolveTab(val: unknown): DetailTabKey {
+  return VALID_TABS.includes(val as DetailTabKey) ? (val as DetailTabKey) : 'overview'
+}
+
+const activeTab = ref<DetailTabKey>(resolveTab(route.query.tab))
+
+function selectTab(key: DetailTabKey) {
+  activeTab.value = key
+  router.replace({ query: { ...route.query, tab: key } })
+}
+
+watch(
+  () => route.query.tab,
+  (newTab) => {
+    const resolved = resolveTab(newTab)
+    if (activeTab.value !== resolved) activeTab.value = resolved
+  },
+)
 
 const tabs = computed(() => [
   { key: 'overview' as DetailTabKey, label: '1. Overview', icon: 'i-heroicons-information-circle' },
@@ -669,6 +747,13 @@ const galleryImages = computed<ProductImage[]>(() => {
 const primaryImageUrl = computed(() => {
   const primary = galleryImages.value.find(i => i.is_primary)
   return (primary || galleryImages.value[0])?.image_url || product.value?.image_url || null
+})
+
+const activeOverviewImageUrl = computed(() => {
+  if (selectedOverviewImageUrl.value && galleryImages.value.some(i => i.image_url === selectedOverviewImageUrl.value)) {
+    return selectedOverviewImageUrl.value
+  }
+  return primaryImageUrl.value
 })
 
 const priceRangeText = computed(() => {
@@ -775,6 +860,39 @@ async function handleDeleteGalleryImage(imageId: string) {
     addToast({ type: 'success', title: 'Image removed' })
   } catch (e: any) {
     addToast({ type: 'error', title: 'Could not remove image', message: e?.data?.detail ?? String(e) })
+  }
+}
+
+async function handleReorderGalleryImage(index: number, delta: -1 | 1) {
+  const list = galleryImages.value
+  const targetIdx = index + delta
+  if (targetIdx < 0 || targetIdx >= list.length) return
+  const currentImg = list[index]
+  const neighborImg = list[targetIdx]
+  if (!currentImg || !neighborImg || currentImg.id === 'primary-fallback' || neighborImg.id === 'primary-fallback') return
+  try {
+    await Promise.all([
+      updateProductImage(id, currentImg.id, { sort_order: targetIdx }),
+      updateProductImage(id, neighborImg.id, { sort_order: index }),
+    ])
+    await loadData()
+    addToast({ type: 'success', title: 'Image order updated' })
+  } catch (e: any) {
+    addToast({ type: 'error', title: 'Could not reorder images', message: e?.data?.detail ?? String(e) })
+  }
+}
+
+async function handleArchiveProduct() {
+  archiving.value = true
+  try {
+    await deleteProduct(id)
+    showArchiveModal.value = false
+    await loadData()
+    addToast({ type: 'success', title: 'Product archived' })
+  } catch (e: any) {
+    addToast({ type: 'error', title: 'Archive failed', message: e?.data?.detail ?? String(e) })
+  } finally {
+    archiving.value = false
   }
 }
 

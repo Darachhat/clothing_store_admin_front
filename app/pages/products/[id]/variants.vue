@@ -17,6 +17,13 @@
         <AppButton
           variant="default"
           size="sm"
+          icon="i-heroicons-arrow-left"
+          label="Back to Product"
+          :to="`/products/${id}`"
+        />
+        <AppButton
+          variant="default"
+          size="sm"
           icon="i-heroicons-tag"
           label="Print Product Labels"
           :to="`/labels/generate?product_id=${id}`"

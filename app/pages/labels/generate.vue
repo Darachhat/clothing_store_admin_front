@@ -5,8 +5,8 @@
       class="no-print"
       title="បោះពុម្ពស្លាកទំនិញ • Product Sticker &amp; Label Studio"
       description="Modern Khmer garment stickers (50×30mm, 40×30mm, 60×40mm) with Code-128 barcode &amp; UTF-8 Khmer typography"
-      back-to="/labels"
-      back-label="Labels &amp; Barcodes"
+      :back-to="route.query.product_id ? `/products/${route.query.product_id}?tab=barcodes` : '/labels'"
+      :back-label="route.query.product_id ? 'Back to Product Detail' : 'Labels & Barcodes'"
     >
       <template #actions>
         <AppButton
