@@ -322,6 +322,58 @@
               </div>
             </div>
 
+            <!-- Availability Grid: which sizes exist for each color -->
+            <div
+              v-if="selectedColors.length > 0 && selectedSizes.length > 0"
+              class="rounded-lg border border-border-subtle bg-surface-card overflow-hidden"
+            >
+              <div class="px-3 py-2 border-b border-border-subtle bg-surface-inset">
+                <div class="text-xs font-semibold text-ink uppercase tracking-wider">Size Availability per Color</div>
+                <p class="text-xs text-ink-secondary m-0 mt-0.5">
+                  Tick the sizes sold for each color. Unticked combinations are not created.
+                </p>
+              </div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs">
+                  <thead>
+                    <tr class="border-b border-border-subtle text-ink-secondary">
+                      <th class="py-2 px-3 font-medium">Color</th>
+                      <th v-for="sId in selectedSizes" :key="sId" class="py-2 px-3 font-medium text-center">
+                        {{ rawSizes.find(s => s.id === sId)?.name }}
+                      </th>
+                      <th class="py-2 px-3 font-medium text-right">All sizes</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-border-subtle">
+                    <tr v-for="cId in selectedColors" :key="cId">
+                      <td class="py-2 px-3 font-medium text-ink whitespace-nowrap">
+                        <div class="flex items-center gap-1.5">
+                          <span
+                            v-if="rawColors.find(c => c.id === cId)?.hex_code"
+                            class="inline-block w-2.5 h-2.5 rounded-full border border-border-subtle shrink-0"
+                            :style="{ background: rawColors.find(c => c.id === cId)?.hex_code || undefined }"
+                          />
+                          <span>{{ rawColors.find(c => c.id === cId)?.name }}</span>
+                        </div>
+                      </td>
+                      <td v-for="sId in selectedSizes" :key="sId" class="py-2 px-3 text-center">
+                        <input
+                          type="checkbox"
+                          v-model="getRowOverride(`${cId}::${sId}`).included"
+                          class="h-4 w-4 rounded border-border-default text-ink cursor-pointer"
+                          :aria-label="`${rawColors.find(c => c.id === cId)?.name} in size ${rawSizes.find(s => s.id === sId)?.name}`"
+                        />
+                      </td>
+                      <td class="py-2 px-3 text-right whitespace-nowrap">
+                        <button type="button" class="underline text-ink-secondary hover:text-ink mr-2" @click="setColorSizesIncluded(cId, true)">All</button>
+                        <button type="button" class="underline text-ink-secondary hover:text-ink" @click="setColorSizesIncluded(cId, false)">None</button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
             <!-- Variant Matrix Table -->
             <div v-if="multiGridRows.length > 0" class="rounded-lg border border-border-subtle overflow-hidden">
               <div class="max-h-96 overflow-x-auto overflow-y-auto">
@@ -768,6 +820,12 @@ function applyDefaultPricesToMatrix() {
 function setAllMatrixIncluded(included: boolean) {
   for (const row of multiGridRows.value) {
     row.override.included = included
+  }
+}
+
+function setColorSizesIncluded(colorId: string, included: boolean) {
+  for (const sId of selectedSizes.value) {
+    getRowOverride(`${colorId}::${sId}`).included = included
   }
 }
 
