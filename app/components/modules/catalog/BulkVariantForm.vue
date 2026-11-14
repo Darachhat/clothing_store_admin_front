@@ -1,5 +1,5 @@
 <template>
-  <AppModal v-model="modelValue" title="Generate Variants Grid" size="xl" @update:model-value="$emit('update:modelValue', $event)">
+  <AppModal :model-value="modelValue" title="Generate Variants Grid" size="xl" @update:model-value="$emit('update:modelValue', $event)">
     <div class="flex flex-col gap-5">
       <!-- Step 1: Select colors & sizes -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
