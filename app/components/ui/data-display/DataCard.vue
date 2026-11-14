@@ -5,12 +5,12 @@
       class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-subtle"
     >
       <slot name="header">
-        <div class="flex flex-col gap-0.5 min-w-0">
+        <div class="flex flex-col gap-0.5 flex-1 min-w-[180px]">
           <div class="flex items-center gap-2">
             <UIcon v-if="icon" :name="icon" class="w-4 h-4 text-ink-secondary flex-shrink-0" />
-            <span v-if="title" class="text-base font-medium text-ink truncate">{{ title }}</span>
+            <span v-if="title" class="text-base font-medium text-ink">{{ title }}</span>
           </div>
-          <p v-if="subtitle" class="text-xs text-ink-secondary truncate">{{ subtitle }}</p>
+          <p v-if="subtitle" class="text-xs text-ink-secondary leading-relaxed">{{ subtitle }}</p>
         </div>
       </slot>
       <div v-if="$slots['header-right'] || $slots.actions" class="flex flex-wrap items-center gap-2 flex-shrink-0">

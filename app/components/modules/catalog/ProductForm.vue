@@ -4,7 +4,7 @@
     novalidate
     @submit.prevent="onSubmit"
   >
-    <div class="flex flex-col gap-4">
+    <div class="flex flex-col gap-4 min-w-0">
       <!-- SECTION 1: BASIC INFORMATION -->
       <AppCard title="Section 1 — Basic Information" subtitle="Core product identity, categorization, tags, and catalog status.">
         <div class="flex flex-col gap-4">
@@ -189,7 +189,7 @@
                   v-for="val in attr.values"
                   :key="val.id"
                   type="button"
-                  class="px-2.5 py-1 rounded-md text-xs font-medium border transition-colors"
+                  class="min-h-[32px] px-2.5 py-1 rounded-md text-xs font-medium border transition-colors"
                   :class="isAttributeValueSelected(val.id)
                     ? 'bg-ink text-white border-border-default'
                     : 'bg-surface-inset text-ink-secondary border-border-subtle hover:text-ink'"
@@ -203,11 +203,11 @@
               </div>
 
               <!-- Quick add value for this attribute -->
-              <div v-if="addingValueForAttr === attr.id" class="flex items-center gap-1.5 pt-1">
+              <div v-if="addingValueForAttr === attr.id" class="flex flex-wrap items-center gap-1.5 pt-1">
                 <AppInput
                   :id="`add-val-${attr.id}`"
                   v-model="newValueText"
-                  class="flex-1"
+                  class="flex-1 min-w-[140px]"
                   placeholder="New option (e.g. Linen)"
                   @keydown.enter.prevent="handleAddAttributeValue(attr.id)"
                 />
@@ -231,7 +231,7 @@
     </div>
 
     <!-- RIGHT COLUMN: SECTION 2 — PRODUCT IMAGES & ACTIONS -->
-    <div class="flex flex-col gap-4">
+    <div class="flex flex-col gap-4 min-w-0 lg:sticky lg:top-4">
       <AppCard
         title="Section 2 — Product Images"
         subtitle="Upload multiple images, set primary cover, and reorder gallery."
@@ -268,7 +268,7 @@
             <AppInput
               id="manual-image-url"
               v-model="manualImageUrl"
-              class="flex-1"
+              class="flex-1 min-w-0"
               placeholder="Or paste image URL..."
               @keydown.enter.prevent="addManualImageUrl"
             />
@@ -319,7 +319,7 @@
               <div class="flex items-center gap-1 shrink-0">
                 <button
                   type="button"
-                  class="p-1 rounded border border-border-subtle text-ink-secondary hover:text-ink disabled:opacity-30"
+                  class="p-1.5 rounded border border-border-subtle text-ink-secondary hover:text-ink disabled:opacity-30"
                   :disabled="idx === 0"
                   title="Move up"
                   @click="moveImage(idx, -1)"
@@ -328,7 +328,7 @@
                 </button>
                 <button
                   type="button"
-                  class="p-1 rounded border border-border-subtle text-ink-secondary hover:text-ink disabled:opacity-30"
+                  class="p-1.5 rounded border border-border-subtle text-ink-secondary hover:text-ink disabled:opacity-30"
                   :disabled="idx === galleryList.length - 1"
                   title="Move down"
                   @click="moveImage(idx, 1)"
@@ -337,7 +337,7 @@
                 </button>
                 <button
                   type="button"
-                  class="p-1 rounded border border-border-subtle text-ink-secondary hover:text-ink"
+                  class="p-1.5 rounded border border-border-subtle text-ink-secondary hover:text-ink"
                   title="Remove image"
                   @click="removeImage(idx)"
                 >
@@ -354,14 +354,15 @@
 
       <div class="flex flex-col gap-2">
         <slot name="actions" />
-        <div class="flex justify-end gap-2">
-          <AppButton type="button" variant="default" label="Cancel" :to="cancelTo" />
+        <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
+          <AppButton type="button" variant="default" label="Cancel" class="w-full sm:w-auto justify-center" :to="cancelTo" />
           <AppButton
             type="submit"
             :variant="primarySubmit ? 'primary' : 'secondary'"
             icon="i-heroicons-check"
             :loading="submitting"
             :label="submitLabel"
+            class="w-full sm:w-auto justify-center"
           />
         </div>
       </div>

@@ -26,10 +26,10 @@
       <!-- SECTION 4: VARIANT GENERATOR -->
       <AppCard
         title="Section 4 — Variant Generator"
-        subtitle="Select multiple Colors and Sizes to automatically generate every (Color × Size) combination, each with its own unique SKU, Barcode, and QR Code."
+        subtitle="Select Colors and Sizes, tick which sizes each color has, and enter the opening stock quantity for each Color × Size."
       >
         <template #header-right>
-          <div class="flex flex-wrap items-center gap-3">
+          <div class="flex flex-wrap items-center gap-2 sm:gap-3">
             <div v-if="includeInitialVariant" class="inline-flex rounded-lg border border-border-subtle bg-surface-inset p-0.5 text-xs">
               <button
                 type="button"
@@ -59,7 +59,7 @@
         <div v-if="includeInitialVariant" class="flex flex-col gap-4">
           <!-- SINGLE / NO-MATRIX MODE -->
           <template v-if="variantMode === 'single'">
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
               <AppSelect
                 id="variant-color"
                 v-model="initialVariant.color_id"
@@ -100,7 +100,7 @@
                   <AppInput
                     id="variant-barcode"
                     v-model="initialVariant.barcode"
-                    class="flex-1"
+                    class="flex-1 min-w-0"
                     placeholder="Auto 10-digit Code-128 (or scan tag)"
                     mono
                     clearable
@@ -167,12 +167,13 @@
 
           <!-- MATRIX GENERATOR MODE -->
           <template v-else>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- STEP 1: Select Colors & Sizes -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <!-- Colors Selector -->
               <div class="rounded-lg border border-border-subtle bg-surface-card p-3 flex flex-col gap-2.5">
-                <div class="flex items-center justify-between">
-                  <span class="text-xs font-semibold text-ink uppercase tracking-wider">Available Colors ({{ selectedColors.length }})</span>
-                  <div class="flex items-center gap-2 text-xs text-ink-secondary">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                  <span class="text-xs font-semibold text-ink uppercase tracking-wider">1. Select Colors ({{ selectedColors.length }})</span>
+                  <div class="flex flex-wrap items-center gap-2.5 text-xs text-ink-secondary">
                     <button type="button" class="underline hover:text-ink" @click="selectedColors = rawColors.map(c => c.id)">Select All</button>
                     <button type="button" class="underline hover:text-ink" @click="selectedColors = []">Clear</button>
                     <button
@@ -187,17 +188,17 @@
                 </div>
 
                 <!-- Inline Quick-Create Color -->
-                <div v-if="showNewColorInput" class="flex items-center gap-1.5 rounded-md border border-border-subtle bg-surface-inset p-2">
+                <div v-if="showNewColorInput" class="flex flex-wrap items-center gap-1.5 rounded-md border border-border-subtle bg-surface-inset p-2">
                   <input
                     v-model="newColorHex"
                     type="color"
-                    class="w-7 h-7 rounded border border-border-subtle cursor-pointer bg-transparent p-0 shrink-0"
+                    class="w-8 h-8 rounded border border-border-subtle cursor-pointer bg-transparent p-0 shrink-0"
                     title="Pick color swatch"
                   />
                   <AppInput
                     id="quick-new-color-name"
                     v-model="newColorName"
-                    class="flex-1"
+                    class="flex-1 min-w-[140px]"
                     placeholder="Color name (e.g. Black, Navy)"
                     @keydown.enter.prevent="handleQuickCreateColor"
                   />
@@ -212,12 +213,12 @@
                   />
                 </div>
 
-                <div class="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto">
+                <div class="flex flex-wrap gap-1.5 max-h-44 overflow-y-auto">
                   <button
                     v-for="c in rawColors"
                     :key="c.id"
                     type="button"
-                    class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium border transition-colors"
+                    class="inline-flex items-center gap-1.5 min-h-[34px] px-3 py-1.5 rounded-md text-xs font-medium border transition-colors"
                     :class="selectedColors.includes(c.id)
                       ? 'bg-ink text-white border-border-default'
                       : 'bg-surface-inset text-ink-secondary border-border-subtle hover:text-ink'"
@@ -238,9 +239,9 @@
 
               <!-- Sizes Selector -->
               <div class="rounded-lg border border-border-subtle bg-surface-card p-3 flex flex-col gap-2.5">
-                <div class="flex items-center justify-between">
-                  <span class="text-xs font-semibold text-ink uppercase tracking-wider">Available Sizes ({{ selectedSizes.length }})</span>
-                  <div class="flex items-center gap-2 text-xs text-ink-secondary">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                  <span class="text-xs font-semibold text-ink uppercase tracking-wider">2. Select Sizes ({{ selectedSizes.length }})</span>
+                  <div class="flex flex-wrap items-center gap-2.5 text-xs text-ink-secondary">
                     <button type="button" class="underline hover:text-ink" @click="selectedSizes = rawSizes.map(s => s.id)">Select All</button>
                     <button type="button" class="underline hover:text-ink" @click="selectedSizes = []">Clear</button>
                     <button
@@ -255,11 +256,11 @@
                 </div>
 
                 <!-- Inline Quick-Create Size -->
-                <div v-if="showNewSizeInput" class="flex items-center gap-1.5 rounded-md border border-border-subtle bg-surface-inset p-2">
+                <div v-if="showNewSizeInput" class="flex flex-wrap items-center gap-1.5 rounded-md border border-border-subtle bg-surface-inset p-2">
                   <AppInput
                     id="quick-new-size-name"
                     v-model="newSizeName"
-                    class="flex-1"
+                    class="flex-1 min-w-[140px]"
                     placeholder="Size name (e.g. S, M, L, XL, XXL)"
                     @keydown.enter.prevent="handleQuickCreateSize"
                   />
@@ -274,12 +275,12 @@
                   />
                 </div>
 
-                <div class="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto">
+                <div class="flex flex-wrap gap-1.5 max-h-44 overflow-y-auto">
                   <button
                     v-for="s in rawSizes"
                     :key="s.id"
                     type="button"
-                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium border transition-colors"
+                    class="inline-flex items-center justify-center min-h-[34px] min-w-[40px] px-3 py-1.5 rounded-md text-xs font-medium border transition-colors"
                     :class="selectedSizes.includes(s.id)
                       ? 'bg-ink text-white border-border-default'
                       : 'bg-surface-inset text-ink-secondary border-border-subtle hover:text-ink'"
@@ -295,14 +296,18 @@
             </div>
 
             <!-- Matrix Summary & Bulk Controls -->
-            <div class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border-subtle bg-surface-inset px-3 py-2 text-xs">
-              <div class="flex flex-wrap items-center gap-2 text-ink-secondary">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 rounded-lg border border-border-subtle bg-surface-inset px-3 py-2.5 text-xs">
+              <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-ink-secondary">
                 <span>
-                  Combinations: <strong class="text-ink">{{ includedMatrixRows.length }}</strong> active of {{ multiGridRows.length }} total
+                  Active Variants: <strong class="text-ink">{{ includedMatrixRows.length }}</strong> of {{ multiGridRows.length }}
                   ({{ selectedColors.length || 1 }} Color{{ (selectedColors.length || 1) === 1 ? '' : 's' }} × {{ selectedSizes.length || 1 }} Size{{ (selectedSizes.length || 1) === 1 ? '' : 's' }})
                 </span>
-                <span>·</span>
-                <span>SKU Pattern: <code class="mono text-ink">{PRODUCT_CODE}-{COLOR}-{SIZE}</code></span>
+                <span class="hidden sm:inline">·</span>
+                <span>
+                  Total Stock: <strong class="text-ink mono">{{ totalMatrixStock }}</strong> units
+                </span>
+                <span class="hidden md:inline">·</span>
+                <span class="hidden md:inline">SKU: <code class="mono text-ink">{CODE}-{COLOR}-{SIZE}</code></span>
               </div>
               <div class="flex flex-wrap items-center gap-1.5">
                 <div class="inline-flex items-center gap-1">
@@ -313,7 +318,7 @@
                     step="1"
                     placeholder="Qty"
                     aria-label="Opening stock for all included variants"
-                    class="h-7 w-16 rounded-md border border-border-subtle bg-surface-card px-2 text-xs mono text-ink"
+                    class="h-8 w-20 rounded-md border border-border-subtle bg-surface-card px-2 text-xs mono text-ink"
                     @keydown.enter.prevent="applyBulkStock"
                   />
                   <AppButton
@@ -352,63 +357,142 @@
               </div>
             </div>
 
-            <!-- Availability Grid: which sizes exist for each color -->
+            <!-- STEP 3: Size Availability & Stock per Color (Works for any Color/Size selection, Responsive Mobile Cards + Desktop Matrix) -->
             <div
-              v-if="selectedColors.length > 0 && selectedSizes.length > 0"
+              v-if="selectedColors.length > 0 || selectedSizes.length > 0"
               class="rounded-lg border border-border-subtle bg-surface-card overflow-hidden"
             >
-              <div class="px-3 py-2 border-b border-border-subtle bg-surface-inset">
-                <div class="text-xs font-semibold text-ink uppercase tracking-wider">Size Availability &amp; Stock per Color</div>
-                <p class="text-xs text-ink-secondary m-0 mt-0.5">
-                  Tick the sizes sold for each color and type the opening stock quantity. Unticked combinations are not created.
-                </p>
+              <div class="px-3 py-2.5 border-b border-border-subtle bg-surface-inset flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <div class="text-xs font-semibold text-ink uppercase tracking-wider">3. Size Availability &amp; Opening Stock per Color</div>
+                  <p class="text-xs text-ink-secondary m-0 mt-0.5">
+                    Tick the sizes available for each color and enter the stock quantity (`Qty`). Unticked sizes are skipped.
+                  </p>
+                </div>
+                <span class="inline-flex items-center gap-1.5 rounded-md border border-border-subtle bg-surface-card px-2.5 py-1 text-xs font-medium text-ink">
+                  <UIcon name="i-heroicons-cube" class="w-3.5 h-3.5 text-ink-secondary" />
+                  <span>{{ includedMatrixRows.length }} variants · {{ totalMatrixStock }} pcs</span>
+                </span>
               </div>
-              <div class="overflow-x-auto">
+
+              <!-- MOBILE & SMALL TABLET VIEW (< md): Per-Color Cards with 2/3-Column Size + Qty Grid (Zero Horizontal Scroll) -->
+              <div class="md:hidden divide-y divide-border-subtle">
+                <div
+                  v-for="colorGroup in effectiveColorGroups"
+                  :key="colorGroup.key"
+                  class="p-3 flex flex-col gap-2.5"
+                >
+                  <div class="flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex items-center gap-2">
+                      <span
+                        v-if="colorGroup.hex"
+                        class="inline-block w-3.5 h-3.5 rounded-full border border-border-subtle shrink-0"
+                        :style="{ background: colorGroup.hex }"
+                      />
+                      <span class="text-xs font-semibold text-ink">{{ colorGroup.name }}</span>
+                      <span class="rounded border border-border-subtle bg-surface-inset px-1.5 py-0.5 text-[11px] text-ink-secondary mono">
+                        {{ getColorActiveCount(colorGroup.id) }}/{{ effectiveSizeGroups.length }} sizes · {{ getColorStockSubtotal(colorGroup.id) }} pcs
+                      </span>
+                    </div>
+                    <div class="flex items-center gap-2 text-xs">
+                      <button
+                        type="button"
+                        class="underline text-ink-secondary hover:text-ink"
+                        @click="setColorSizesIncluded(colorGroup.id, true)"
+                      >
+                        All sizes
+                      </button>
+                      <button
+                        type="button"
+                        class="underline text-ink-secondary hover:text-ink"
+                        @click="setColorSizesIncluded(colorGroup.id, false)"
+                      >
+                        None
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    <div
+                      v-for="sizeGroup in effectiveSizeGroups"
+                      :key="sizeGroup.key"
+                      class="flex items-center justify-between gap-1.5 rounded-md border border-border-subtle px-2.5 py-1.5 transition-opacity"
+                      :class="getRowOverride(`${colorGroup.key}::${sizeGroup.key}`).included ? 'bg-surface-card' : 'bg-surface-inset opacity-50'"
+                    >
+                      <label class="inline-flex items-center gap-1.5 text-xs font-medium text-ink cursor-pointer min-w-0">
+                        <input
+                          type="checkbox"
+                          v-model="getRowOverride(`${colorGroup.key}::${sizeGroup.key}`).included"
+                          class="h-4 w-4 rounded border-border-default text-ink cursor-pointer shrink-0"
+                        />
+                        <span class="truncate">{{ sizeGroup.name }}</span>
+                      </label>
+                      <input
+                        v-model="getRowOverride(`${colorGroup.key}::${sizeGroup.key}`).initial_stock"
+                        type="number"
+                        min="0"
+                        step="1"
+                        placeholder="Qty"
+                        :disabled="!getRowOverride(`${colorGroup.key}::${sizeGroup.key}`).included"
+                        :aria-label="`Stock for ${colorGroup.name} size ${sizeGroup.name}`"
+                        class="h-7 w-14 rounded border border-border-subtle bg-surface-inset px-1.5 text-xs text-center mono text-ink disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- DESKTOP VIEW (>= md): Structured Color × Size Matrix Table -->
+              <div class="hidden md:block overflow-x-auto">
                 <table class="w-full text-left border-collapse text-xs">
                   <thead>
-                    <tr class="border-b border-border-subtle text-ink-secondary">
-                      <th class="py-2 px-3 font-medium">Color</th>
-                      <th v-for="sId in selectedSizes" :key="sId" class="py-2 px-3 font-medium text-center">
-                        {{ rawSizes.find(s => s.id === sId)?.name }}
+                    <tr class="border-b border-border-subtle text-ink-secondary bg-surface-card">
+                      <th class="py-2 px-3 font-medium sticky left-0 bg-surface-card">Color</th>
+                      <th v-for="sizeGroup in effectiveSizeGroups" :key="sizeGroup.key" class="py-2 px-3 font-medium text-center">
+                        {{ sizeGroup.name }}
                       </th>
+                      <th class="py-2 px-3 font-medium text-right">Stock</th>
                       <th class="py-2 px-3 font-medium text-right">All sizes</th>
                     </tr>
                   </thead>
                   <tbody class="divide-y divide-border-subtle">
-                    <tr v-for="cId in selectedColors" :key="cId">
-                      <td class="py-2 px-3 font-medium text-ink whitespace-nowrap">
+                    <tr v-for="colorGroup in effectiveColorGroups" :key="colorGroup.key">
+                      <td class="py-2 px-3 font-medium text-ink whitespace-nowrap sticky left-0 bg-surface-card">
                         <div class="flex items-center gap-1.5">
                           <span
-                            v-if="rawColors.find(c => c.id === cId)?.hex_code"
+                            v-if="colorGroup.hex"
                             class="inline-block w-2.5 h-2.5 rounded-full border border-border-subtle shrink-0"
-                            :style="{ background: rawColors.find(c => c.id === cId)?.hex_code || undefined }"
+                            :style="{ background: colorGroup.hex }"
                           />
-                          <span>{{ rawColors.find(c => c.id === cId)?.name }}</span>
+                          <span>{{ colorGroup.name }}</span>
                         </div>
                       </td>
-                      <td v-for="sId in selectedSizes" :key="sId" class="py-2 px-3 text-center">
+                      <td v-for="sizeGroup in effectiveSizeGroups" :key="sizeGroup.key" class="py-2 px-3 text-center">
                         <div class="inline-flex items-center gap-1.5">
                           <input
                             type="checkbox"
-                            v-model="getRowOverride(`${cId}::${sId}`).included"
+                            v-model="getRowOverride(`${colorGroup.key}::${sizeGroup.key}`).included"
                             class="h-4 w-4 rounded border-border-default text-ink cursor-pointer"
-                            :aria-label="`${rawColors.find(c => c.id === cId)?.name} in size ${rawSizes.find(s => s.id === sId)?.name}`"
+                            :aria-label="`${colorGroup.name} in size ${sizeGroup.name}`"
                           />
                           <input
-                            v-model="getRowOverride(`${cId}::${sId}`).initial_stock"
+                            v-model="getRowOverride(`${colorGroup.key}::${sizeGroup.key}`).initial_stock"
                             type="number"
                             min="0"
                             step="1"
                             placeholder="Qty"
-                            :disabled="!getRowOverride(`${cId}::${sId}`).included"
-                            :aria-label="`Stock for ${rawColors.find(c => c.id === cId)?.name} size ${rawSizes.find(s => s.id === sId)?.name}`"
+                            :disabled="!getRowOverride(`${colorGroup.key}::${sizeGroup.key}`).included"
+                            :aria-label="`Stock for ${colorGroup.name} size ${sizeGroup.name}`"
                             class="h-7 w-16 rounded-md border border-border-subtle bg-surface-card px-2 text-xs mono text-ink disabled:opacity-40 disabled:cursor-not-allowed"
                           />
                         </div>
                       </td>
+                      <td class="py-2 px-3 text-right whitespace-nowrap mono font-medium text-ink">
+                        {{ getColorStockSubtotal(colorGroup.id) }}
+                      </td>
                       <td class="py-2 px-3 text-right whitespace-nowrap">
-                        <button type="button" class="underline text-ink-secondary hover:text-ink mr-2" @click="setColorSizesIncluded(cId, true)">All</button>
-                        <button type="button" class="underline text-ink-secondary hover:text-ink" @click="setColorSizesIncluded(cId, false)">None</button>
+                        <button type="button" class="underline text-ink-secondary hover:text-ink mr-2" @click="setColorSizesIncluded(colorGroup.id, true)">All</button>
+                        <button type="button" class="underline text-ink-secondary hover:text-ink" @click="setColorSizesIncluded(colorGroup.id, false)">None</button>
                       </td>
                     </tr>
                   </tbody>
@@ -416,103 +500,106 @@
               </div>
             </div>
 
-            <!-- Variant Matrix Table -->
-            <div v-if="multiGridRows.length > 0" class="rounded-lg border border-border-subtle overflow-hidden">
-              <div class="max-h-96 overflow-x-auto overflow-y-auto">
-                <table class="w-full text-left border-collapse text-xs">
-                  <thead class="bg-surface-inset border-b border-border-subtle text-ink-secondary sticky top-0 z-10">
-                    <tr>
-                      <th class="py-2 px-2.5 font-medium w-10 text-center">Inc.</th>
-                      <th class="py-2 px-2.5 font-medium">Color</th>
-                      <th class="py-2 px-2.5 font-medium">Size</th>
-                      <th class="py-2 px-2.5 font-medium min-w-[165px]">SKU</th>
-                      <th class="py-2 px-2.5 font-medium w-28">Cost Price</th>
-                      <th class="py-2 px-2.5 font-medium w-28">Selling Price</th>
-                      <th class="py-2 px-2.5 font-medium w-28">Opening Stock</th>
-                      <th class="py-2 px-2.5 font-medium min-w-[190px]">Barcode (Code 128)</th>
-                      <th class="py-2 px-2.5 font-medium w-36">Variant Image</th>
-                      <th class="py-2 px-2.5 font-medium w-28">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-border-subtle">
-                    <tr
-                      v-for="row in multiGridRows"
-                      :key="row.key"
-                      class="bg-surface-card transition-opacity"
-                      :class="!row.override.included ? 'opacity-45' : ''"
-                    >
-                      <td class="py-1.5 px-2.5 text-center">
+            <!-- STEP 4: Variant Matrix Details (Responsive Mobile Cards + Desktop Table) -->
+            <div v-if="multiGridRows.length > 0" class="rounded-lg border border-border-subtle bg-surface-card overflow-hidden">
+              <button
+                type="button"
+                class="w-full px-3 py-2.5 bg-surface-inset border-b border-border-subtle flex items-center justify-between gap-2 text-left hover:bg-surface-hover transition-colors"
+                @click="showAdvancedMatrix = !showAdvancedMatrix"
+              >
+                <div class="flex items-center gap-2 min-w-0">
+                  <UIcon
+                    :name="showAdvancedMatrix ? 'i-heroicons-chevron-down' : 'i-heroicons-chevron-right'"
+                    class="w-4 h-4 text-ink-secondary shrink-0"
+                  />
+                  <span class="text-xs font-semibold text-ink uppercase tracking-wider truncate">
+                    4. Variant SKU, Price &amp; Barcode Details ({{ includedMatrixRows.length }} active)
+                  </span>
+                </div>
+                <span class="text-xs text-ink-secondary shrink-0">
+                  {{ showAdvancedMatrix ? 'Hide details' : 'Customize SKUs / Barcodes' }}
+                </span>
+              </button>
+
+              <template v-if="showAdvancedMatrix">
+                <!-- MOBILE VIEW (< md): Responsive Per-Variant Cards (No Horizontal Scroll) -->
+                <div class="md:hidden divide-y divide-border-subtle max-h-[480px] overflow-y-auto">
+                  <div
+                    v-for="row in multiGridRows"
+                    :key="`mob-${row.key}`"
+                    class="p-3 flex flex-col gap-2.5 transition-opacity"
+                    :class="!row.override.included ? 'opacity-45 bg-surface-inset' : 'bg-surface-card'"
+                  >
+                    <div class="flex items-center justify-between gap-2">
+                      <label class="inline-flex items-center gap-2 text-xs font-semibold text-ink cursor-pointer">
                         <input
                           type="checkbox"
                           v-model="row.override.included"
                           class="h-4 w-4 rounded border-border-default text-ink cursor-pointer"
-                          :aria-label="`Include ${row.colorName} ${row.sizeName}`"
                         />
-                      </td>
-                      <td class="py-1.5 px-2.5 font-medium text-ink whitespace-nowrap">
-                        <div class="flex items-center gap-1.5">
-                          <span
-                            v-if="row.colorHex"
-                            class="inline-block w-2.5 h-2.5 rounded-full border border-border-subtle shrink-0"
-                            :style="{ background: row.colorHex }"
-                          />
-                          <span>{{ row.colorName }}</span>
-                        </div>
-                      </td>
-                      <td class="py-1.5 px-2.5 font-medium text-ink whitespace-nowrap">
-                        {{ row.sizeName }}
-                      </td>
-                      <td class="py-1.5 px-2.5">
-                        <AppInput
-                          :id="`sku-${row.key}`"
-                          v-model="row.override.sku"
-                          :placeholder="row.previewSku"
-                          mono
+                        <span
+                          v-if="row.colorHex"
+                          class="inline-block w-3 h-3 rounded-full border border-border-subtle shrink-0"
+                          :style="{ background: row.colorHex }"
                         />
-                      </td>
-                      <td class="py-1.5 px-2.5">
-                        <AppInput
-                          :id="`cost-${row.key}`"
-                          v-model="row.override.cost_price"
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          :placeholder="String(initialVariant.cost_price || '0.00')"
-                          mono
-                        />
-                      </td>
-                      <td class="py-1.5 px-2.5">
-                        <AppInput
-                          :id="`sell-${row.key}`"
-                          v-model="row.override.selling_price"
-                          type="number"
-                          min="0.01"
-                          step="0.01"
-                          :placeholder="String(initialVariant.selling_price || '0.00')"
-                          mono
-                        />
-                      </td>
-                      <td class="py-1.5 px-2.5">
-                        <AppInput
-                          :id="`stock-${row.key}`"
-                          v-model="row.override.initial_stock"
-                          type="number"
-                          min="0"
-                          step="1"
-                          placeholder="0"
-                          mono
-                        />
-                      </td>
-                      <td class="py-1.5 px-2.5">
+                        <span>{{ row.colorName }} · {{ row.sizeName }}</span>
+                      </label>
+                      <code class="text-[11px] mono text-ink-secondary bg-surface-inset px-1.5 py-0.5 rounded border border-border-subtle">
+                        {{ row.override.sku || row.previewSku }}
+                      </code>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-2">
+                      <AppInput
+                        :id="`mob-stock-${row.key}`"
+                        v-model="row.override.initial_stock"
+                        type="number"
+                        min="0"
+                        step="1"
+                        label="Stock Qty"
+                        placeholder="0"
+                        mono
+                      />
+                      <AppInput
+                        :id="`mob-cost-${row.key}`"
+                        v-model="row.override.cost_price"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        label="Cost ($)"
+                        :placeholder="String(initialVariant.cost_price || '0.00')"
+                        mono
+                      />
+                      <AppInput
+                        :id="`mob-sell-${row.key}`"
+                        v-model="row.override.selling_price"
+                        type="number"
+                        min="0.01"
+                        step="0.01"
+                        label="Sell ($)"
+                        :placeholder="String(initialVariant.selling_price || '0.00')"
+                        mono
+                      />
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <AppInput
+                        :id="`mob-sku-${row.key}`"
+                        v-model="row.override.sku"
+                        label="Custom SKU (Optional)"
+                        :placeholder="row.previewSku"
+                        mono
+                      />
+                      <div class="flex flex-col gap-1">
+                        <label :for="`mob-bc-${row.key}`" class="text-xs text-ink-secondary">Barcode (Code 128)</label>
                         <div class="flex items-center gap-1">
                           <AppInput
-                            :id="`bc-${row.key}`"
+                            :id="`mob-bc-${row.key}`"
                             v-model="row.override.barcode"
-                            class="flex-1"
+                            class="flex-1 min-w-0"
                             placeholder="Auto Code-128"
                             mono
                             clearable
-                            data-barcode-scanner-target="true"
                             :error="row.override.error"
                             @blur="verifyRowBarcode(row.key)"
                           />
@@ -525,26 +612,140 @@
                             @click="openScannerForRow(row.key)"
                           />
                         </div>
-                      </td>
-                      <td class="py-1.5 px-2.5">
-                        <AppSelect
-                          :id="`img-${row.key}`"
-                          v-model="row.override.image_url"
-                          :options="galleryImageOptions"
-                          placeholder="Default"
-                        />
-                      </td>
-                      <td class="py-1.5 px-2.5">
-                        <AppSelect
-                          :id="`st-${row.key}`"
-                          v-model="row.override.status_code"
-                          :options="variantStatusOptions"
-                        />
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- DESKTOP VIEW (>= md): Full Sticky-Header Matrix Table -->
+                <div class="hidden md:block max-h-96 overflow-x-auto overflow-y-auto">
+                  <table class="w-full text-left border-collapse text-xs">
+                    <thead class="bg-surface-inset border-b border-border-subtle text-ink-secondary sticky top-0 z-10">
+                      <tr>
+                        <th class="py-2 px-2.5 font-medium w-10 text-center">Inc.</th>
+                        <th class="py-2 px-2.5 font-medium">Color</th>
+                        <th class="py-2 px-2.5 font-medium">Size</th>
+                        <th class="py-2 px-2.5 font-medium min-w-[165px]">SKU</th>
+                        <th class="py-2 px-2.5 font-medium w-28">Cost Price</th>
+                        <th class="py-2 px-2.5 font-medium w-28">Selling Price</th>
+                        <th class="py-2 px-2.5 font-medium w-28">Opening Stock</th>
+                        <th class="py-2 px-2.5 font-medium min-w-[190px]">Barcode (Code 128)</th>
+                        <th class="py-2 px-2.5 font-medium w-36">Variant Image</th>
+                        <th class="py-2 px-2.5 font-medium w-28">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-border-subtle">
+                      <tr
+                        v-for="row in multiGridRows"
+                        :key="row.key"
+                        class="bg-surface-card transition-opacity"
+                        :class="!row.override.included ? 'opacity-45' : ''"
+                      >
+                        <td class="py-1.5 px-2.5 text-center">
+                          <input
+                            type="checkbox"
+                            v-model="row.override.included"
+                            class="h-4 w-4 rounded border-border-default text-ink cursor-pointer"
+                            :aria-label="`Include ${row.colorName} ${row.sizeName}`"
+                          />
+                        </td>
+                        <td class="py-1.5 px-2.5 font-medium text-ink whitespace-nowrap">
+                          <div class="flex items-center gap-1.5">
+                            <span
+                              v-if="row.colorHex"
+                              class="inline-block w-2.5 h-2.5 rounded-full border border-border-subtle shrink-0"
+                              :style="{ background: row.colorHex }"
+                            />
+                            <span>{{ row.colorName }}</span>
+                          </div>
+                        </td>
+                        <td class="py-1.5 px-2.5 font-medium text-ink whitespace-nowrap">
+                          {{ row.sizeName }}
+                        </td>
+                        <td class="py-1.5 px-2.5">
+                          <AppInput
+                            :id="`sku-${row.key}`"
+                            v-model="row.override.sku"
+                            :placeholder="row.previewSku"
+                            mono
+                          />
+                        </td>
+                        <td class="py-1.5 px-2.5">
+                          <AppInput
+                            :id="`cost-${row.key}`"
+                            v-model="row.override.cost_price"
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            :placeholder="String(initialVariant.cost_price || '0.00')"
+                            mono
+                          />
+                        </td>
+                        <td class="py-1.5 px-2.5">
+                          <AppInput
+                            :id="`sell-${row.key}`"
+                            v-model="row.override.selling_price"
+                            type="number"
+                            min="0.01"
+                            step="0.01"
+                            :placeholder="String(initialVariant.selling_price || '0.00')"
+                            mono
+                          />
+                        </td>
+                        <td class="py-1.5 px-2.5">
+                          <AppInput
+                            :id="`stock-${row.key}`"
+                            v-model="row.override.initial_stock"
+                            type="number"
+                            min="0"
+                            step="1"
+                            placeholder="0"
+                            mono
+                          />
+                        </td>
+                        <td class="py-1.5 px-2.5">
+                          <div class="flex items-center gap-1">
+                            <AppInput
+                              :id="`bc-${row.key}`"
+                              v-model="row.override.barcode"
+                              class="flex-1"
+                              placeholder="Auto Code-128"
+                              mono
+                              clearable
+                              data-barcode-scanner-target="true"
+                              :error="row.override.error"
+                              @blur="verifyRowBarcode(row.key)"
+                            />
+                            <AppButton
+                              type="button"
+                              size="xs"
+                              variant="default"
+                              icon="i-heroicons-qr-code"
+                              aria-label="Scan barcode"
+                              @click="openScannerForRow(row.key)"
+                            />
+                          </div>
+                        </td>
+                        <td class="py-1.5 px-2.5">
+                          <AppSelect
+                            :id="`img-${row.key}`"
+                            v-model="row.override.image_url"
+                            :options="galleryImageOptions"
+                            placeholder="Default"
+                          />
+                        </td>
+                        <td class="py-1.5 px-2.5">
+                          <AppSelect
+                            :id="`st-${row.key}`"
+                            v-model="row.override.status_code"
+                            :options="variantStatusOptions"
+                          />
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </template>
             </div>
           </template>
         </div>
@@ -598,6 +799,7 @@
               variant="default"
               icon="i-heroicons-arrow-path"
               label="Apply Default Prices to Matrix"
+              class="w-full sm:w-auto justify-center"
               @click="applyDefaultPricesToMatrix"
             />
           </div>
@@ -605,6 +807,18 @@
       </AppCard>
 
       <template #actions>
+        <div
+          v-if="includeInitialVariant"
+          class="rounded-lg border border-border-subtle bg-surface-inset px-3 py-2 text-xs text-ink-secondary flex items-center justify-between gap-2"
+        >
+          <span>
+            Ready: <strong class="text-ink">{{ variantMode === 'multi' ? includedMatrixRows.length : 1 }}</strong>
+            variant{{ (variantMode === 'multi' ? includedMatrixRows.length : 1) === 1 ? '' : 's' }}
+          </span>
+          <span class="mono">
+            Stock: <strong class="text-ink">{{ variantMode === 'multi' ? totalMatrixStock : (Math.max(0, Math.floor(Number(initialVariant.initial_stock) || 0))) }}</strong> pcs
+          </span>
+        </div>
         <AppButton
           v-if="includeInitialVariant"
           type="button"
@@ -866,6 +1080,67 @@ const multiGridRows = computed(() => {
 
 const includedMatrixRows = computed(() => multiGridRows.value.filter(r => r.override.included))
 
+const showAdvancedMatrix = ref(true)
+
+const effectiveColorGroups = computed(() => {
+  if (selectedColors.value.length > 0) {
+    return selectedColors.value.map((cId) => {
+      const c = rawColors.value.find(item => item.id === cId)
+      return {
+        id: cId as string | null,
+        key: cId,
+        name: c?.name || 'Color',
+        hex: c?.hex_code || undefined,
+      }
+    })
+  }
+  return [{
+    id: null as string | null,
+    key: 'null',
+    name: 'Standard Color',
+    hex: undefined,
+  }]
+})
+
+const effectiveSizeGroups = computed(() => {
+  if (selectedSizes.value.length > 0) {
+    return selectedSizes.value.map((sId) => {
+      const s = rawSizes.value.find(item => item.id === sId)
+      return {
+        id: sId as string | null,
+        key: sId,
+        name: s?.name || 'Size',
+      }
+    })
+  }
+  return [{
+    id: null as string | null,
+    key: 'null',
+    name: 'Free Size',
+  }]
+})
+
+const totalMatrixStock = computed(() => {
+  return includedMatrixRows.value.reduce((sum, r) => {
+    const qty = Math.max(0, Math.floor(Number(r.override.initial_stock) || 0))
+    return sum + qty
+  }, 0)
+})
+
+function getColorActiveCount(colorId: string | null): number {
+  const cKey = colorId ?? 'null'
+  return effectiveSizeGroups.value.filter(s => getRowOverride(`${cKey}::${s.key}`).included).length
+}
+
+function getColorStockSubtotal(colorId: string | null): number {
+  const cKey = colorId ?? 'null'
+  return effectiveSizeGroups.value.reduce((sum, s) => {
+    const ov = getRowOverride(`${cKey}::${s.key}`)
+    if (!ov.included) return sum
+    return sum + Math.max(0, Math.floor(Number(ov.initial_stock) || 0))
+  }, 0)
+}
+
 function applyDefaultPricesToMatrix() {
   for (const row of multiGridRows.value) {
     row.override.cost_price = initialVariant.cost_price
@@ -891,9 +1166,10 @@ function applyBulkStock() {
   addToast({ type: 'info', title: 'Opening stock set', message: `${qty} unit(s) applied to ${includedMatrixRows.value.length} variant(s).` })
 }
 
-function setColorSizesIncluded(colorId: string, included: boolean) {
-  for (const sId of selectedSizes.value) {
-    getRowOverride(`${colorId}::${sId}`).included = included
+function setColorSizesIncluded(colorId: string | null, included: boolean) {
+  const cKey = colorId ?? 'null'
+  for (const s of effectiveSizeGroups.value) {
+    getRowOverride(`${cKey}::${s.key}`).included = included
   }
 }
 
