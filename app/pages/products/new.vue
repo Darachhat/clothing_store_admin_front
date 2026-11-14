@@ -23,63 +23,13 @@
       :submitting="isSubmitting && !printAfterCreate"
       @submit="submitProduct(false)"
     >
-      <!-- SECTION 5: PRICING -->
-      <AppCard
-        title="Section 5 — Pricing"
-        subtitle="Set default cost and selling prices (USD). Individual variants can override these prices in the matrix below."
-      >
-        <template #actions>
-          <span class="inline-flex items-center gap-1 rounded-md border border-border-subtle bg-surface-inset px-2 py-0.5 text-xs font-medium text-ink-secondary">
-            <UIcon name="i-heroicons-currency-dollar" class="w-3.5 h-3.5" />
-            <span>Base Currency: USD</span>
-          </span>
-        </template>
-
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
-          <AppInput
-            id="default-cost-price"
-            v-model="initialVariant.cost_price"
-            type="number"
-            label="Default Cost Price (USD)"
-            step="0.01"
-            min="0"
-            placeholder="5.00"
-            mono
-            :error="costError"
-          />
-          <AppInput
-            id="default-selling-price"
-            v-model="initialVariant.selling_price"
-            type="number"
-            label="Default Selling Price (USD)"
-            step="0.01"
-            min="0.01"
-            placeholder="12.00"
-            mono
-            required
-            :error="priceError"
-          />
-          <div class="flex items-center gap-2">
-            <AppButton
-              v-if="variantMode === 'multi' && multiGridRows.length > 0"
-              type="button"
-              size="sm"
-              variant="default"
-              icon="i-heroicons-arrow-Path"
-              label="Apply Default Prices to Matrix"
-              @click="applyDefaultPricesToMatrix"
-            />
-          </div>
-        </div>
-      </AppCard>
-
       <!-- SECTION 4: VARIANT GENERATOR -->
       <AppCard
         title="Section 4 — Variant Generator"
-        subtitle="Select available Colors and Sizes to automatically generate combinations, preview SKUs, and customize per-variant prices or barcodes."
+        subtitle="Select multiple Colors and Sizes to automatically generate every (Color × Size) combination, each with its own unique SKU, Barcode, and QR Code."
       >
-        <template #actions>
-          <div class="flex items-center gap-3">
+        <template #header-right>
+          <div class="flex flex-wrap items-center gap-3">
             <div v-if="includeInitialVariant" class="inline-flex rounded-lg border border-border-subtle bg-surface-inset p-0.5 text-xs">
               <button
                 type="button"
@@ -209,14 +159,49 @@
           <template v-else>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <!-- Colors Selector -->
-              <div class="rounded-lg border border-border-subtle bg-surface-card p-3">
-                <div class="flex items-center justify-between mb-2">
+              <div class="rounded-lg border border-border-subtle bg-surface-card p-3 flex flex-col gap-2.5">
+                <div class="flex items-center justify-between">
                   <span class="text-xs font-semibold text-ink uppercase tracking-wider">Available Colors ({{ selectedColors.length }})</span>
-                  <div class="text-xs text-ink-secondary space-x-2">
+                  <div class="flex items-center gap-2 text-xs text-ink-secondary">
                     <button type="button" class="underline hover:text-ink" @click="selectedColors = rawColors.map(c => c.id)">Select All</button>
                     <button type="button" class="underline hover:text-ink" @click="selectedColors = []">Clear</button>
+                    <button
+                      type="button"
+                      class="inline-flex items-center gap-0.5 font-medium text-ink hover:underline"
+                      @click="showNewColorInput = !showNewColorInput"
+                    >
+                      <UIcon name="i-heroicons-plus" class="w-3.5 h-3.5" />
+                      <span>New Color</span>
+                    </button>
                   </div>
                 </div>
+
+                <!-- Inline Quick-Create Color -->
+                <div v-if="showNewColorInput" class="flex items-center gap-1.5 rounded-md border border-border-subtle bg-surface-inset p-2">
+                  <input
+                    v-model="newColorHex"
+                    type="color"
+                    class="w-7 h-7 rounded border border-border-subtle cursor-pointer bg-transparent p-0 shrink-0"
+                    title="Pick color swatch"
+                  />
+                  <AppInput
+                    id="quick-new-color-name"
+                    v-model="newColorName"
+                    class="flex-1"
+                    placeholder="Color name (e.g. Black, Navy)"
+                    @keydown.enter.prevent="handleQuickCreateColor"
+                  />
+                  <AppButton
+                    type="button"
+                    size="xs"
+                    variant="primary"
+                    icon="i-heroicons-check"
+                    label="Add"
+                    :loading="creatingColor"
+                    @click="handleQuickCreateColor"
+                  />
+                </div>
+
                 <div class="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto">
                   <button
                     v-for="c in rawColors"
@@ -235,19 +220,50 @@
                     />
                     <span>{{ c.name }}</span>
                   </button>
-                  <p v-if="rawColors.length === 0" class="text-xs text-ink-tertiary italic m-0">No colors configured.</p>
+                  <p v-if="rawColors.length === 0" class="text-xs text-ink-tertiary italic m-0">
+                    No colors configured yet. Click "+ New Color" above to add one.
+                  </p>
                 </div>
               </div>
 
               <!-- Sizes Selector -->
-              <div class="rounded-lg border border-border-subtle bg-surface-card p-3">
-                <div class="flex items-center justify-between mb-2">
+              <div class="rounded-lg border border-border-subtle bg-surface-card p-3 flex flex-col gap-2.5">
+                <div class="flex items-center justify-between">
                   <span class="text-xs font-semibold text-ink uppercase tracking-wider">Available Sizes ({{ selectedSizes.length }})</span>
-                  <div class="text-xs text-ink-secondary space-x-2">
+                  <div class="flex items-center gap-2 text-xs text-ink-secondary">
                     <button type="button" class="underline hover:text-ink" @click="selectedSizes = rawSizes.map(s => s.id)">Select All</button>
                     <button type="button" class="underline hover:text-ink" @click="selectedSizes = []">Clear</button>
+                    <button
+                      type="button"
+                      class="inline-flex items-center gap-0.5 font-medium text-ink hover:underline"
+                      @click="showNewSizeInput = !showNewSizeInput"
+                    >
+                      <UIcon name="i-heroicons-plus" class="w-3.5 h-3.5" />
+                      <span>New Size</span>
+                    </button>
                   </div>
                 </div>
+
+                <!-- Inline Quick-Create Size -->
+                <div v-if="showNewSizeInput" class="flex items-center gap-1.5 rounded-md border border-border-subtle bg-surface-inset p-2">
+                  <AppInput
+                    id="quick-new-size-name"
+                    v-model="newSizeName"
+                    class="flex-1"
+                    placeholder="Size name (e.g. S, M, L, XL, XXL)"
+                    @keydown.enter.prevent="handleQuickCreateSize"
+                  />
+                  <AppButton
+                    type="button"
+                    size="xs"
+                    variant="primary"
+                    icon="i-heroicons-check"
+                    label="Add"
+                    :loading="creatingSize"
+                    @click="handleQuickCreateSize"
+                  />
+                </div>
+
                 <div class="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto">
                   <button
                     v-for="s in rawSizes"
@@ -261,21 +277,24 @@
                   >
                     <span>{{ s.name }}</span>
                   </button>
-                  <p v-if="rawSizes.length === 0" class="text-xs text-ink-tertiary italic m-0">No sizes configured.</p>
+                  <p v-if="rawSizes.length === 0" class="text-xs text-ink-tertiary italic m-0">
+                    No sizes configured yet. Click "+ New Size" above to add one.
+                  </p>
                 </div>
               </div>
             </div>
 
             <!-- Matrix Summary & Bulk Controls -->
             <div class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border-subtle bg-surface-inset px-3 py-2 text-xs">
-              <div class="flex items-center gap-2 text-ink-secondary">
+              <div class="flex flex-wrap items-center gap-2 text-ink-secondary">
                 <span>
                   Combinations: <strong class="text-ink">{{ includedMatrixRows.length }}</strong> active of {{ multiGridRows.length }} total
+                  ({{ selectedColors.length || 1 }} Color{{ (selectedColors.length || 1) === 1 ? '' : 's' }} × {{ selectedSizes.length || 1 }} Size{{ (selectedSizes.length || 1) === 1 ? '' : 's' }})
                 </span>
                 <span>·</span>
                 <span>SKU Pattern: <code class="mono text-ink">{PRODUCT_CODE}-{COLOR}-{SIZE}</code></span>
               </div>
-              <div class="flex flex-wrap items-center gap-2">
+              <div class="flex flex-wrap items-center gap-1.5">
                 <AppButton
                   type="button"
                   size="xs"
@@ -429,6 +448,56 @@
         </p>
       </AppCard>
 
+      <!-- SECTION 5: PRICING -->
+      <AppCard
+        title="Section 5 — Pricing"
+        subtitle="Set default cost and selling prices (USD). Individual variants can override these prices in the matrix above."
+      >
+        <template #header-right>
+          <span class="inline-flex items-center gap-1 rounded-md border border-border-subtle bg-surface-inset px-2 py-0.5 text-xs font-medium text-ink-secondary">
+            <UIcon name="i-heroicons-currency-dollar" class="w-3.5 h-3.5" />
+            <span>Base Currency: USD</span>
+          </span>
+        </template>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
+          <AppInput
+            id="default-cost-price"
+            v-model="initialVariant.cost_price"
+            type="number"
+            label="Default Cost Price (USD)"
+            step="0.01"
+            min="0"
+            placeholder="5.00"
+            mono
+            :error="costError"
+          />
+          <AppInput
+            id="default-selling-price"
+            v-model="initialVariant.selling_price"
+            type="number"
+            label="Default Selling Price (USD)"
+            step="0.01"
+            min="0.01"
+            placeholder="12.00"
+            mono
+            required
+            :error="priceError"
+          />
+          <div class="flex items-center gap-2">
+            <AppButton
+              v-if="variantMode === 'multi' && multiGridRows.length > 0"
+              type="button"
+              size="sm"
+              variant="default"
+              icon="i-heroicons-arrow-path"
+              label="Apply Default Prices to Matrix"
+              @click="applyDefaultPricesToMatrix"
+            />
+          </div>
+        </div>
+      </AppCard>
+
       <template #actions>
         <AppButton
           v-if="includeInitialVariant"
@@ -461,7 +530,7 @@ definePageMeta({ middleware: ['auth'] })
 useHead({ title: 'New Product — KVC Clothing Store Admin' })
 
 const { createProduct, createVariantsBulk, scanCode } = useProductApi()
-const { listColors, listSizes } = useCatalogApi()
+const { listColors, listSizes, createColor, createSize } = useCatalogApi()
 const { addToast } = useAppToast()
 const router = useRouter()
 
@@ -481,6 +550,53 @@ const sizeOptions = ref<SelectOption[]>([])
 
 const selectedColors = ref<string[]>([])
 const selectedSizes = ref<string[]>([])
+
+// Quick-create Color / Size inline (so variants can be generated without leaving the page)
+const showNewColorInput = ref(false)
+const newColorName = ref('')
+const newColorHex = ref('#000000')
+const creatingColor = ref(false)
+const showNewSizeInput = ref(false)
+const newSizeName = ref('')
+const creatingSize = ref(false)
+
+async function handleQuickCreateColor() {
+  const name = newColorName.value.trim()
+  if (!name || creatingColor.value) return
+  creatingColor.value = true
+  try {
+    const created = await createColor({ name, hex_code: newColorHex.value }) as Color
+    rawColors.value.push(created)
+    colorOptions.value.push({ label: created.name, value: created.id })
+    selectedColors.value.push(created.id)
+    newColorName.value = ''
+    showNewColorInput.value = false
+    addToast({ type: 'success', title: 'Color added', message: `${created.name} is now selected.` })
+  } catch (e: any) {
+    addToast({ type: 'error', title: 'Could not add color', message: e?.data?.detail ?? String(e) })
+  } finally {
+    creatingColor.value = false
+  }
+}
+
+async function handleQuickCreateSize() {
+  const name = newSizeName.value.trim()
+  if (!name || creatingSize.value) return
+  creatingSize.value = true
+  try {
+    const created = await createSize({ name, type: 'LETTER', sort_order: rawSizes.value.length + 1 }) as Size
+    rawSizes.value.push(created)
+    sizeOptions.value.push({ label: created.name, value: created.id })
+    selectedSizes.value.push(created.id)
+    newSizeName.value = ''
+    showNewSizeInput.value = false
+    addToast({ type: 'success', title: 'Size added', message: `${created.name} is now selected.` })
+  } catch (e: any) {
+    addToast({ type: 'error', title: 'Could not add size', message: e?.data?.detail ?? String(e) })
+  } finally {
+    creatingSize.value = false
+  }
+}
 
 const variantStatusOptions: SelectOption[] = [
   { label: 'Active', value: 'ACTIVE' },

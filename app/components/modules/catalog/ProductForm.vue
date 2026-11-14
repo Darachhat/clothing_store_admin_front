@@ -109,7 +109,7 @@
         title="Section 3 — Product Attributes"
         subtitle="Configurable garment attributes loaded dynamically from the catalog schema."
       >
-        <template #actions>
+        <template #header-right>
           <AppButton
             type="button"
             size="xs"

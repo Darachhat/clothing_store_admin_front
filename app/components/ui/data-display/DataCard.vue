@@ -1,8 +1,8 @@
 <template>
   <div class="bg-white border border-subtle rounded-lg overflow-hidden shadow-card">
     <div
-      v-if="title || subtitle || $slots.header || $slots['header-right']"
-      class="flex items-center justify-between gap-3 px-4 py-3 border-b border-subtle"
+      v-if="title || subtitle || $slots.header || $slots['header-right'] || $slots.actions"
+      class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-subtle"
     >
       <slot name="header">
         <div class="flex flex-col gap-0.5 min-w-0">
@@ -13,8 +13,9 @@
           <p v-if="subtitle" class="text-xs text-ink-secondary truncate">{{ subtitle }}</p>
         </div>
       </slot>
-      <div v-if="$slots['header-right']" class="flex items-center gap-2 flex-shrink-0">
+      <div v-if="$slots['header-right'] || $slots.actions" class="flex flex-wrap items-center gap-2 flex-shrink-0">
         <slot name="header-right" />
+        <slot name="actions" />
       </div>
     </div>
     <div :class="noPad ? '' : 'p-4'">
