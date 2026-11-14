@@ -81,6 +81,16 @@
                 :placeholder="singlePreviewSku"
                 mono
               />
+              <AppInput
+                id="single-variant-stock"
+                v-model="initialVariant.initial_stock"
+                type="number"
+                min="0"
+                step="1"
+                label="Opening Stock"
+                placeholder="0"
+                mono
+              />
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -295,6 +305,26 @@
                 <span>SKU Pattern: <code class="mono text-ink">{PRODUCT_CODE}-{COLOR}-{SIZE}</code></span>
               </div>
               <div class="flex flex-wrap items-center gap-1.5">
+                <div class="inline-flex items-center gap-1">
+                  <input
+                    v-model="bulkStock"
+                    type="number"
+                    min="0"
+                    step="1"
+                    placeholder="Qty"
+                    aria-label="Opening stock for all included variants"
+                    class="h-7 w-16 rounded-md border border-border-subtle bg-surface-card px-2 text-xs mono text-ink"
+                    @keydown.enter.prevent="applyBulkStock"
+                  />
+                  <AppButton
+                    type="button"
+                    size="xs"
+                    variant="default"
+                    icon="i-heroicons-archive-box"
+                    label="Set All Stock"
+                    @click="applyBulkStock"
+                  />
+                </div>
                 <AppButton
                   type="button"
                   size="xs"
@@ -386,6 +416,7 @@
                       <th class="py-2 px-2.5 font-medium min-w-[165px]">SKU</th>
                       <th class="py-2 px-2.5 font-medium w-28">Cost Price</th>
                       <th class="py-2 px-2.5 font-medium w-28">Selling Price</th>
+                      <th class="py-2 px-2.5 font-medium w-28">Opening Stock</th>
                       <th class="py-2 px-2.5 font-medium min-w-[190px]">Barcode (Code 128)</th>
                       <th class="py-2 px-2.5 font-medium w-36">Variant Image</th>
                       <th class="py-2 px-2.5 font-medium w-28">Status</th>
@@ -446,6 +477,17 @@
                           min="0.01"
                           step="0.01"
                           :placeholder="String(initialVariant.selling_price || '0.00')"
+                          mono
+                        />
+                      </td>
+                      <td class="py-1.5 px-2.5">
+                        <AppInput
+                          :id="`stock-${row.key}`"
+                          v-model="row.override.initial_stock"
+                          type="number"
+                          min="0"
+                          step="1"
+                          placeholder="0"
                           mono
                         />
                       </td>
@@ -677,6 +719,7 @@ const initialVariant = reactive({
   sku: '',
   barcode: '',
   image_url: '',
+  initial_stock: '' as string | number,
 })
 
 const galleryImageOptions = computed<SelectOption[]>(() => {
@@ -750,6 +793,7 @@ interface RowOverride {
   sku: string
   cost_price: string | number
   selling_price: string | number
+  initial_stock: string | number
   barcode: string
   image_url: string
   status_code: string
@@ -764,6 +808,7 @@ function getRowOverride(key: string): RowOverride {
       sku: '',
       cost_price: '',
       selling_price: '',
+      initial_stock: '',
       barcode: '',
       image_url: '',
       status_code: 'ACTIVE',
@@ -821,6 +866,17 @@ function setAllMatrixIncluded(included: boolean) {
   for (const row of multiGridRows.value) {
     row.override.included = included
   }
+}
+
+const bulkStock = ref<string | number>('')
+
+function applyBulkStock() {
+  const qty = Math.max(0, Math.floor(Number(bulkStock.value)))
+  if (!Number.isFinite(qty) || bulkStock.value === '') return
+  for (const row of includedMatrixRows.value) {
+    row.override.initial_stock = qty
+  }
+  addToast({ type: 'info', title: 'Opening stock set', message: `${qty} unit(s) applied to ${includedMatrixRows.value.length} variant(s).` })
 }
 
 function setColorSizesIncluded(colorId: string, included: boolean) {
@@ -1052,7 +1108,7 @@ async function submitProduct(shouldPrintSticker = false) {
         size_id: initialVariant.size_id || null,
         barcode: initialVariant.barcode?.trim() || null,
         image_url: initialVariant.image_url || null,
-        initial_stock: 0,
+        initial_stock: Math.max(0, Math.floor(Number(initialVariant.initial_stock) || 0)),
       }
     }
 
@@ -1076,7 +1132,7 @@ async function submitProduct(shouldPrintSticker = false) {
           barcode: r.override.barcode.trim() || null,
           image_url: r.override.image_url || null,
           status_code: r.override.status_code || 'ACTIVE',
-          initial_stock: 0,
+          initial_stock: Math.max(0, Math.floor(Number(r.override.initial_stock) || 0)),
         }
       })
       const bulkRes = await createVariantsBulk(res.id, {
