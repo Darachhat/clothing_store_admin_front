@@ -14,19 +14,105 @@
       </template>
     </AppPageHeader>
 
+    <!-- 3-STEP WIZARD BAR (No Long Page Scrolling) -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 rounded-lg border border-border-subtle bg-surface-card p-2">
+      <button
+        type="button"
+        class="flex items-center justify-between gap-2 rounded-md border px-3 py-2 text-left transition-colors"
+        :class="wizardStep === 1
+          ? 'bg-ink text-white border-border-default'
+          : 'bg-surface-inset text-ink border-border-subtle hover:bg-surface-hover'"
+        @click="goToStep(1)"
+      >
+        <div class="flex items-center gap-2 min-w-0">
+          <span
+            class="inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-semibold shrink-0 border"
+            :class="wizardStep === 1 ? 'bg-white text-ink border-border-subtle' : 'bg-surface-card text-ink border-border-subtle'"
+          >
+            1
+          </span>
+          <div class="min-w-0">
+            <div class="text-xs font-semibold truncate">Basic Info &amp; Pricing</div>
+            <div class="text-[11px] truncate opacity-80">
+              {{ form.name.trim() ? form.name.trim() : 'Name, category & default price' }}
+            </div>
+          </div>
+        </div>
+        <span class="text-[11px] mono px-1.5 py-0.5 rounded border border-border-subtle bg-surface-card text-ink shrink-0">
+          {{ sellingPrice > 0 ? `$${sellingPrice.toFixed(2)}` : 'Step 1' }}
+        </span>
+      </button>
+
+      <button
+        type="button"
+        class="flex items-center justify-between gap-2 rounded-md border px-3 py-2 text-left transition-colors"
+        :class="wizardStep === 2
+          ? 'bg-ink text-white border-border-default'
+          : 'bg-surface-inset text-ink border-border-subtle hover:bg-surface-hover'"
+        @click="goToStep(2)"
+      >
+        <div class="flex items-center gap-2 min-w-0">
+          <span
+            class="inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-semibold shrink-0 border"
+            :class="wizardStep === 2 ? 'bg-white text-ink border-border-subtle' : 'bg-surface-card text-ink border-border-subtle'"
+          >
+            2
+          </span>
+          <div class="min-w-0">
+            <div class="text-xs font-semibold truncate">Images &amp; Attributes</div>
+            <div class="text-[11px] truncate opacity-80">
+              Photos &amp; garment details
+            </div>
+          </div>
+        </div>
+        <span class="text-[11px] mono px-1.5 py-0.5 rounded border border-border-subtle bg-surface-card text-ink shrink-0">
+          {{ (form.images?.length || 0) }} img · {{ (form.attribute_value_ids?.length || 0) }} attr
+        </span>
+      </button>
+
+      <button
+        type="button"
+        class="flex items-center justify-between gap-2 rounded-md border px-3 py-2 text-left transition-colors"
+        :class="wizardStep === 3
+          ? 'bg-ink text-white border-border-default'
+          : 'bg-surface-inset text-ink border-border-subtle hover:bg-surface-hover'"
+        @click="goToStep(3)"
+      >
+        <div class="flex items-center gap-2 min-w-0">
+          <span
+            class="inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-semibold shrink-0 border"
+            :class="wizardStep === 3 ? 'bg-white text-ink border-border-subtle' : 'bg-surface-card text-ink border-border-subtle'"
+          >
+            3
+          </span>
+          <div class="min-w-0">
+            <div class="text-xs font-semibold truncate">Colors, Sizes &amp; Stock</div>
+            <div class="text-[11px] truncate opacity-80">
+              Add color → sizes → stock
+            </div>
+          </div>
+        </div>
+        <span class="text-[11px] mono px-1.5 py-0.5 rounded border border-border-subtle bg-surface-card text-ink shrink-0">
+          {{ variantMode === 'multi' ? `${includedMatrixRows.length} var · ${totalMatrixStock} pcs` : '1 var' }}
+        </span>
+      </button>
+    </div>
+
     <ProductForm
       ref="formRef"
       v-model="form"
+      wizard
+      :step="wizardStep"
       cancel-to="/products"
       submit-label="Create Product"
       :primary-submit="!includeInitialVariant"
       :submitting="isSubmitting && !printAfterCreate"
       @submit="submitProduct(false)"
     >
-      <!-- SECTION 4: VARIANT GENERATOR -->
+      <!-- STEP 3: COLORS, SIZES & STOCK GENERATOR -->
       <AppCard
-        title="Section 4 — Variant Generator"
-        subtitle="Select Colors and Sizes, tick which sizes each color has, and enter the opening stock quantity for each Color × Size."
+        title="Step 3 — Colors, Sizes & Opening Stock"
+        subtitle="Choose a color, pick its available sizes, enter the opening stock quantity, and save. Then add another color if needed."
       >
         <template #header-right>
           <div class="flex flex-wrap items-center gap-2 sm:gap-3">
@@ -772,58 +858,153 @@
         </p>
       </AppCard>
 
-      <!-- SECTION 5: PRICING -->
-      <AppCard
-        title="Section 5 — Pricing"
-        subtitle="Set default cost and selling prices (USD). Individual variants can override these prices in the matrix above."
-      >
-        <template #header-right>
-          <span class="inline-flex items-center gap-1 rounded-md border border-border-subtle bg-surface-inset px-2 py-0.5 text-xs font-medium text-ink-secondary">
-            <UIcon name="i-heroicons-currency-dollar" class="w-3.5 h-3.5" />
-            <span>Base Currency: USD</span>
-          </span>
-        </template>
+      <!-- WIZARD STEP 1 SIDEBAR: Default Pricing & Next Step Button -->
+      <template #step-1-side>
+        <AppCard
+          title="Default Pricing (USD)"
+          subtitle="Base cost and selling prices applied to variants."
+        >
+          <template #header-right>
+            <span class="inline-flex items-center gap-1 rounded-md border border-border-subtle bg-surface-inset px-2 py-0.5 text-xs font-medium text-ink-secondary">
+              <UIcon name="i-heroicons-currency-dollar" class="w-3.5 h-3.5" />
+              <span>USD</span>
+            </span>
+          </template>
 
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-end">
-          <AppInput
-            id="default-cost-price"
-            v-model="initialVariant.cost_price"
-            type="number"
-            label="Default Cost Price (USD)"
-            step="0.01"
-            min="0"
-            placeholder="5.00"
-            mono
-            :error="costError"
+          <div class="flex flex-col gap-3">
+            <AppInput
+              id="default-selling-price"
+              v-model="initialVariant.selling_price"
+              type="number"
+              label="Default Selling Price (USD)"
+              step="0.01"
+              min="0.01"
+              placeholder="12.00"
+              mono
+              required
+              :error="priceError"
+            />
+            <AppInput
+              id="default-cost-price"
+              v-model="initialVariant.cost_price"
+              type="number"
+              label="Default Cost Price (USD)"
+              step="0.01"
+              min="0"
+              placeholder="5.00"
+              mono
+              :error="costError"
+            />
+          </div>
+        </AppCard>
+
+        <div class="flex flex-col-reverse sm:flex-row lg:flex-col gap-2">
+          <AppButton
+            type="button"
+            variant="default"
+            label="Cancel"
+            to="/products"
+            class="w-full justify-center"
           />
-          <AppInput
-            id="default-selling-price"
-            v-model="initialVariant.selling_price"
-            type="number"
-            label="Default Selling Price (USD)"
-            step="0.01"
-            min="0.01"
-            placeholder="12.00"
-            mono
-            required
-            :error="priceError"
+          <AppButton
+            type="button"
+            variant="primary"
+            icon="i-heroicons-arrow-right"
+            label="Next: Images & Attributes"
+            class="w-full justify-center"
+            @click="goToStep(2)"
           />
-          <div class="flex items-center gap-2">
+        </div>
+      </template>
+
+      <!-- WIZARD STEP 2 SIDEBAR: Back / Next Step Buttons -->
+      <template #step-2-side>
+        <div class="flex flex-col-reverse sm:flex-row lg:flex-col gap-2">
+          <AppButton
+            type="button"
+            variant="default"
+            icon="i-heroicons-arrow-left"
+            label="Back: Basic Info & Price"
+            class="w-full justify-center"
+            @click="goToStep(1)"
+          />
+          <AppButton
+            type="button"
+            variant="primary"
+            icon="i-heroicons-arrow-right"
+            label="Next: Colors, Sizes & Stock"
+            class="w-full justify-center"
+            @click="goToStep(3)"
+          />
+        </div>
+      </template>
+
+      <!-- WIZARD STEP 3 SIDEBAR: Summary, Quick Price Edit & Create Actions -->
+      <template #actions>
+        <AppCard
+          title="Product & Price Summary"
+          subtitle="Review product details or adjust default prices before creating."
+        >
+          <div class="flex flex-col gap-3 text-xs">
+            <div class="flex items-center justify-between gap-2 pb-2 border-b border-border-subtle">
+              <div class="min-w-0">
+                <div class="font-semibold text-ink truncate">{{ form.name.trim() || 'Untitled Product' }}</div>
+                <div class="text-ink-secondary mono truncate">{{ form.code?.trim() || 'Auto Product Code' }}</div>
+              </div>
+              <button type="button" class="underline text-ink-secondary hover:text-ink shrink-0" @click="goToStep(1)">
+                Edit Step 1
+              </button>
+            </div>
+
+            <div class="flex items-center justify-between gap-2 pb-2 border-b border-border-subtle">
+              <span class="text-ink-secondary">
+                Images: <strong class="text-ink">{{ form.images?.length || 0 }}</strong> ·
+                Attributes: <strong class="text-ink">{{ form.attribute_value_ids?.length || 0 }}</strong>
+              </span>
+              <button type="button" class="underline text-ink-secondary hover:text-ink shrink-0" @click="goToStep(2)">
+                Edit Step 2
+              </button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <AppInput
+                id="step3-cost-price"
+                v-model="initialVariant.cost_price"
+                type="number"
+                label="Cost ($)"
+                step="0.01"
+                min="0"
+                placeholder="5.00"
+                mono
+                :error="costError"
+              />
+              <AppInput
+                id="step3-selling-price"
+                v-model="initialVariant.selling_price"
+                type="number"
+                label="Selling ($)"
+                step="0.01"
+                min="0.01"
+                placeholder="12.00"
+                mono
+                required
+                :error="priceError"
+              />
+            </div>
+
             <AppButton
               v-if="variantMode === 'multi' && multiGridRows.length > 0"
               type="button"
-              size="sm"
+              size="xs"
               variant="default"
               icon="i-heroicons-arrow-path"
-              label="Apply Default Prices to Matrix"
-              class="w-full sm:w-auto justify-center"
+              label="Apply Default Prices to Variants"
+              class="w-full justify-center"
               @click="applyDefaultPricesToMatrix"
             />
           </div>
-        </div>
-      </AppCard>
+        </AppCard>
 
-      <template #actions>
         <div
           v-if="includeInitialVariant"
           class="rounded-lg border border-border-subtle bg-surface-inset px-3 py-2 text-xs text-ink-secondary flex items-center justify-between gap-2"
@@ -836,6 +1017,16 @@
             Stock: <strong class="text-ink">{{ variantMode === 'multi' ? totalMatrixStock : (Math.max(0, Math.floor(Number(initialVariant.initial_stock) || 0))) }}</strong> pcs
           </span>
         </div>
+
+        <AppButton
+          type="button"
+          variant="default"
+          icon="i-heroicons-arrow-left"
+          label="Back: Images & Attributes"
+          class="w-full justify-center"
+          @click="goToStep(2)"
+        />
+
         <AppButton
           v-if="includeInitialVariant"
           type="button"
@@ -872,6 +1063,7 @@ const { addToast } = useAppToast()
 const router = useRouter()
 
 const formRef = ref<{ validate: () => boolean } | null>(null)
+const wizardStep = ref<1 | 2 | 3>(1)
 const isSubmitting = ref(false)
 const printAfterCreate = ref(false)
 const includeInitialVariant = ref(true)
@@ -1501,10 +1693,37 @@ function toItems(res: any): any[] {
   return Array.isArray(res) ? res : (res?.items ?? [])
 }
 
+function goToStep(target: 1 | 2 | 3) {
+  if (target > 1 && wizardStep.value === 1) {
+    attempted.value = true
+    const nameOk = formRef.value?.validate() ?? !!form.value.name.trim()
+    if (!nameOk) {
+      addToast({
+        type: 'warn',
+        title: 'Product Name Required',
+        message: 'Enter a Product Name in Step 1 before continuing.',
+      })
+      return
+    }
+    if (includeInitialVariant.value && sellingPrice.value <= 0) {
+      addToast({
+        type: 'warn',
+        title: 'Default Selling Price Required',
+        message: 'Enter a Default Selling Price greater than $0.00 before continuing.',
+      })
+      return
+    }
+  }
+  wizardStep.value = target
+}
+
 async function submitProduct(shouldPrintSticker = false) {
   attempted.value = true
   const nameOk = formRef.value?.validate() ?? !!form.value.name.trim()
-  if (!nameOk) return
+  if (!nameOk) {
+    wizardStep.value = 1
+    return
+  }
 
   if (includeInitialVariant.value && variantMode.value === 'single' && initialVariant.barcode.trim()) {
     await verifyBarcodeUniqueness(initialVariant.barcode)

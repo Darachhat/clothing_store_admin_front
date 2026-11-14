@@ -5,8 +5,12 @@
     @submit.prevent="onSubmit"
   >
     <div class="flex flex-col gap-4 min-w-0">
-      <!-- SECTION 1: BASIC INFORMATION -->
-      <AppCard title="Section 1 — Basic Information" subtitle="Core product identity, categorization, tags, and catalog status.">
+      <!-- SECTION 1: BASIC INFORMATION (Shown when !wizard OR step === 1) -->
+      <AppCard
+        v-if="!wizard || step === 1"
+        :title="wizard ? 'Step 1 — Basic Information' : 'Section 1 — Basic Information'"
+        subtitle="Core product identity, categorization, tags, and catalog status."
+      >
         <div class="flex flex-col gap-4">
           <div class="grid grid-cols-1 sm:grid-cols-[1fr_220px] gap-4">
             <AppInput
@@ -104,9 +108,10 @@
         </div>
       </AppCard>
 
-      <!-- SECTION 3: DYNAMIC PRODUCT ATTRIBUTES -->
+      <!-- SECTION 3: DYNAMIC PRODUCT ATTRIBUTES (Shown when !wizard OR step === 2) -->
       <AppCard
-        title="Section 3 — Product Attributes"
+        v-if="!wizard || step === 2"
+        :title="wizard ? 'Step 2 — Product Attributes' : 'Section 3 — Product Attributes'"
         subtitle="Configurable garment attributes loaded dynamically from the catalog schema."
       >
         <template #header-right>
@@ -226,14 +231,23 @@
         </div>
       </AppCard>
 
-      <!-- Slot for Section 4 (Variant Generator) & Section 5 (Pricing) -->
-      <slot />
+      <!-- Slot for Variant Generator (Shown when !wizard OR step === 3) -->
+      <template v-if="!wizard || step === 3">
+        <slot />
+      </template>
     </div>
 
-    <!-- RIGHT COLUMN: SECTION 2 — PRODUCT IMAGES & ACTIONS -->
+    <!-- RIGHT COLUMN -->
     <div class="flex flex-col gap-4 min-w-0 lg:sticky lg:top-4">
+      <!-- WIZARD STEP 1 SIDEBAR: Default Pricing & Next Step -->
+      <template v-if="wizard && step === 1">
+        <slot name="step-1-side" />
+      </template>
+
+      <!-- PRODUCT IMAGES (Shown when !wizard OR step === 2) -->
       <AppCard
-        title="Section 2 — Product Images"
+        v-if="!wizard || step === 2"
+        :title="wizard ? 'Step 2 — Product Images' : 'Section 2 — Product Images'"
         subtitle="Upload multiple images, set primary cover, and reorder gallery."
       >
         <div class="flex flex-col gap-3">
@@ -352,10 +366,23 @@
         </div>
       </AppCard>
 
-      <div class="flex flex-col gap-2">
+      <!-- WIZARD STEP 2 ACTIONS -->
+      <template v-if="wizard && step === 2">
+        <slot name="step-2-side" />
+      </template>
+
+      <!-- FINAL / STANDARD ACTIONS (Shown when !wizard OR step === 3) -->
+      <div v-if="!wizard || step === 3" class="flex flex-col gap-2">
         <slot name="actions" />
         <div class="flex flex-col-reverse sm:flex-row sm:justify-end gap-2">
-          <AppButton type="button" variant="default" label="Cancel" class="w-full sm:w-auto justify-center" :to="cancelTo" />
+          <AppButton
+            v-if="!wizard"
+            type="button"
+            variant="default"
+            label="Cancel"
+            class="w-full sm:w-auto justify-center"
+            :to="cancelTo"
+          />
           <AppButton
             type="submit"
             :variant="primarySubmit ? 'primary' : 'secondary'"
@@ -407,9 +434,13 @@ withDefaults(defineProps<{
   submitLabel?: string
   cancelTo: string
   primarySubmit?: boolean
+  wizard?: boolean
+  step?: 1 | 2 | 3
 }>(), {
   submitLabel: 'Save',
   primarySubmit: true,
+  wizard: false,
+  step: 1,
 })
 
 const emit = defineEmits<{ submit: [] }>()
