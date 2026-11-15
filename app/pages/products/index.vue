@@ -1,13 +1,13 @@
 <template>
   <div class="page-root">
     <AppPageHeader
-      title="Products"
-      description="Manage KVC master catalog products, categories, brands, attributes, and SKU variants."
+      :title="t('nav.products', 'Products')"
+      :description="t('products.description', 'Manage KVC master catalog products, categories, brands, attributes, and SKU variants.')"
       :breadcrumbs="[
-        { label: 'Catalog', to: '/products' },
-        { label: 'Products' },
+        { label: t('nav_section.catalog', 'Catalog'), to: '/products' },
+        { label: t('nav.products', 'Products') },
       ]"
-      primary-label="New Product"
+      :primary-label="t('dashboard.new_product', 'New Product')"
       primary-icon="i-heroicons-plus"
       primary-to="/products/new"
     >
@@ -17,21 +17,21 @@
             type="button"
             class="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors"
             :class="viewMode === 'list' ? 'bg-ink text-white' : 'text-ink-secondary hover:text-ink'"
-            title="List view"
+            :title="t('products.view_list', 'List')"
             @click="viewMode = 'list'"
           >
             <UIcon name="i-heroicons-bars-3" class="w-4 h-4" />
-            <span>List</span>
+            <span>{{ t('products.view_list', 'List') }}</span>
           </button>
           <button
             type="button"
             class="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors"
             :class="viewMode === 'grid' ? 'bg-ink text-white' : 'text-ink-secondary hover:text-ink'"
-            title="Grid view"
+            :title="t('products.view_grid', 'Grid')"
             @click="viewMode = 'grid'"
           >
             <UIcon name="i-heroicons-squares-2x2" class="w-4 h-4" />
-            <span>Grid</span>
+            <span>{{ t('products.view_grid', 'Grid') }}</span>
           </button>
         </div>
 
@@ -39,14 +39,14 @@
           size="sm"
           variant="default"
           icon="i-heroicons-tag"
-          label="Print Labels"
+          :label="t('nav.print_labels', 'Print Labels')"
           to="/labels/generate"
         />
         <AppButton
           size="sm"
           variant="default"
           icon="i-heroicons-arrow-path"
-          label="Refresh"
+          :label="t('common.refresh', 'Refresh')"
           :loading="loading"
           @click="fetchProducts"
         />
@@ -55,40 +55,40 @@
 
     <AppFilterBar
       v-model:search="search"
-      search-placeholder="Search products by name, product code, SKU, category, or brand..."
+      :search-placeholder="t('products.search_placeholder', 'Search products by name, product code, SKU, category, or brand...')"
       :chips="activeChips"
       :shown-count="products.length"
       :total-count="totalProducts"
       :summary-items="[
-        { label: 'Variants (page)', value: pageVariantCount },
-        { label: 'Active (page)', value: pageActiveCount },
+        { label: t('products.variants', 'Variants'), value: pageVariantCount },
+        { label: t('status.active', 'Active'), value: pageActiveCount },
       ]"
-      count-label="products"
+      :count-label="t('nav.products', 'products')"
       @submit="applyFilters"
       @remove-chip="removeChip"
       @clear-all="resetFilters"
     >
       <AppSelect
         v-model="categoryFilter"
-        aria-label="Filter by category"
+        :aria-label="t('nav.categories', 'Filter by category')"
         :options="categoryOptions"
         style="min-width: 155px;"
       />
       <AppSelect
         v-model="brandFilter"
-        aria-label="Filter by brand"
+        :aria-label="t('nav.brands', 'Filter by brand')"
         :options="brandOptions"
         style="min-width: 145px;"
       />
       <AppSelect
         v-model="statusFilter"
-        aria-label="Filter by status"
+        :aria-label="t('common.status', 'Filter by status')"
         :options="statusOptions"
         style="min-width: 155px;"
       />
       <AppSelect
         v-model="sortComposite"
-        aria-label="Sort products"
+        :aria-label="t('common.filter', 'Sort products')"
         :options="sortOptions"
         style="min-width: 165px;"
       />
@@ -101,21 +101,21 @@
     >
       <div class="flex items-center gap-3 text-sm">
         <span class="inline-flex items-center justify-center rounded-md bg-surface-inset px-2 py-0.5 text-xs font-semibold text-ink border border-border-subtle">
-          {{ selectedIds.length }} selected
+          {{ selectedIds.length }} {{ t('products.selected', 'selected') }}
         </span>
         <button
           type="button"
           class="text-xs font-medium text-ink-secondary hover:text-ink underline"
           @click="toggleSelectAllPage"
         >
-          {{ allPageSelected ? 'Deselect page' : 'Select all on page' }}
+          {{ allPageSelected ? t('products.deselect_page', 'Deselect page') : t('products.select_page', 'Select all on page') }}
         </button>
         <button
           type="button"
           class="text-xs font-medium text-ink-secondary hover:text-ink underline"
           @click="selectedIds = []"
         >
-          Clear selection
+          {{ t('common.reset', 'Clear selection') }}
         </button>
       </div>
       <div class="flex items-center gap-2">
@@ -123,7 +123,7 @@
           size="xs"
           variant="danger"
           icon="i-heroicons-archive-box"
-          :label="`Archive Selected (${selectedIds.length})`"
+          :label="`${t('products.archive', 'Archive')} (${selectedIds.length})`"
           @click="showBulkArchiveModal = true"
         />
       </div>
@@ -140,8 +140,8 @@
         :row-clickable="true"
         :empty-state="{
           icon: 'i-heroicons-tag',
-          label: 'No products found',
-          description: 'Adjust your filters or add a new product to the catalog.',
+          label: t('products.empty_title', 'No products found'),
+          description: t('products.empty_desc', 'Adjust your filters or add a new product to the catalog.'),
         }"
         @sort="onSort"
         @row-click="onRowClick"
@@ -217,7 +217,7 @@
 
         <template #cell-status="{ row }">
           <AppBadge :color="statusColor(statusOf(row))" size="sm">
-            {{ statusOf(row) }}
+            {{ localizeStatus(statusOf(row)) }}
           </AppBadge>
         </template>
 
@@ -227,16 +227,16 @@
 
         <template #actions="{ row }">
           <div class="flex items-center justify-end gap-1">
-            <AppButton size="xs" variant="ghost" icon="i-heroicons-eye" :aria-label="`View ${row.name}`" label="View" :to="`/products/${row.id}`" />
-            <AppButton size="xs" variant="ghost" icon="i-heroicons-pencil-square" :aria-label="`Edit ${row.name}`" label="Edit" :to="`/products/${row.id}/edit`" />
-            <AppButton size="xs" variant="default" icon="i-heroicons-squares-plus" :aria-label="`Variants of ${row.name}`" label="Variants" :to="`/products/${row.id}?tab=variants`" />
+            <AppButton size="xs" variant="ghost" icon="i-heroicons-eye" :aria-label="`View ${row.name}`" :label="t('common.view', 'View')" :to="`/products/${row.id}`" />
+            <AppButton size="xs" variant="ghost" icon="i-heroicons-pencil-square" :aria-label="`Edit ${row.name}`" :label="t('common.edit', 'Edit')" :to="`/products/${row.id}/edit`" />
+            <AppButton size="xs" variant="default" icon="i-heroicons-squares-plus" :aria-label="`Variants of ${row.name}`" :label="t('products.variants', 'Variants')" :to="`/products/${row.id}?tab=variants`" />
             <AppButton
               v-if="statusOf(row) !== 'DISCONTINUED'"
               size="xs"
               variant="danger"
               icon="i-heroicons-archive-box"
               :aria-label="`Archive ${row.name}`"
-              label="Archive"
+              :label="t('products.archive', 'Archive')"
               @click="confirmArchive(row)"
             />
           </div>
@@ -271,8 +271,8 @@
         class="rounded-xl border border-border-subtle bg-surface-raised p-12 text-center"
       >
         <UIcon name="i-heroicons-tag" class="w-8 h-8 text-ink-tertiary mx-auto mb-2" />
-        <div class="text-sm font-semibold text-ink">No products found</div>
-        <div class="text-xs text-ink-secondary mt-1">Adjust your filters or create a new product.</div>
+        <div class="text-sm font-semibold text-ink">{{ t('products.empty_title', 'No products found') }}</div>
+        <div class="text-xs text-ink-secondary mt-1">{{ t('products.empty_desc', 'Adjust your filters or create a new product.') }}</div>
       </div>
 
       <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -312,7 +312,7 @@
 
               <div class="absolute top-2.5 right-2.5">
                 <AppBadge :color="statusColor(statusOf(row))" size="sm">
-                  {{ statusOf(row) }}
+                  {{ localizeStatus(statusOf(row)) }}
                 </AppBadge>
               </div>
             </div>
@@ -332,11 +332,11 @@
 
               <div class="flex items-center justify-between pt-2 border-t border-border-subtle">
                 <div>
-                  <div class="text-[11px] text-ink-tertiary uppercase tracking-wider">Price Range</div>
+                  <div class="text-[11px] text-ink-tertiary uppercase tracking-wider">{{ t('products.col_price_range', 'Price Range') }}</div>
                   <div class="mono text-sm font-semibold text-ink">{{ priceRangeOf(row) }}</div>
                 </div>
                 <NuxtLink :to="`/products/${row.id}?tab=variants`" class="text-right no-underline hover:underline">
-                  <div class="text-[11px] text-ink-tertiary uppercase tracking-wider">Variants</div>
+                  <div class="text-[11px] text-ink-tertiary uppercase tracking-wider">{{ t('products.variants', 'Variants') }}</div>
                   <div class="mono text-sm font-semibold text-ink">{{ variantCountOf(row) }}</div>
                 </NuxtLink>
               </div>
@@ -344,10 +344,10 @@
           </div>
 
           <div class="px-4 py-2.5 bg-surface-inset border-t border-border-subtle flex items-center justify-between gap-1">
-            <AppButton size="xs" variant="ghost" icon="i-heroicons-eye" label="Details" :to="`/products/${row.id}`" />
+            <AppButton size="xs" variant="ghost" icon="i-heroicons-eye" :label="t('common.view', 'View')" :to="`/products/${row.id}`" />
             <div class="flex items-center gap-1">
-              <AppButton size="xs" variant="ghost" icon="i-heroicons-squares-2x2" label="Variants" :to="`/products/${row.id}?tab=variants`" />
-              <AppButton size="xs" variant="ghost" icon="i-heroicons-pencil-square" label="Edit" :to="`/products/${row.id}/edit`" />
+              <AppButton size="xs" variant="ghost" icon="i-heroicons-squares-2x2" :label="t('products.variants', 'Variants')" :to="`/products/${row.id}?tab=variants`" />
+              <AppButton size="xs" variant="ghost" icon="i-heroicons-pencil-square" :label="t('common.edit', 'Edit')" :to="`/products/${row.id}/edit`" />
               <AppButton
                 v-if="statusOf(row) !== 'DISCONTINUED'"
                 size="xs"
@@ -373,24 +373,24 @@
     <!-- Single Archive Dialog -->
     <AppConfirmDialog
       v-model="showArchiveModal"
-      title="Archive Product"
+      :title="t('products.archive_title', 'Archive Product')"
       variant="danger"
-      confirm-label="Archive Product"
+      :confirm-label="t('products.archive_title', 'Archive Product')"
       :loading="archiving"
-      :message="`Are you sure you want to archive &quot;${archiveTarget?.name}&quot;?`"
-      consequence="The product is marked Discontinued and hidden from active POS checkout grids. Variants, stock, and historical sales records are kept, and you can re-activate it from the Edit page."
+      :message="`${t('products.archive_confirm', 'Are you sure you want to archive')} &quot;${archiveTarget?.name}&quot;?`"
+      :consequence="t('products.archive_consequence', 'The product is marked Discontinued and hidden from active POS checkout grids. Variants, stock, and historical sales records are kept, and you can re-activate it from the Edit page.')"
       @confirm="doArchive"
     />
 
     <!-- Bulk Archive Dialog -->
     <AppConfirmDialog
       v-model="showBulkArchiveModal"
-      title="Archive Selected Products"
+      :title="t('products.archive_title', 'Archive Selected Products')"
       variant="danger"
-      :confirm-label="`Archive ${selectedIds.length} Product(s)`"
+      :confirm-label="`${t('products.archive', 'Archive')} (${selectedIds.length})`"
       :loading="bulkArchiving"
-      :message="`Are you sure you want to archive ${selectedIds.length} selected product(s)?`"
-      consequence="Selected products will be marked Discontinued and hidden from active POS checkout grids while preserving all variants and historical records."
+      :message="`${t('products.archive_confirm', 'Are you sure you want to archive')} (${selectedIds.length})?`"
+      :consequence="t('products.archive_consequence', 'Selected products will be marked Discontinued and hidden from active POS checkout grids while preserving all variants and historical records.')"
       @confirm="doBulkArchive"
     />
   </div>
@@ -400,7 +400,9 @@
 import type { Product, FilterChipItem } from '~/types'
 
 definePageMeta({ middleware: ['auth'] })
-useHead({ title: 'Products — KVC Clothing Store Admin' })
+
+const { t } = useAppTranslation()
+useHead({ title: computed(() => `${t('nav.products', 'Products')} — KVC Clothing Store Admin`) })
 
 const { listProducts, deleteProduct, bulkArchiveProducts } = useProductApi()
 const { listCategories, listBrands } = useCatalogApi()
@@ -441,14 +443,14 @@ const sortComposite = computed({
   },
 })
 
-const sortOptions = [
-  { label: 'Newest First', value: 'created_at:desc' },
-  { label: 'Oldest First', value: 'created_at:asc' },
-  { label: 'Name (A–Z)', value: 'name:asc' },
-  { label: 'Name (Z–A)', value: 'name:desc' },
-  { label: 'Code (A–Z)', value: 'code:asc' },
-  { label: 'Code (Z–A)', value: 'code:desc' },
-]
+const sortOptions = computed(() => [
+  { label: t('products.sort_newest', 'Newest First'), value: 'created_at:desc' },
+  { label: t('products.sort_oldest', 'Oldest First'), value: 'created_at:asc' },
+  { label: `${t('fields.name', 'Name')} (A–Z)`, value: 'name:asc' },
+  { label: `${t('fields.name', 'Name')} (Z–A)`, value: 'name:desc' },
+  { label: `${t('products.col_code', 'Code')} (A–Z)`, value: 'code:asc' },
+  { label: `${t('products.col_code', 'Code')} (Z–A)`, value: 'code:desc' },
+])
 
 const showArchiveModal = ref(false)
 const archiveTarget = ref<Product | null>(null)
@@ -457,12 +459,12 @@ const archiving = ref(false)
 const showBulkArchiveModal = ref(false)
 const bulkArchiving = ref(false)
 
-const statusOptions = [
-  { label: 'All Statuses', value: 'ALL' },
-  { label: 'Active', value: 'ACTIVE' },
-  { label: 'Inactive', value: 'INACTIVE' },
-  { label: 'Discontinued (Archived)', value: 'DISCONTINUED' },
-]
+const statusOptions = computed(() => [
+  { label: t('products.all_statuses', 'All Statuses'), value: 'ALL' },
+  { label: t('status.active', 'Active'), value: 'ACTIVE' },
+  { label: t('status.inactive', 'Inactive'), value: 'INACTIVE' },
+  { label: t('products.status_discontinued', 'Discontinued (Archived)'), value: 'DISCONTINUED' },
+])
 
 const categoryMap = computed<Record<string, string>>(() =>
   Object.fromEntries(categories.value.filter(c => c?.id).map(c => [c.id, c.name])),
@@ -472,27 +474,36 @@ const brandMap = computed<Record<string, string>>(() =>
 )
 
 const categoryOptions = computed(() => [
-  { label: 'All Categories', value: '' },
+  { label: t('products.all_categories', 'All Categories'), value: '' },
   ...categories.value.map(c => ({ label: c.name, value: c.id })),
 ])
 const brandOptions = computed(() => [
-  { label: 'All Brands', value: '' },
+  { label: t('products.all_brands', 'All Brands'), value: '' },
   ...brands.value.map(b => ({ label: b.name, value: b.id })),
 ])
 
-const columns = [
+const columns = computed(() => [
   { key: 'select', label: '', width: '40px' },
-  { key: 'code', label: 'Code', width: '125px', sortable: true },
-  { key: 'name', label: 'Product', sortable: true },
-  { key: 'category_name', label: 'Category' },
-  { key: 'brand_name', label: 'Brand' },
-  { key: 'variant_count', label: 'Variants', width: '100px' },
-  { key: 'price_range', label: 'Price Range', width: '140px' },
-  { key: 'status', label: 'Status', width: '120px', sortable: true },
-  { key: 'created_at', label: 'Created', width: '115px', sortable: true },
-]
+  { key: 'code', label: t('products.col_code', 'Code'), width: '125px', sortable: true },
+  { key: 'name', label: t('nav.products', 'Product'), sortable: true },
+  { key: 'category_name', label: t('nav.categories', 'Category') },
+  { key: 'brand_name', label: t('nav.brands', 'Brand') },
+  { key: 'variant_count', label: t('products.variants', 'Variants'), width: '100px' },
+  { key: 'price_range', label: t('products.col_price_range', 'Price Range'), width: '140px' },
+  { key: 'status', label: t('common.status', 'Status'), width: '120px', sortable: true },
+  { key: 'created_at', label: t('fields.date', 'Created'), width: '115px', sortable: true },
+])
 
 const statusOf = (p: any): string => p.status_code || p.status || 'ACTIVE'
+
+function localizeStatus(s: string): string {
+  const upper = (s || 'ACTIVE').toUpperCase()
+  if (upper === 'ACTIVE') return t('status.active', 'Active')
+  if (upper === 'INACTIVE') return t('status.inactive', 'Inactive')
+  if (upper === 'DISCONTINUED') return t('products.status_discontinued', 'Discontinued')
+  return s
+}
+
 const categoryOf = (p: any): string =>
   p.category?.name || p.category_name || categoryMap.value[p.category_id] || '—'
 const brandOf = (p: any): string =>
@@ -574,13 +585,13 @@ function toggleSelectAllPage() {
 const activeChips = computed<FilterChipItem[]>(() => {
   const chips: FilterChipItem[] = []
   if (categoryFilter.value) {
-    chips.push({ key: 'category', label: 'Category', value: categoryMap.value[categoryFilter.value] || categoryFilter.value })
+    chips.push({ key: 'category', label: t('nav.categories', 'Category'), value: categoryMap.value[categoryFilter.value] || categoryFilter.value })
   }
   if (brandFilter.value) {
-    chips.push({ key: 'brand', label: 'Brand', value: brandMap.value[brandFilter.value] || brandFilter.value })
+    chips.push({ key: 'brand', label: t('nav.brands', 'Brand'), value: brandMap.value[brandFilter.value] || brandFilter.value })
   }
   if (statusFilter.value && statusFilter.value !== 'ALL') {
-    chips.push({ key: 'status', label: 'Status', value: statusFilter.value })
+    chips.push({ key: 'status', label: t('common.status', 'Status'), value: localizeStatus(statusFilter.value) })
   }
   return chips
 })
@@ -674,7 +685,7 @@ async function doArchive() {
   archiving.value = true
   try {
     await deleteProduct(archiveTarget.value.id)
-    addToast({ type: 'success', title: 'Product archived', message: `${archiveTarget.value.name} is now Discontinued.` })
+    addToast({ type: 'success', title: t('products.archive_title', 'Product archived'), message: `${archiveTarget.value.name}` })
     showArchiveModal.value = false
     selectedIds.value = selectedIds.value.filter(id => id !== archiveTarget.value?.id)
     await fetchProducts()
@@ -692,14 +703,14 @@ async function doBulkArchive() {
     const res = await bulkArchiveProducts(selectedIds.value)
     addToast({
       type: 'success',
-      title: 'Products archived',
-      message: `${res?.archived_count ?? selectedIds.value.length} product(s) marked as Discontinued.`,
+      title: t('products.archive_title', 'Products archived'),
+      message: `${res?.archived_count ?? selectedIds.value.length}`,
     })
     showBulkArchiveModal.value = false
     selectedIds.value = []
     await fetchProducts()
   } catch (e: any) {
-    addToast({ type: 'error', title: 'Bulk archive failed', message: e?.data?.detail ?? String(e) })
+    addToast({ type: 'error', title: 'Error', message: e?.data?.detail ?? String(e) })
   } finally {
     bulkArchiving.value = false
   }

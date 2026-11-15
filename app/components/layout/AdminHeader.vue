@@ -63,11 +63,11 @@
         <NuxtLink
           to="/products/new"
           class="inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-md bg-action text-white text-sm font-medium hover:bg-action-hover transition-colors no-underline"
-          title="Create a new product"
-          aria-label="Create a new product"
+          :title="t('dashboard.new_product', 'New Product')"
+          :aria-label="t('dashboard.new_product', 'New Product')"
         >
           <UIcon name="i-heroicons-plus" class="w-4 h-4 shrink-0" />
-          <span class="hidden xl:inline">New Product</span>
+          <span class="hidden xl:inline">{{ t('dashboard.new_product', 'New Product') }}</span>
         </NuxtLink>
       </div>
 
@@ -75,8 +75,8 @@
       <button
         type="button"
         class="relative inline-flex items-center justify-center w-9 h-9 rounded-md border border-border-subtle bg-surface-card text-ink-secondary hover:bg-surface-hover hover:text-ink cursor-pointer transition-colors"
-        title="Notifications"
-        aria-label="Open notifications drawer"
+        :title="t('common.notifications', 'Notifications')"
+        :aria-label="t('common.notifications', 'Notifications')"
         @click="openNotifDrawer"
       >
         <UIcon name="i-heroicons-bell" class="w-4.5 h-4.5" />
@@ -92,8 +92,8 @@
         <button
           type="button"
           class="inline-flex items-center gap-1.5 h-9 px-2.5 rounded-md border border-border-subtle bg-surface-card text-ink text-sm font-medium cursor-pointer hover:bg-surface-hover transition-colors"
-          title="Switch display language"
-          aria-label="Switch display language"
+          :title="t('common.language', 'Language')"
+          :aria-label="t('common.language', 'Language')"
           @click="langMenuOpen = !langMenuOpen; userMenuOpen = false"
         >
           <UIcon name="i-heroicons-language" class="w-4 h-4 text-ink-tertiary shrink-0" />
@@ -104,7 +104,7 @@
 
         <div v-if="langMenuOpen" class="absolute right-0 mt-1.5 w-[220px] bg-surface-card border border-border-subtle rounded-lg shadow-menu py-1 z-50 max-w-[calc(100vw-24px)]">
           <div class="px-3 py-1.5 text-xs font-medium uppercase tracking-wider text-ink-tertiary border-b border-border-subtle">
-            Display Language
+            {{ t('common.language', 'Display Language') }}
           </div>
           <button
             v-for="loc in supportedLocales"
@@ -134,7 +134,7 @@
               @click="langMenuOpen = false"
             >
               <UIcon name="i-heroicons-cog-6-tooth" class="w-3.5 h-3.5" />
-              <span>Manage Translations CMS</span>
+              <span>{{ t('nav.translations', 'Translations CMS') }}</span>
             </NuxtLink>
           </div>
         </div>

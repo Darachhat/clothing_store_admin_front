@@ -1,16 +1,16 @@
 <template>
   <div class="page-root">
     <AppPageHeader
-      title="Create New Product"
-      description="Create a KVC product with basic information, gallery images, dynamic attributes, pricing, and an automated Color × Size variant matrix."
+      :title="t('products.new_title', 'Create New Product')"
+      :description="t('products.new_desc', 'Create a KVC product with basic information, gallery images, dynamic attributes, pricing, and an automated Color × Size variant matrix.')"
       :breadcrumbs="[
-        { label: 'Catalog', to: '/products' },
-        { label: 'Products', to: '/products' },
-        { label: 'Create New Product' },
+        { label: t('nav_section.catalog', 'Catalog'), to: '/products' },
+        { label: t('nav.products', 'Products'), to: '/products' },
+        { label: t('products.new_title', 'Create New Product') },
       ]"
     >
       <template #actions>
-        <AppButton to="/products" variant="default" size="sm" icon="i-heroicons-arrow-left" label="Back to Products" />
+        <AppButton to="/products" variant="default" size="sm" icon="i-heroicons-arrow-left" :label="t('common.back', 'Back to Products')" />
       </template>
     </AppPageHeader>
 
@@ -31,9 +31,9 @@
           1
         </span>
         <div class="min-w-0 flex-1">
-          <div class="text-xs font-semibold leading-snug">Basic Info &amp; Pricing</div>
+          <div class="text-xs font-semibold leading-snug">{{ t('products.step_1', 'Basic Info & Pricing') }}</div>
           <div class="text-[11px] truncate opacity-80 mono">
-            {{ form.name.trim() ? form.name.trim() : 'Name & category' }} · {{ sellingPrice > 0 ? `$${sellingPrice.toFixed(2)}` : '$0.00' }}
+            {{ form.name.trim() ? form.name.trim() : t('fields.name', 'Name & category') }} · {{ sellingPrice > 0 ? `$${sellingPrice.toFixed(2)}` : '$0.00' }}
           </div>
         </div>
       </button>
@@ -53,9 +53,9 @@
           2
         </span>
         <div class="min-w-0 flex-1">
-          <div class="text-xs font-semibold leading-snug">Images &amp; Attributes</div>
+          <div class="text-xs font-semibold leading-snug">{{ t('products.step_2', 'Images & Attributes') }}</div>
           <div class="text-[11px] truncate opacity-80 mono">
-            {{ (form.images?.length || 0) }} image{{ (form.images?.length || 0) === 1 ? '' : 's' }} · {{ (form.attribute_value_ids?.length || 0) }} attribute{{ (form.attribute_value_ids?.length || 0) === 1 ? '' : 's' }}
+            {{ (form.images?.length || 0) }} img · {{ (form.attribute_value_ids?.length || 0) }} attr
           </div>
         </div>
       </button>
@@ -75,9 +75,9 @@
           3
         </span>
         <div class="min-w-0 flex-1">
-          <div class="text-xs font-semibold leading-snug">Colors, Sizes &amp; Stock</div>
+          <div class="text-xs font-semibold leading-snug">{{ t('products.step_3', 'Colors, Sizes & Stock') }}</div>
           <div class="text-[11px] truncate opacity-80 mono">
-            {{ variantMode === 'multi' ? `${selectedColors.length} color${selectedColors.length === 1 ? '' : 's'} · ${includedMatrixRows.length} var · ${totalMatrixStock} pcs` : 'Single item' }}
+            {{ variantMode === 'multi' ? `${selectedColors.length} col · ${includedMatrixRows.length} var · ${totalMatrixStock} pcs` : 'Single item' }}
           </div>
         </div>
       </button>
@@ -89,7 +89,7 @@
       wizard
       :step="wizardStep"
       cancel-to="/products"
-      submit-label="Create Product"
+      :submit-label="t('dashboard.new_product', 'Create Product')"
       :primary-submit="!includeInitialVariant"
       :submitting="isSubmitting && !printAfterCreate"
       @submit="submitProduct(false)"
@@ -1040,7 +1040,9 @@ import type { ProductFormState } from '~/components/modules/catalog/ProductForm.
 import { normalizeScannedCode } from '~/utils/scanCode'
 
 definePageMeta({ middleware: ['auth'] })
-useHead({ title: 'New Product — KVC Clothing Store Admin' })
+
+const { t } = useAppTranslation()
+useHead({ title: computed(() => `${t('products.new_title', 'New Product')} — KVC Clothing Store Admin`) })
 
 const { createProduct, createVariantsBulk, scanCode } = useProductApi()
 const { listColors, listSizes, createColor, createSize } = useCatalogApi()

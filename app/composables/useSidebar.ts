@@ -201,9 +201,11 @@ const ROUTE_TRANSLATION_MAP: Record<string, string> = {
   '/sales': 'nav.sales_orders',
   '/sales/returns': 'nav.returns',
   '/products': 'nav.products',
+  '/products/new': 'nav.add_product',
   '/categories': 'nav.categories',
   '/brands': 'nav.brands',
   '/labels': 'nav.print_labels',
+  '/labels/generate': 'nav.batch_print_stickers',
   '/inventory': 'nav.stock_levels',
   '/inventory/movements': 'nav.movements',
   '/inventory/transfers': 'nav.transfers',
@@ -225,6 +227,17 @@ const ROUTE_TRANSLATION_MAP: Record<string, string> = {
   '/settings/translations': 'nav.translations',
   '/settings/brand': 'nav.brand_identity',
   '/settings': 'nav.settings',
+}
+
+const PARENT_GROUP_TRANSLATION_MAP: Record<string, string> = {
+  'Sales & Orders': 'nav.sales_orders',
+  'Catalog & Products': 'nav.products',
+  'Sticker & Label Studio': 'nav.print_labels',
+  Inventory: 'nav_section.inventory',
+  Purchasing: 'nav_section.purchasing',
+  'Reports & Analytics': 'nav_section.reports',
+  'Access & Security': 'nav.roles',
+  'System Settings': 'nav.system_settings',
 }
 
 const SECTION_TRANSLATION_MAP: Record<string, string> = {
@@ -300,7 +313,7 @@ export function useSidebar() {
         items: section.items.map(item => ({
           ...item,
           label: item.children
-            ? item.label
+            ? t(PARENT_GROUP_TRANSLATION_MAP[item.label] || ROUTE_TRANSLATION_MAP[item.to] || item.label, item.label)
             : t(ROUTE_TRANSLATION_MAP[item.to] || item.label, item.label),
           children: item.children?.map(child => ({
             ...child,

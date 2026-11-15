@@ -1,13 +1,13 @@
 <template>
   <div class="page-root">
     <AppPageHeader
-      title="Customers & Loyalty"
-      description="Manage client profiles, loyalty tiers, reward points, and purchase history."
+      :title="t('customers.title', 'Customers & Loyalty')"
+      :description="t('customers.description', 'Manage client profiles, loyalty tiers, reward points, and purchase history.')"
       :breadcrumbs="[
-        { label: 'Customers', to: '/customers' },
-        { label: 'Customers & Loyalty' },
+        { label: t('nav_section.customers', 'Customers'), to: '/customers' },
+        { label: t('customers.title', 'Customers & Loyalty') },
       ]"
-      primary-label="New Customer"
+      :primary-label="t('customers.new_customer', 'New Customer')"
       primary-icon="i-heroicons-plus"
       @primary-click="openCreateModal"
     >
@@ -16,7 +16,7 @@
           size="sm"
           variant="default"
           icon="i-heroicons-arrow-path"
-          label="Refresh"
+          :label="t('common.refresh', 'Refresh')"
           :loading="loading"
           @click="fetchCustomers"
         />
@@ -25,15 +25,15 @@
 
     <AppFilterBar
       v-model:search="search"
-      search-placeholder="Search by name, phone, code, or email..."
+      :search-placeholder="t('customers.search_placeholder', 'Search by name, phone, code, or email...')"
       :chips="activeChips"
       :shown-count="customers.length"
       :total-count="total"
       :summary-items="[
-        { label: 'Total Customers', value: total },
-        { label: 'Total Loyalty Points', value: totalPointsBalance },
+        { label: t('customers.total_customers', 'Total Customers'), value: total },
+        { label: t('customers.loyalty_points', 'Total Loyalty Points'), value: totalPointsBalance },
       ]"
-      count-label="customers"
+      :count-label="t('nav.customers', 'customers')"
       @submit="fetchCustomers"
       @remove-chip="statusFilter = ''; fetchCustomers()"
       @clear-all="clearFilters"
@@ -41,7 +41,7 @@
       <AppSelect
         v-model="statusFilter"
         :options="statusOptions"
-        placeholder="All Statuses"
+        :placeholder="t('products.all_statuses', 'All Statuses')"
         style="min-width: 155px;"
         @change="fetchCustomers"
       />
@@ -55,8 +55,8 @@
         :loading="loading"
         :empty-state="{
           icon: 'i-heroicons-user-group',
-          label: 'No customers found',
-          description: 'Add customer profiles to track loyalty points and purchase history.',
+          label: t('customers.empty_title', 'No customers found'),
+          description: t('customers.empty_desc', 'Add customer profiles to track loyalty points and purchase history.'),
         }"
       >
         <template #cell-customer_code="{ row }">
@@ -94,7 +94,7 @@
         <template #cell-status="{ row }">
           <AppBadge
             :color="(row.status_code || row.status || 'ACTIVE') === 'ACTIVE' ? 'green' : 'default'"
-            :label="row.status_code || row.status || 'ACTIVE'"
+            :label="(row.status_code || row.status || 'ACTIVE') === 'ACTIVE' ? t('status.active', 'Active') : t('status.inactive', 'Inactive')"
             size="sm"
           />
         </template>
@@ -104,20 +104,20 @@
             <AppButton
               size="xs"
               variant="ghost"
-              label="View"
+              :label="t('common.view', 'View')"
               :to="`/customers/${row.id}`"
             />
             <AppButton
               size="xs"
               variant="ghost"
-              label="Edit"
+              :label="t('common.edit', 'Edit')"
               @click="openEditModal(row)"
             />
             <AppButton
               size="xs"
               variant="primary"
               icon="i-heroicons-sparkles"
-              label="Points"
+              :label="t('customers.points', 'Points')"
               @click="openPointsModal(row)"
             />
           </div>
@@ -137,34 +137,34 @@
     <!-- Create / Edit Customer Modal -->
     <AppModal
       v-model="isCreateModalOpen"
-      :title="editingCustomer ? 'Edit Customer' : 'Add New Customer'"
+      :title="editingCustomer ? t('common.edit', 'Edit Customer') : t('customers.new_customer', 'Add New Customer')"
       size="md"
     >
       <form class="form-grid" @submit.prevent="submitCreate">
         <div class="form-field">
-          <label class="field-label">Full Name <span class="required">*</span></label>
+          <label class="field-label">{{ t('fields.name', 'Full Name') }} <span class="required">*</span></label>
           <AppInput v-model="createForm.name" placeholder="John Doe" required />
         </div>
 
         <div class="form-row">
           <div class="form-field">
-            <label class="field-label">Phone</label>
+            <label class="field-label">{{ t('fields.phone', 'Phone') }}</label>
             <AppInput v-model="createForm.phone" placeholder="012345678" />
           </div>
 
           <div class="form-field">
-            <label class="field-label">Email</label>
+            <label class="field-label">{{ t('fields.email', 'Email') }}</label>
             <AppInput v-model="createForm.email" type="email" placeholder="john@example.com" />
           </div>
         </div>
 
         <div class="form-field">
-          <label class="field-label">Address</label>
+          <label class="field-label">{{ t('fields.address', 'Address') }}</label>
           <AppInput v-model="createForm.address" placeholder="Street, City" />
         </div>
 
         <div class="form-field">
-          <label class="field-label">Notes</label>
+          <label class="field-label">{{ t('fields.notes', 'Notes') }}</label>
           <textarea
             v-model="createForm.notes"
             rows="2"
@@ -174,9 +174,9 @@
         </div>
 
         <div class="modal-actions">
-          <AppButton type="button" variant="ghost" @click="isCreateModalOpen = false">Cancel</AppButton>
+          <AppButton type="button" variant="ghost" @click="isCreateModalOpen = false">{{ t('common.cancel', 'Cancel') }}</AppButton>
           <AppButton type="submit" variant="primary" :loading="isSubmitting">
-            {{ editingCustomer ? 'Save Changes' : 'Save Customer' }}
+            {{ t('common.save', 'Save') }}
           </AppButton>
         </div>
       </form>
@@ -185,30 +185,30 @@
     <!-- Adjust Points Modal -->
     <AppModal
       v-model="isPointsModalOpen"
-      :title="`Adjust Points: ${selectedCustomer?.name || selectedCustomer?.full_name || ''}`"
+      :title="`${t('customers.points', 'Points')}: ${selectedCustomer?.name || selectedCustomer?.full_name || ''}`"
       size="sm"
     >
       <form class="form-grid" @submit.prevent="submitAdjustPoints">
         <div class="p-3 rounded-lg bg-gray-50 border border-gray-200 text-xs flex items-center justify-between">
-          <span class="text-gray-600">Current Balance:</span>
+          <span class="text-gray-600">{{ t('customers.loyalty_points', 'Current Balance') }}:</span>
           <strong class="mono text-sm text-gray-900">
             {{ selectedCustomer?.loyalty_account?.points_balance ?? selectedCustomer?.loyalty_points ?? 0 }} pts
           </strong>
         </div>
 
         <div class="form-field">
-          <label class="field-label">Points Adjustment (+ to add, - to deduct) <span class="required">*</span></label>
+          <label class="field-label">{{ t('inventory.qty_delta', 'Points Adjustment (+ to add, - to deduct)') }} <span class="required">*</span></label>
           <AppInput v-model.number="pointsDelta" type="number" placeholder="e.g. 100 or -50" required />
         </div>
 
         <div class="form-field">
-          <label class="field-label">Reason / Note</label>
+          <label class="field-label">{{ t('fields.notes', 'Reason / Note') }}</label>
           <AppInput v-model="pointsNote" placeholder="e.g. VIP birthday bonus" />
         </div>
 
         <div class="modal-actions">
-          <AppButton type="button" variant="ghost" @click="isPointsModalOpen = false">Cancel</AppButton>
-          <AppButton type="submit" variant="primary" :loading="isSubmitting">Update Points</AppButton>
+          <AppButton type="button" variant="ghost" @click="isPointsModalOpen = false">{{ t('common.cancel', 'Cancel') }}</AppButton>
+          <AppButton type="submit" variant="primary" :loading="isSubmitting">{{ t('common.save', 'Update Points') }}</AppButton>
         </div>
       </form>
     </AppModal>
@@ -221,7 +221,9 @@ import type { FilterChipItem } from '~/types'
 definePageMeta({
   middleware: ['auth'],
 })
-useHead({ title: 'Customers & Loyalty — Clothing Store Admin' })
+
+const { t } = useAppTranslation()
+useHead({ title: computed(() => `${t('customers.title', 'Customers & Loyalty')} — Clothing Store Admin`) })
 
 const customerApi = useCustomerApi()
 const toast = useAppToast()
@@ -250,22 +252,22 @@ const selectedCustomer = ref<any>(null)
 const pointsDelta = ref<number>(0)
 const pointsNote = ref('')
 
-const statusOptions = [
-  { label: 'All Statuses', value: '' },
-  { label: 'Active', value: 'ACTIVE' },
-  { label: 'Inactive', value: 'INACTIVE' },
-]
+const statusOptions = computed(() => [
+  { label: t('products.all_statuses', 'All Statuses'), value: '' },
+  { label: t('status.active', 'Active'), value: 'ACTIVE' },
+  { label: t('status.inactive', 'Inactive'), value: 'INACTIVE' },
+])
 
-const columns = [
-  { key: 'name', label: 'Customer Representative', sortable: true },
-  { key: 'customer_code', label: 'Code', sortable: true },
-  { key: 'phone', label: 'Phone' },
-  { key: 'email', label: 'Email' },
-  { key: 'tier', label: 'Tier' },
-  { key: 'points', label: 'Loyalty Points', sortable: true, align: 'right' as const },
-  { key: 'status', label: 'Status' },
-  { key: 'actions', label: 'Actions', align: 'right' as const },
-]
+const columns = computed(() => [
+  { key: 'name', label: t('fields.customer', 'Customer Representative'), sortable: true },
+  { key: 'customer_code', label: t('products.col_code', 'Code'), sortable: true },
+  { key: 'phone', label: t('fields.phone', 'Phone') },
+  { key: 'email', label: t('fields.email', 'Email') },
+  { key: 'tier', label: t('customers.col_tier', 'Tier') },
+  { key: 'points', label: t('customers.loyalty_points', 'Loyalty Points'), sortable: true, align: 'right' as const },
+  { key: 'status', label: t('common.status', 'Status') },
+  { key: 'actions', label: t('common.actions', 'Actions'), align: 'right' as const },
+])
 
 const totalPointsBalance = computed(() =>
   customers.value.reduce((sum, c) => sum + Number(c.loyalty_account?.points_balance ?? c.loyalty_points ?? 0), 0).toLocaleString(),
@@ -273,7 +275,7 @@ const totalPointsBalance = computed(() =>
 
 const activeChips = computed<FilterChipItem[]>(() => {
   const chips: FilterChipItem[] = []
-  if (statusFilter.value) chips.push({ key: 'status', label: 'Status', value: statusFilter.value })
+  if (statusFilter.value) chips.push({ key: 'status', label: t('common.status', 'Status'), value: statusFilter.value })
   return chips
 })
 

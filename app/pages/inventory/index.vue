@@ -1,70 +1,70 @@
 <template>
   <div class="page-root">
     <AppPageHeader
-      title="Inventory Management"
-      description="Track stock levels across warehouses and branches, print barcode stickers, and apply stock adjustments."
+      :title="t('inventory.title', 'Inventory Management')"
+      :description="t('inventory.description', 'Track stock levels across warehouses and branches, print barcode stickers, and apply stock adjustments.')"
       :breadcrumbs="[
-        { label: 'Inventory', to: '/inventory' },
-        { label: 'Stock Levels' },
+        { label: t('nav_section.inventory', 'Inventory'), to: '/inventory' },
+        { label: t('nav.stock_levels', 'Stock Levels') },
       ]"
-      primary-label="Stock Adjustment"
+      :primary-label="t('inventory.stock_adjustment', 'Stock Adjustment')"
       primary-icon="i-heroicons-adjustments-horizontal"
       @primary-click="openAdjustModal"
     >
       <template #secondary>
-        <AppButton size="sm" variant="default" icon="i-heroicons-tag" label="Print Barcodes" to="/labels/generate" />
-        <AppButton size="sm" variant="default" icon="i-heroicons-arrows-right-left" label="Movements" to="/inventory/movements" />
-        <AppButton size="sm" variant="default" icon="i-heroicons-truck" label="Transfers" to="/inventory/transfers" />
-        <AppButton size="sm" variant="default" icon="i-heroicons-arrow-path" :loading="loading" aria-label="Refresh" @click="fetchInventory" />
+        <AppButton size="sm" variant="default" icon="i-heroicons-tag" :label="t('nav.print_labels', 'Print Barcodes')" to="/labels/generate" />
+        <AppButton size="sm" variant="default" icon="i-heroicons-arrows-right-left" :label="t('nav.movements', 'Movements')" to="/inventory/movements" />
+        <AppButton size="sm" variant="default" icon="i-heroicons-truck" :label="t('nav.transfers', 'Transfers')" to="/inventory/transfers" />
+        <AppButton size="sm" variant="default" icon="i-heroicons-arrow-path" :loading="loading" :aria-label="t('common.refresh', 'Refresh')" @click="fetchInventory" />
       </template>
     </AppPageHeader>
 
-    <!-- KPI Summary (from API X-Total-Count family or computed) -->
+    <!-- KPI Summary -->
     <div class="kpi-grid-3">
       <AppStatCard
-        label="Tracked Stock Lines"
+        :label="t('inventory.tracked_lines', 'Tracked Stock Lines')"
         :value="totalCount"
         icon="i-heroicons-archive-box"
         tone="neutral"
         :loading="loading"
-        sublabel="Active SKU warehouse allocations"
+        :sublabel="t('inventory.tracked_sub', 'Active SKU warehouse allocations')"
       />
       <AppStatCard
-        label="Low Stock SKUs"
+        :label="t('inventory.low_stock_skus', 'Low Stock SKUs')"
         :value="lowStockCount"
         icon="i-heroicons-exclamation-triangle"
         :tone="lowStockCount > 0 ? 'amber' : 'green'"
         :loading="loading"
-        sublabel="Quantity at or below reorder threshold"
+        :sublabel="t('inventory.low_stock_sub', 'Quantity at or below reorder threshold')"
       />
       <AppStatCard
-        label="Out of Stock"
+        :label="t('inventory.out_of_stock', 'Out of Stock')"
         :value="outOfStockCount"
         icon="i-heroicons-x-circle"
         :tone="outOfStockCount > 0 ? 'red' : 'green'"
         :loading="loading"
-        sublabel="Zero units on hand"
+        :sublabel="t('inventory.out_of_stock_sub', 'Zero units on hand')"
       />
     </div>
 
     <!-- Filter Bar -->
     <AppFilterBar
       v-model:search="search"
-      search-placeholder="Search by SKU, product name, or barcode..."
+      :search-placeholder="t('inventory.search_placeholder', 'Search by SKU, product name, or barcode...')"
       :chips="activeChips"
       :shown-count="stocks.length"
       :total-count="totalCount"
-      count-label="stock records"
+      :count-label="t('nav.stock_levels', 'stock records')"
       @remove-chip="onRemoveChip"
       @clear-all="clearFilters"
     >
       <AppSelect
         v-model="stockStatus"
         :options="[
-          { label: 'All Stock Levels', value: 'ALL' },
-          { label: 'Low Stock', value: 'LOW' },
-          { label: 'Out of Stock', value: 'OUT' },
-          { label: 'In Stock', value: 'IN' },
+          { label: t('inventory.all_levels', 'All Stock Levels'), value: 'ALL' },
+          { label: t('inventory.low_stock', 'Low Stock'), value: 'LOW' },
+          { label: t('inventory.out_of_stock', 'Out of Stock'), value: 'OUT' },
+          { label: t('inventory.in_stock', 'In Stock'), value: 'IN' },
         ]"
         style="min-width: 185px;"
       />
@@ -78,7 +78,7 @@
         :loading="loading"
         :error="loadError"
         :on-retry="fetchInventory"
-        empty-text="No inventory records found. Try clearing your filters or record an initial stock adjustment."
+        :empty-text="t('inventory.empty_text', 'No inventory records found. Try clearing your filters or record an initial stock adjustment.')"
       >
         <template #cell-sku="{ row }">
           <code class="mono text-xs font-semibold text-ink">{{ row.sku || row.variant?.sku || '—' }}</code>
@@ -117,7 +117,7 @@
               size="xs"
               variant="primary"
               icon="i-heroicons-adjustments-horizontal"
-              label="Adjust"
+              :label="t('inventory.adjust', 'Adjust')"
               :aria-label="`Adjust stock for ${row.sku || row.variant?.sku}`"
               @click="openQuickAdjust(row)"
             />
@@ -136,12 +136,12 @@
     />
 
     <!-- Adjustment Modal -->
-    <AppModal v-model="isAdjustOpen" title="Stock Adjustment" size="sm">
+    <AppModal v-model="isAdjustOpen" :title="t('inventory.stock_adjustment', 'Stock Adjustment')" size="sm">
       <form class="flex flex-col gap-4" @submit.prevent="submitAdjustment">
         <AppInput
           id="adj-variant"
           v-model="adjustForm.variantId"
-          label="Variant ID"
+          :label="t('inventory.variant_id', 'Variant ID')"
           placeholder="Variant UUID"
           mono
           required
@@ -149,7 +149,7 @@
         <AppInput
           id="adj-warehouse"
           v-model="adjustForm.warehouseId"
-          label="Warehouse ID"
+          :label="t('fields.warehouse', 'Warehouse ID')"
           placeholder="Warehouse UUID"
           mono
           required
@@ -158,7 +158,7 @@
           id="adj-delta"
           v-model.number="adjustForm.quantityDelta"
           type="number"
-          label="Quantity Delta (+ add, − remove)"
+          :label="t('inventory.qty_delta', 'Quantity Delta (+ add, − remove)')"
           placeholder="e.g. +10 or -2"
           mono
           required
@@ -166,20 +166,20 @@
         <AppSelect
           id="adj-reason"
           v-model="adjustForm.reason"
-          label="Reason"
+          :label="t('inventory.reason', 'Reason')"
           :options="[
-            { label: 'Physical Count', value: 'PHYSICAL_COUNT' },
-            { label: 'Damaged', value: 'DAMAGED' },
-            { label: 'Lost', value: 'LOST' },
-            { label: 'Return Restock', value: 'RETURN_RESTOCK' },
-            { label: 'Initial Count', value: 'INITIAL_COUNT' },
+            { label: t('inventory.reason_physical', 'Physical Count'), value: 'PHYSICAL_COUNT' },
+            { label: t('inventory.reason_damaged', 'Damaged'), value: 'DAMAGED' },
+            { label: t('inventory.reason_lost', 'Lost'), value: 'LOST' },
+            { label: t('inventory.reason_return', 'Return Restock'), value: 'RETURN_RESTOCK' },
+            { label: t('inventory.reason_initial', 'Initial Count'), value: 'INITIAL_COUNT' },
           ]"
         />
-        <AppInput id="adj-notes" v-model="adjustForm.notes" label="Notes" placeholder="Optional notes" />
+        <AppInput id="adj-notes" v-model="adjustForm.notes" :label="t('fields.notes', 'Notes')" placeholder="Optional notes" />
 
         <div class="modal-actions">
-          <AppButton type="button" variant="ghost" @click="isAdjustOpen = false">Cancel</AppButton>
-          <AppButton type="submit" variant="primary" :loading="isSubmitting">Apply Adjustment</AppButton>
+          <AppButton type="button" variant="ghost" @click="isAdjustOpen = false">{{ t('common.cancel', 'Cancel') }}</AppButton>
+          <AppButton type="submit" variant="primary" :loading="isSubmitting">{{ t('inventory.apply_adjustment', 'Apply Adjustment') }}</AppButton>
         </div>
       </form>
     </AppModal>
@@ -190,7 +190,9 @@
 import type { FilterChipItem } from '~/types'
 
 definePageMeta({ middleware: ['auth'] })
-useHead({ title: 'Inventory Management — Clothing Store Admin' })
+
+const { t } = useAppTranslation()
+useHead({ title: computed(() => `${t('inventory.title', 'Inventory Management')} — Clothing Store Admin`) })
 
 const route = useRoute()
 const invApi = useInventoryApi()
@@ -206,7 +208,6 @@ const outOfStockCount = ref(0)
 
 const page = ref(1)
 const pageSize = 50
-const totalPages = computed(() => Math.max(1, Math.ceil(totalCount.value / pageSize)))
 
 const search = ref('')
 const stockStatus = ref<'ALL' | 'LOW' | 'OUT' | 'IN'>(
@@ -222,19 +223,19 @@ const adjustForm = reactive({
   notes: '',
 })
 
-const columns = [
-  { key: 'sku', label: 'SKU', sortable: true },
-  { key: 'product', label: 'Product' },
-  { key: 'warehouse_id', label: 'Warehouse' },
-  { key: 'quantity', label: 'Qty', sortable: true },
-  { key: 'reorder_level', label: 'Reorder', sortable: true },
-  { key: 'status', label: 'Status' },
-  { key: 'actions', label: 'Actions', align: 'right' as const },
-]
+const columns = computed(() => [
+  { key: 'sku', label: t('fields.sku', 'SKU'), sortable: true },
+  { key: 'product', label: t('nav.products', 'Product') },
+  { key: 'warehouse_id', label: t('fields.warehouse', 'Warehouse') },
+  { key: 'quantity', label: t('fields.quantity', 'Qty'), sortable: true },
+  { key: 'reorder_level', label: t('inventory.col_reorder', 'Reorder'), sortable: true },
+  { key: 'status', label: t('common.status', 'Status') },
+  { key: 'actions', label: t('common.actions', 'Actions'), align: 'right' as const },
+])
 
 const activeChips = computed<FilterChipItem[]>(() => {
   const chips: FilterChipItem[] = []
-  if (stockStatus.value !== 'ALL') chips.push({ key: 'stock_status', label: 'Level', value: stockStatus.value })
+  if (stockStatus.value !== 'ALL') chips.push({ key: 'stock_status', label: t('common.status', 'Status'), value: stockStatus.value })
   return chips
 })
 
@@ -261,9 +262,9 @@ function stockBadgeColor(row: any) {
 }
 function stockLabel(row: any) {
   const q = stockQty(row)
-  if (q <= 0) return 'Out of Stock'
-  if (q <= (row.reorder_level ?? 5)) return 'Low Stock'
-  return 'In Stock'
+  if (q <= 0) return t('inventory.out_of_stock', 'Out of Stock')
+  if (q <= (row.reorder_level ?? 5)) return t('inventory.low_stock', 'Low Stock')
+  return t('inventory.in_stock', 'In Stock')
 }
 
 let searchTimer: ReturnType<typeof setTimeout> | null = null
@@ -286,7 +287,6 @@ async function fetchInventory() {
     if (search.value.trim()) params.q = search.value.trim()
     if (stockStatus.value !== 'ALL') params.stock_status = stockStatus.value
 
-    // listStocks now returns paginated data with X-Total-Count header
     const res: any = await invApi.listStocks(params)
 
     if (Array.isArray(res)) {
@@ -300,7 +300,6 @@ async function fetchInventory() {
       totalCount.value = 0
     }
 
-    // compute KPIs from current page data (best effort)
     lowStockCount.value = stocks.value.filter(s => {
       const q = stockQty(s)
       return q > 0 && q <= (s.reorder_level ?? 5)

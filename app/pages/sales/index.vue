@@ -1,32 +1,32 @@
 <template>
   <div class="page-root">
     <AppPageHeader
-      title="Sales History"
-      description="View POS transactions, online storefront orders, and receipt records."
+      :title="t('sales.title', 'Sales History')"
+      :description="t('sales.description', 'View POS transactions, online storefront orders, and receipt records.')"
       :breadcrumbs="[
-        { label: 'Store', to: '/sales' },
-        { label: 'Sales Orders' },
+        { label: t('nav_section.store', 'Store'), to: '/sales' },
+        { label: t('nav.sales_orders', 'Sales Orders') },
       ]"
     >
       <template #secondary>
-        <AppButton size="sm" variant="default" icon="i-heroicons-arrow-uturn-left" label="Returns" to="/sales/returns" />
-        <AppButton size="sm" variant="default" icon="i-heroicons-arrow-down-tray" label="Export CSV" @click="exportCsv" />
-        <AppButton size="sm" variant="default" icon="i-heroicons-arrow-path" label="Refresh" :loading="loading" @click="fetchSales" />
+        <AppButton size="sm" variant="default" icon="i-heroicons-arrow-uturn-left" :label="t('nav.returns', 'Returns')" to="/sales/returns" />
+        <AppButton size="sm" variant="default" icon="i-heroicons-arrow-down-tray" :label="t('common.export_csv', 'Export CSV')" @click="exportCsv" />
+        <AppButton size="sm" variant="default" icon="i-heroicons-arrow-path" :label="t('common.refresh', 'Refresh')" :loading="loading" @click="fetchSales" />
       </template>
     </AppPageHeader>
 
     <AppFilterBar
       v-model:search="searchQuery"
-      search-placeholder="Search invoice number (e.g. INV-2026...)..."
+      :search-placeholder="t('sales.search_placeholder', 'Search invoice number (e.g. INV-2026...)...')"
       :chips="activeChips"
       :shown-count="paginatedSales.length"
       :total-count="filteredSales.length"
       :summary-items="[
-        { label: 'Total Revenue', value: `$${totalSalesRevenue}` },
-        { label: 'Invoices', value: filteredSales.length },
-        { label: 'Completed', value: completedSalesCount },
+        { label: t('sales.total_revenue', 'Total Revenue'), value: `$${totalSalesRevenue}` },
+        { label: t('sales.invoices', 'Invoices'), value: filteredSales.length },
+        { label: t('status.completed', 'Completed'), value: completedSalesCount },
       ]"
-      count-label="sales"
+      :count-label="t('nav.sales_orders', 'sales')"
       @submit="fetchSales"
       @remove-chip="removeChip"
       @clear-all="resetFilters"
@@ -34,30 +34,30 @@
       <AppSelect
         v-model="channelFilter"
         :options="[
-          { label: 'All Channels', value: 'ALL' },
-          { label: 'POS In-Store', value: 'POS' },
-          { label: 'Online Store', value: 'ONLINE' },
+          { label: t('sales.all_channels', 'All Channels'), value: 'ALL' },
+          { label: t('sales.channel_pos', 'POS In-Store'), value: 'POS' },
+          { label: t('sales.channel_online', 'Online Store'), value: 'ONLINE' },
         ]"
         style="min-width: 145px;"
       />
       <AppSelect
         v-model="statusFilter"
         :options="[
-          { label: 'All Statuses', value: '' },
-          { label: 'Completed', value: 'COMPLETED' },
-          { label: 'Returned', value: 'RETURNED' },
-          { label: 'Cancelled', value: 'CANCELLED' },
-          { label: 'Draft', value: 'DRAFT' },
+          { label: t('products.all_statuses', 'All Statuses'), value: '' },
+          { label: t('status.completed', 'Completed'), value: 'COMPLETED' },
+          { label: t('status.refunded', 'Returned'), value: 'RETURNED' },
+          { label: t('status.cancelled', 'Cancelled'), value: 'CANCELLED' },
+          { label: t('status.draft', 'Draft'), value: 'DRAFT' },
         ]"
         style="min-width: 145px;"
         @change="fetchSales"
       />
       <div class="flex items-center gap-1.5">
-        <span class="text-xs text-gray-500">From:</span>
+        <span class="text-xs text-gray-500">{{ t('sales.from', 'From') }}:</span>
         <AppInput v-model="fromDate" type="date" style="width: 140px;" @change="fetchSales" />
       </div>
       <div class="flex items-center gap-1.5">
-        <span class="text-xs text-gray-500">To:</span>
+        <span class="text-xs text-gray-500">{{ t('sales.to', 'To') }}:</span>
         <AppInput v-model="toDate" type="date" style="width: 140px;" @change="fetchSales" />
       </div>
     </AppFilterBar>
@@ -70,8 +70,8 @@
         :loading="loading"
         :empty-state="{
           icon: 'i-heroicons-receipt-percent',
-          label: 'No sales found',
-          description: 'Completed POS sales and online storefront orders will appear here.',
+          label: t('sales.empty_title', 'No sales found'),
+          description: t('sales.empty_desc', 'Completed POS sales and online storefront orders will appear here.'),
         }"
       >
         <template #cell-invoice_number="{ row }">
@@ -81,11 +81,11 @@
                 {{ row.invoice_number }}
               </NuxtLink>
               <span class="text-xs text-ink-secondary">
-                ({{ isOnlineOrder(row) ? 'Online Storefront' : 'POS Register' }})
+                ({{ isOnlineOrder(row) ? t('sales.channel_online', 'Online Store') : t('sales.channel_pos', 'POS In-Store') }})
               </span>
             </div>
             <div class="text-xs text-ink-secondary truncate max-w-[380px]">
-              Clothing Store | {{ row.items?.length ? `${row.items.length} item(s)` : 'Standard Retail Sale' }}
+              Clothing Store | {{ row.items?.length ? `${row.items.length} ${t('sales.items', 'items')}` : 'Standard Retail Sale' }}
               <template v-if="row.notes"> — {{ row.notes }}</template>
             </div>
           </div>
@@ -97,7 +97,7 @@
             :class="isOnlineOrder(row) ? 'bg-navy text-white' : 'bg-surface-inset text-ink border border-border-subtle'"
           >
             <UIcon :name="isOnlineOrder(row) ? 'i-heroicons-globe-alt' : 'i-heroicons-building-storefront'" class="w-3.5 h-3.5" />
-            <span>{{ isOnlineOrder(row) ? 'Online Store' : 'POS' }}</span>
+            <span>{{ isOnlineOrder(row) ? t('sales.channel_online', 'Online Store') : 'POS' }}</span>
           </span>
         </template>
 
@@ -107,7 +107,7 @@
               ${{ Number(row.total || 0).toFixed(2) }}
             </span>
             <span class="text-xs text-ink-secondary whitespace-nowrap">
-              Issued - {{ formatDate(row.created_at) }}
+              {{ formatDate(row.created_at) }}
             </span>
           </div>
         </template>
@@ -115,7 +115,7 @@
         <template #cell-sale_status="{ row }">
           <AppBadge
             :color="getStatusColor(row.sale_status || row.status)"
-            :label="row.sale_status || row.status || 'COMPLETED'"
+            :label="localizeStatus(row.sale_status || row.status || 'COMPLETED')"
             size="sm"
           />
         </template>
@@ -138,7 +138,7 @@
 
         <template #cell-created_at="{ row }">
           <span class="text-xs text-ink-secondary whitespace-nowrap">
-            {{ (row.sale_status || row.status || 'COMPLETED') === 'COMPLETED' ? 'Paid - ' : '' }}{{ formatDate(row.created_at) }}
+            {{ (row.sale_status || row.status || 'COMPLETED') === 'COMPLETED' ? `${t('status.paid', 'Paid')} - ` : '' }}{{ formatDate(row.created_at) }}
           </span>
         </template>
 
@@ -147,13 +147,13 @@
             <AppButton
               size="xs"
               variant="ghost"
-              label="Preview"
+              :label="t('sales.preview', 'Preview')"
               @click="openDetails(row)"
             />
             <AppButton
               size="xs"
               variant="default"
-              label="View"
+              :label="t('common.view', 'View')"
               :to="`/sales/${row.id}`"
             />
           </div>
@@ -172,19 +172,19 @@
     <!-- Sale Detail Modal -->
     <AppModal
       v-model="isDetailOpen"
-      :title="selectedSale ? `Sale #${selectedSale.invoice_number}` : 'Sale Detail'"
+      :title="selectedSale ? `${t('dashboard.col_invoice', 'Invoice #')} ${selectedSale.invoice_number}` : t('sales.title', 'Sale Detail')"
       :description="selectedSale ? formatDate(selectedSale.created_at) : ''"
       size="md"
     >
       <div v-if="selectedSale" class="space-y-4">
         <div class="flex items-center justify-between">
-          <span class="text-xs text-gray-500">Status</span>
-          <AppBadge :color="getStatusColor(selectedSale.sale_status)" :label="selectedSale.sale_status" size="sm" />
+          <span class="text-xs text-gray-500">{{ t('common.status', 'Status') }}</span>
+          <AppBadge :color="getStatusColor(selectedSale.sale_status)" :label="localizeStatus(selectedSale.sale_status)" size="sm" />
         </div>
 
         <!-- Items List -->
         <div>
-          <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Items</h4>
+          <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">{{ t('sales.items', 'Items') }}</h4>
           <div class="divide-y divide-gray-100 border border-gray-200 rounded-lg px-3">
             <div
               v-for="item in selectedSale.items"
@@ -195,7 +195,7 @@
                 <p class="font-medium text-gray-900">
                   Variant #{{ item.variant_id?.slice(0, 8) }}
                 </p>
-                <p class="text-xs text-gray-500">Qty: {{ item.quantity }} × ${{ Number(item.unit_price).toFixed(2) }}</p>
+                <p class="text-xs text-gray-500">{{ t('fields.quantity', 'Qty') }}: {{ item.quantity }} × ${{ Number(item.unit_price).toFixed(2) }}</p>
               </div>
               <span class="font-semibold mono">${{ Number(item.subtotal).toFixed(2) }}</span>
             </div>
@@ -205,22 +205,22 @@
         <!-- Summary Breakdown -->
         <div class="border-t border-gray-200 pt-3 space-y-1 text-sm">
           <div class="flex justify-between text-gray-500">
-            <span>Subtotal</span>
+            <span>{{ t('fields.subtotal', 'Subtotal') }}</span>
             <span class="mono">${{ Number(selectedSale.subtotal || 0).toFixed(2) }}</span>
           </div>
           <div v-if="Number(selectedSale.discount_amount) > 0" class="flex justify-between text-green-600">
-            <span>Discount</span>
+            <span>{{ t('fields.discount', 'Discount') }}</span>
             <span class="mono">-${{ Number(selectedSale.discount_amount).toFixed(2) }}</span>
           </div>
           <div class="flex justify-between font-medium text-base text-gray-900 pt-1">
-            <span>Total</span>
+            <span>{{ t('fields.total', 'Total') }}</span>
             <span class="mono">${{ Number(selectedSale.total || 0).toFixed(2) }}</span>
           </div>
         </div>
 
         <div class="modal-actions">
-          <AppButton variant="ghost" @click="isDetailOpen = false">Close</AppButton>
-          <AppButton variant="primary" :to="`/sales/${selectedSale.id}`">Full Invoice</AppButton>
+          <AppButton variant="ghost" @click="isDetailOpen = false">{{ t('common.close', 'Close') }}</AppButton>
+          <AppButton variant="primary" :to="`/sales/${selectedSale.id}`">{{ t('sales.full_invoice', 'Full Invoice') }}</AppButton>
         </div>
       </div>
     </AppModal>
@@ -234,7 +234,9 @@ import type { FilterChipItem } from '~/types'
 definePageMeta({
   middleware: ['auth'],
 })
-useHead({ title: 'Sales History — Clothing Store Admin' })
+
+const { t } = useAppTranslation()
+useHead({ title: computed(() => `${t('sales.title', 'Sales History')} — Clothing Store Admin`) })
 
 const saleApi = useSaleApi()
 const toast = useAppToast()
@@ -252,15 +254,24 @@ const pageSize = 25
 const isDetailOpen = ref(false)
 const selectedSale = ref<any>(null)
 
-const columns = [
-  { key: 'invoice_number', label: 'Invoice #', sortable: true },
-  { key: 'channel', label: 'Channel' },
-  { key: 'total', label: 'Total ($)', sortable: true, align: 'right' as const },
-  { key: 'sale_status', label: 'Status' },
-  { key: 'payments', label: 'Payment' },
-  { key: 'created_at', label: 'Date / Time', sortable: true },
-  { key: 'actions', label: 'Actions', align: 'right' as const },
-]
+const columns = computed(() => [
+  { key: 'invoice_number', label: t('dashboard.col_invoice', 'Invoice #'), sortable: true },
+  { key: 'channel', label: t('sales.col_channel', 'Channel') },
+  { key: 'total', label: t('fields.total', 'Total ($)'), sortable: true, align: 'right' as const },
+  { key: 'sale_status', label: t('common.status', 'Status') },
+  { key: 'payments', label: t('sales.col_payment', 'Payment') },
+  { key: 'created_at', label: t('fields.date', 'Date / Time'), sortable: true },
+  { key: 'actions', label: t('common.actions', 'Actions'), align: 'right' as const },
+])
+
+function localizeStatus(status?: string): string {
+  const s = (status || 'COMPLETED').toUpperCase()
+  if (s === 'COMPLETED') return t('status.completed', 'Completed')
+  if (s === 'CANCELLED') return t('status.cancelled', 'Cancelled')
+  if (s === 'DRAFT') return t('status.draft', 'Draft')
+  if (s === 'REFUNDED' || s === 'RETURNED' || s === 'PARTIALLY_REFUNDED') return t('status.refunded', 'Refunded')
+  return s
+}
 
 const totalSalesRevenue = computed(() =>
   filteredSales.value.reduce((sum, s) => sum + Number(s.total || 0), 0).toFixed(2),
@@ -298,10 +309,10 @@ const paginatedSales = computed(() => {
 
 const activeChips = computed<FilterChipItem[]>(() => {
   const chips: FilterChipItem[] = []
-  if (channelFilter.value !== 'ALL') chips.push({ key: 'channel', label: 'Channel', value: channelFilter.value })
-  if (statusFilter.value) chips.push({ key: 'status', label: 'Status', value: statusFilter.value })
-  if (fromDate.value) chips.push({ key: 'from', label: 'From', value: fromDate.value })
-  if (toDate.value) chips.push({ key: 'to', label: 'To', value: toDate.value })
+  if (channelFilter.value !== 'ALL') chips.push({ key: 'channel', label: t('sales.col_channel', 'Channel'), value: channelFilter.value })
+  if (statusFilter.value) chips.push({ key: 'status', label: t('common.status', 'Status'), value: localizeStatus(statusFilter.value) })
+  if (fromDate.value) chips.push({ key: 'from', label: t('sales.from', 'From'), value: fromDate.value })
+  if (toDate.value) chips.push({ key: 'to', label: t('sales.to', 'To'), value: toDate.value })
   return chips
 })
 

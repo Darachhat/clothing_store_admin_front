@@ -1,6 +1,6 @@
 <template>
   <div class="page-root">
-    <!-- Top Dashboard Action & KPI Strip (Reference Screenshot 2 Layout) -->
+    <!-- Top Dashboard Action & KPI Strip -->
     <div class="flex flex-col xl:flex-row xl:items-start justify-between gap-4">
       <!-- Left: Primary & Secondary Actions -->
       <div class="flex flex-wrap items-center gap-2.5">
@@ -8,43 +8,43 @@
           size="md"
           variant="primary"
           icon="i-heroicons-plus"
-          label="New Product"
+          :label="t('dashboard.new_product', 'New Product')"
           to="/products/new"
         />
         <AppButton
           size="md"
           variant="default"
           icon="i-heroicons-arrow-down-tray"
-          label="Reports"
+          :label="t('nav_section.reports', 'Reports')"
           to="/reports"
         />
         <AppButton
           size="md"
           variant="default"
           icon="i-heroicons-computer-desktop"
-          label="POS Registers"
+          :label="t('nav.pos_registers', 'POS Registers')"
           to="/settings/terminals"
         />
         <AppButton
           size="md"
           variant="default"
           icon="i-heroicons-arrow-path"
-          label="Refresh"
+          :label="t('common.refresh', 'Refresh')"
           :loading="loading"
           @click="loadDashboard"
         />
       </div>
 
-      <!-- Right: Two Wide Summary KPI Cards with Progress Bars (Screenshot 2) -->
+      <!-- Right: Two Wide Summary KPI Cards with Progress Bars -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 xl:min-w-[640px] flex-1 xl:max-w-[740px]">
-        <!-- Card 1: Today's Revenue (#000000 Primary Accent) -->
+        <!-- Card 1: Today's Revenue -->
         <div class="bg-surface-card border border-border-subtle rounded-xl p-4 shadow-card flex flex-col justify-between gap-3">
           <div class="flex items-start justify-between gap-3">
             <div class="flex items-center gap-2">
               <span class="w-6 h-6 rounded-md bg-navy text-white inline-flex items-center justify-center shrink-0">
                 <UIcon name="i-heroicons-check" class="w-3.5 h-3.5" />
               </span>
-              <span class="text-sm font-medium text-ink">Today's Revenue</span>
+              <span class="text-sm font-medium text-ink">{{ t('dashboard.today_revenue', "Today's Revenue") }}</span>
             </div>
             <div class="text-2xl sm:text-[26px] font-medium text-ink mono tracking-tight leading-none pt-1">
               ${{ fmt(kpis.todayRevenue) }}
@@ -52,8 +52,8 @@
           </div>
           <div class="space-y-1.5">
             <div class="flex items-center justify-between text-xs text-ink-secondary">
-              <span>Orders: <strong class="font-medium text-ink mono">{{ kpis.todayOrders }}</strong></span>
-              <span>Avg Order: <strong class="font-medium text-ink mono">${{ fmt(kpis.avgOrderValue) }}</strong></span>
+              <span>{{ t('dashboard.orders', 'Orders') }}: <strong class="font-medium text-ink mono">{{ kpis.todayOrders }}</strong></span>
+              <span>{{ t('dashboard.avg_order', 'Avg Order') }}: <strong class="font-medium text-ink mono">${{ fmt(kpis.avgOrderValue) }}</strong></span>
             </div>
             <div class="w-full h-1.5 bg-surface-inset rounded-full overflow-hidden">
               <div
@@ -64,14 +64,14 @@
           </div>
         </div>
 
-        <!-- Card 2: 30-Day Gross Revenue (#2A7C13 Green Accent) -->
+        <!-- Card 2: 30-Day Gross Revenue -->
         <div class="bg-surface-card border border-border-subtle rounded-xl p-4 shadow-card flex flex-col justify-between gap-3">
           <div class="flex items-start justify-between gap-3">
             <div class="flex items-center gap-2">
               <span class="w-6 h-6 rounded-md bg-status-green-bg text-white inline-flex items-center justify-center shrink-0">
                 <UIcon name="i-heroicons-banknotes" class="w-3.5 h-3.5" />
               </span>
-              <span class="text-sm font-medium text-ink">30-Day Gross Revenue</span>
+              <span class="text-sm font-medium text-ink">{{ t('dashboard.month_revenue', '30-Day Gross Revenue') }}</span>
             </div>
             <div class="text-2xl sm:text-[26px] font-medium text-ink mono tracking-tight leading-none pt-1">
               ${{ fmt(kpis.monthRevenue) }}
@@ -79,8 +79,8 @@
           </div>
           <div class="space-y-1.5">
             <div class="flex items-center justify-between text-xs text-ink-secondary">
-              <span>Orders: <strong class="font-medium text-ink mono">{{ kpis.monthOrders }}</strong></span>
-              <span>Active SKUs: <strong class="font-medium text-ink mono">{{ invSummary.totalSkus }}</strong></span>
+              <span>{{ t('dashboard.orders', 'Orders') }}: <strong class="font-medium text-ink mono">{{ kpis.monthOrders }}</strong></span>
+              <span>{{ t('dashboard.active_skus', 'Active SKUs') }}: <strong class="font-medium text-ink mono">{{ invSummary.totalSkus }}</strong></span>
             </div>
             <div class="w-full h-1.5 bg-surface-inset rounded-full overflow-hidden">
               <div
@@ -96,19 +96,19 @@
     <!-- Error State -->
     <AppErrorState
       v-if="loadError"
-      title="Unable to load dashboard metrics"
+      :title="t('dashboard.error_title', 'Unable to load dashboard metrics')"
       :message="loadError"
       @retry="loadDashboard"
     />
 
     <template v-else>
-      <!-- Operational Units / Store Breakdown Card (Reference Screenshot 2 Middle Panel) -->
+      <!-- Operational Units / Store Breakdown Card -->
       <div class="bg-surface-card border border-border-subtle rounded-xl p-4 shadow-card space-y-2.5">
         <!-- Header Row -->
         <div class="bg-surface-inset rounded-lg px-4 py-2.5 grid grid-cols-12 items-center text-sm font-medium text-ink">
-          <div class="col-span-6 sm:col-span-7">Store Operational Unit</div>
-          <div class="col-span-3 sm:col-span-2 text-right">Today / Active</div>
-          <div class="col-span-3 text-right">30-Day / Valuation</div>
+          <div class="col-span-6 sm:col-span-7">{{ t('dashboard.ops_unit', 'Store Operational Unit') }}</div>
+          <div class="col-span-3 sm:col-span-2 text-right">{{ t('dashboard.ops_today', 'Today / Active') }}</div>
+          <div class="col-span-3 text-right">{{ t('dashboard.ops_month', '30-Day / Valuation') }}</div>
         </div>
 
         <!-- Row 1: POS & Storefront Revenue -->
@@ -118,7 +118,7 @@
         >
           <div class="col-span-6 sm:col-span-7 flex items-center gap-3 min-w-0">
             <span class="h-7 px-3 py-1 rounded bg-navy text-white text-xs font-medium inline-flex items-center justify-center shrink-0">POS</span>
-            <span class="text-sm font-normal text-ink truncate">In-Store POS &amp; Online Storefront Revenue</span>
+            <span class="text-sm font-normal text-ink truncate">{{ t('dashboard.ops_pos', 'In-Store POS & Online Storefront Revenue') }}</span>
           </div>
           <div class="col-span-3 sm:col-span-2 text-right text-sm font-normal text-ink mono">
             ${{ fmt(kpis.todayRevenue) }}
@@ -135,10 +135,10 @@
         >
           <div class="col-span-6 sm:col-span-7 flex items-center gap-3 min-w-0">
             <span class="h-7 px-3 py-1 rounded bg-status-green-bg text-white text-xs font-medium inline-flex items-center justify-center shrink-0">INV</span>
-            <span class="text-sm font-normal text-ink truncate">Warehouse Inventory &amp; Active Catalog SKUs</span>
+            <span class="text-sm font-normal text-ink truncate">{{ t('dashboard.ops_inv', 'Warehouse Inventory & Active Catalog SKUs') }}</span>
           </div>
           <div class="col-span-3 sm:col-span-2 text-right text-sm font-normal text-ink mono">
-            {{ invSummary.inStock }} healthy
+            {{ invSummary.inStock }} {{ t('dashboard.healthy', 'healthy') }}
           </div>
           <div class="col-span-3 text-right text-sm font-normal text-ink mono">
             ${{ fmt(invSummary.stockValue) }}
@@ -157,24 +157,24 @@
             >
               ALT
             </span>
-            <span class="text-sm font-normal text-ink truncate">Replenishment &amp; Low Stock Operational Alerts</span>
+            <span class="text-sm font-normal text-ink truncate">{{ t('dashboard.ops_alert', 'Replenishment & Low Stock Operational Alerts') }}</span>
           </div>
           <div class="col-span-3 sm:col-span-2 text-right text-sm font-normal mono" :class="invSummary.outOfStock > 0 ? 'text-status-red font-medium' : 'text-ink'">
-            {{ invSummary.outOfStock }} out of stock
+            {{ invSummary.outOfStock }} {{ t('dashboard.out_of_stock', 'out of stock') }}
           </div>
           <div class="col-span-3 text-right text-sm font-normal text-ink mono flex items-center justify-end gap-1.5">
-            <span>{{ invSummary.lowStock }} low stock</span>
+            <span>{{ invSummary.lowStock }} {{ t('dashboard.low_stock', 'low stock') }}</span>
             <UIcon name="i-heroicons-chevron-right" class="w-3.5 h-3.5 text-ink-tertiary" />
           </div>
         </NuxtLink>
       </div>
 
-      <!-- Full-Width Bar Chart Card (Reference Screenshot 2 Bottom Panel) -->
+      <!-- Full-Width Bar Chart Card -->
       <div class="bg-surface-card border border-border-subtle rounded-xl p-5 shadow-card">
         <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
           <div class="flex items-center gap-3">
             <h2 class="text-base font-medium text-ink">
-              {{ chartMetric === 'revenue' ? 'Daily Revenue — Last 14 Days' : 'Daily Order Volume — Last 14 Days' }}
+              {{ chartMetric === 'revenue' ? t('dashboard.chart_revenue', 'Daily Revenue — Last 14 Days') : t('dashboard.chart_orders', 'Daily Order Volume — Last 14 Days') }}
             </h2>
           </div>
           <div class="flex items-center gap-2">
@@ -185,7 +185,7 @@
                 :class="chartMetric === 'revenue' ? 'bg-navy text-white' : 'text-ink-secondary hover:text-ink'"
                 @click="chartMetric = 'revenue'"
               >
-                Revenue ($)
+                {{ t('dashboard.metric_revenue', 'Revenue ($)') }}
               </button>
               <button
                 type="button"
@@ -193,13 +193,13 @@
                 :class="chartMetric === 'orders' ? 'bg-navy text-white' : 'text-ink-secondary hover:text-ink'"
                 @click="chartMetric = 'orders'"
               >
-                Orders (#)
+                {{ t('dashboard.metric_orders', 'Orders (#)') }}
               </button>
             </div>
             <NuxtLink
               to="/reports/sales"
               class="w-8 h-8 rounded-lg border border-border-subtle bg-surface-card hover:bg-surface-hover inline-flex items-center justify-center text-ink-secondary hover:text-ink no-underline"
-              title="Open Sales Report"
+              :title="t('nav.sales_report', 'Sales Report')"
             >
               <UIcon name="i-heroicons-arrow-top-right-on-square" class="w-4 h-4" />
             </NuxtLink>
@@ -207,7 +207,6 @@
         </div>
 
         <div v-if="salesTrend.length > 0" class="relative pt-4 pb-1">
-          <!-- Horizontal Reference Grid Lines -->
           <div class="flex gap-3 items-stretch">
             <div class="flex flex-col justify-between h-[180px] text-right pr-2 text-xs text-ink-tertiary mono select-none shrink-0">
               <span>{{ chartMetric === 'revenue' ? `$${Math.round(maxRevenue)}` : maxOrders }}</span>
@@ -222,7 +221,7 @@
                 v-for="bar in salesTrend"
                 :key="bar.period"
                 class="flex-1 min-w-[42px] flex flex-col items-center group cursor-default"
-                :title="`${bar.period}: $${fmt(bar.revenue)} (${bar.order_count || 0} orders)`"
+                :title="`${bar.period}: $${fmt(bar.revenue)} (${bar.order_count || 0} ${t('dashboard.orders', 'Orders')})`"
               >
                 <div class="h-[180px] w-full flex flex-col items-center justify-end border-b border-border-subtle">
                   <span class="text-xs font-medium text-ink mono mb-1">
@@ -245,22 +244,24 @@
         <AppEmptyState
           v-else
           icon="i-heroicons-chart-bar"
-          title="No sales recorded in the last 14 days"
-          description="Completed POS and admin sales will appear here."
+          :title="t('dashboard.empty_chart_title', 'No sales recorded in the last 14 days')"
+          :description="t('dashboard.empty_chart_desc', 'Completed POS and admin sales will appear here.')"
         />
       </div>
 
       <!-- Bottom Row: Recent Sales + Low Stock Alerts & Top Products -->
       <div class="grid grid-cols-1 lg:grid-cols-[1.35fr_1fr] gap-3.5">
-        <AppCard title="Recent Sales Transactions" :no-pad="true">
+        <AppCard :title="t('dashboard.recent_sales', 'Recent Sales Transactions')" :no-pad="true">
           <template #header-right>
-            <NuxtLink to="/sales" class="text-xs font-medium text-ink-secondary hover:text-ink no-underline hover:underline">View All</NuxtLink>
+            <NuxtLink to="/sales" class="text-xs font-medium text-ink-secondary hover:text-ink no-underline hover:underline">
+              {{ t('common.view_all', 'View All') }}
+            </NuxtLink>
           </template>
           <AppTable
             :columns="saleColumns"
             :rows="recentSales"
             :loading="loading"
-            empty-text="No recent sales recorded."
+            :empty-text="t('dashboard.empty_sales', 'No recent sales recorded.')"
             row-clickable
             @row-click="(row) => navigateTo(`/sales/${row.id}`)"
           >
@@ -277,7 +278,7 @@
                 :color="(row.sale_status || row.status) === 'COMPLETED' ? 'green' : (row.sale_status || row.status) === 'CANCELLED' ? 'red' : 'yellow'"
                 size="sm"
               >
-                {{ row.sale_status || row.status || 'COMPLETED' }}
+                {{ localizeStatus(row.sale_status || row.status || 'COMPLETED') }}
               </AppBadge>
             </template>
             <template #cell-created_at="{ value }">
@@ -287,26 +288,35 @@
         </AppCard>
 
         <div class="flex flex-col gap-3.5">
-          <AppCard title="Low Stock Operational Alerts" :no-pad="true">
+          <AppCard :title="t('dashboard.low_stock_alerts', 'Low Stock Operational Alerts')" :no-pad="true">
             <template #header-right>
-              <NuxtLink to="/inventory?low_stock_only=true" class="text-xs font-medium text-ink-secondary hover:text-ink no-underline hover:underline">Restock</NuxtLink>
+              <NuxtLink to="/inventory?low_stock_only=true" class="text-xs font-medium text-ink-secondary hover:text-ink no-underline hover:underline">
+                {{ t('dashboard.restock', 'Restock') }}
+              </NuxtLink>
             </template>
-            <AppTable :columns="alertColumns" :rows="lowStockItems" :loading="loading" empty-text="All SKUs are well stocked.">
+            <AppTable
+              :columns="alertColumns"
+              :rows="lowStockItems"
+              :loading="loading"
+              :empty-text="t('dashboard.empty_alerts', 'All SKUs are well stocked.')"
+            >
               <template #cell-sku="{ value }">
                 <code class="mono font-medium text-ink">{{ value }}</code>
               </template>
               <template #cell-quantity_available="{ value }">
                 <AppBadge :color="Number(value) <= 0 ? 'red' : 'yellow'" size="sm">
-                  {{ Number(value) <= 0 ? '0 (Out)' : `${value} left` }}
+                  {{ Number(value) <= 0 ? t('dashboard.out_badge', '0 (Out)') : `${value} ${t('dashboard.left', 'left')}` }}
                 </AppBadge>
               </template>
             </AppTable>
           </AppCard>
 
           <!-- Top Products -->
-          <AppCard v-if="topProducts.length > 0" title="Top Products (30d)">
+          <AppCard v-if="topProducts.length > 0" :title="t('dashboard.top_products', 'Top Products (30d)')">
             <template #header-right>
-              <NuxtLink to="/products" class="text-xs font-medium text-ink-secondary hover:text-ink no-underline hover:underline">Catalog</NuxtLink>
+              <NuxtLink to="/products" class="text-xs font-medium text-ink-secondary hover:text-ink no-underline hover:underline">
+                {{ t('nav_section.catalog', 'Catalog') }}
+              </NuxtLink>
             </template>
             <div class="flex flex-col gap-2.5">
               <div v-for="(p, i) in topProducts" :key="i" class="flex items-center gap-2 text-xs">
@@ -315,7 +325,9 @@
                 <div class="w-20 h-1.5 bg-surface-inset rounded-full shrink-0 overflow-hidden">
                   <div class="h-full bg-navy rounded-full" :style="{ width: `${(p.qty / (topProducts[0]?.qty || 1)) * 100}%` }" />
                 </div>
-                <span class="w-[56px] text-right font-medium text-ink-secondary shrink-0 text-xs mono">{{ p.qty }} sold</span>
+                <span class="w-[56px] text-right font-medium text-ink-secondary shrink-0 text-xs mono">
+                  {{ p.qty }} {{ t('dashboard.sold', 'sold') }}
+                </span>
               </div>
             </div>
           </AppCard>
@@ -327,7 +339,9 @@
 
 <script setup lang="ts">
 definePageMeta({ middleware: ['auth'] })
-useHead({ title: 'Dashboard — Clothing Store Admin' })
+
+const { t } = useAppTranslation()
+useHead({ title: computed(() => `${t('nav.dashboard', 'Dashboard')} — Clothing Store Admin`) })
 
 const reportApi = useReportApi()
 const saleApi = useSaleApi()
@@ -355,18 +369,27 @@ const chartMetric = ref<'revenue' | 'orders'>('revenue')
 const maxRevenue = computed(() => Math.max(...salesTrend.value.map(r => Number(r.revenue || 0)), 1))
 const maxOrders = computed(() => Math.max(...salesTrend.value.map(r => Number(r.order_count || 0)), 1))
 
-const saleColumns = [
-  { key: 'sale_number', label: 'Invoice #' },
-  { key: 'total_amount', label: 'Total' },
-  { key: 'status', label: 'Status' },
-  { key: 'created_at', label: 'Date' },
-]
+const saleColumns = computed(() => [
+  { key: 'sale_number', label: t('dashboard.col_invoice', 'Invoice #') },
+  { key: 'total_amount', label: t('fields.total', 'Total') },
+  { key: 'status', label: t('common.status', 'Status') },
+  { key: 'created_at', label: t('fields.date', 'Date') },
+])
 
-const alertColumns = [
-  { key: 'sku', label: 'SKU' },
-  { key: 'product_name', label: 'Product' },
-  { key: 'quantity_available', label: 'Available' },
-]
+const alertColumns = computed(() => [
+  { key: 'sku', label: t('fields.sku', 'SKU') },
+  { key: 'product_name', label: t('nav.products', 'Product') },
+  { key: 'quantity_available', label: t('dashboard.col_available', 'Available') },
+])
+
+function localizeStatus(status: string): string {
+  const s = (status || 'COMPLETED').toUpperCase()
+  if (s === 'COMPLETED') return t('status.completed', 'Completed')
+  if (s === 'CANCELLED') return t('status.cancelled', 'Cancelled')
+  if (s === 'PENDING') return t('status.pending', 'Pending')
+  if (s === 'REFUNDED' || s === 'RETURNED') return t('status.refunded', 'Refunded')
+  return s
+}
 
 function fmt(val: any) {
   return Number(val || 0).toFixed(2)
@@ -424,7 +447,7 @@ async function loadDashboard() {
 
     recentSales.value = ((salesRes as any[]) || []).slice(0, 8)
   } catch (err: any) {
-    loadError.value = err?.data?.detail || err?.message || 'Could not load dashboard metrics.'
+    loadError.value = err?.data?.detail || err?.message || t('dashboard.error_msg', 'Could not load dashboard metrics.')
   } finally {
     loading.value = false
   }
@@ -432,4 +455,3 @@ async function loadDashboard() {
 
 onMounted(loadDashboard)
 </script>
-
