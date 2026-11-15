@@ -20,7 +20,7 @@
     <aside
       :data-state="effectiveRail ? 'collapsed' : 'expanded'"
       :data-collapsible="effectiveRail ? 'icon' : ''"
-      class="group/sidebar relative fixed inset-y-0 left-0 z-50 md:z-30 h-dvh flex flex-col shrink-0 bg-navy text-white border-r border-white/10 transition-[width,transform] duration-200 ease-out md:sticky md:top-0 md:self-start no-print select-none"
+      class="group/sidebar fixed inset-y-0 left-0 z-50 md:z-30 h-dvh flex flex-col shrink-0 bg-navy text-white border-r border-white/10 transition-[width,transform] duration-200 ease-out md:sticky md:top-0 md:self-start no-print select-none"
       :class="[
         effectiveRail ? 'w-16' : 'w-[256px]',
         isMobileOpen ? 'translate-x-0 shadow-xl' : '-translate-x-full md:translate-x-0',

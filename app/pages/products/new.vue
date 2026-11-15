@@ -18,83 +18,68 @@
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 rounded-lg border border-border-subtle bg-surface-card p-2">
       <button
         type="button"
-        class="flex items-center justify-between gap-2 rounded-md border px-3 py-2 text-left transition-colors"
+        class="flex items-center gap-2.5 rounded-md border px-3 py-2 text-left transition-colors min-w-0"
         :class="wizardStep === 1
           ? 'bg-ink text-white border-border-default'
           : 'bg-surface-inset text-ink border-border-subtle hover:bg-surface-hover'"
         @click="goToStep(1)"
       >
-        <div class="flex items-center gap-2 min-w-0">
-          <span
-            class="inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-semibold shrink-0 border"
-            :class="wizardStep === 1 ? 'bg-white text-ink border-border-subtle' : 'bg-surface-card text-ink border-border-subtle'"
-          >
-            1
-          </span>
-          <div class="min-w-0">
-            <div class="text-xs font-semibold truncate">Basic Info &amp; Pricing</div>
-            <div class="text-[11px] truncate opacity-80">
-              {{ form.name.trim() ? form.name.trim() : 'Name, category & default price' }}
-            </div>
+        <span
+          class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold shrink-0 border"
+          :class="wizardStep === 1 ? 'bg-white text-ink border-border-subtle' : 'bg-surface-card text-ink border-border-subtle'"
+        >
+          1
+        </span>
+        <div class="min-w-0 flex-1">
+          <div class="text-xs font-semibold leading-snug">Basic Info &amp; Pricing</div>
+          <div class="text-[11px] truncate opacity-80 mono">
+            {{ form.name.trim() ? form.name.trim() : 'Name & category' }} · {{ sellingPrice > 0 ? `$${sellingPrice.toFixed(2)}` : '$0.00' }}
           </div>
         </div>
-        <span class="text-[11px] mono px-1.5 py-0.5 rounded border border-border-subtle bg-surface-card text-ink shrink-0">
-          {{ sellingPrice > 0 ? `$${sellingPrice.toFixed(2)}` : 'Step 1' }}
-        </span>
       </button>
 
       <button
         type="button"
-        class="flex items-center justify-between gap-2 rounded-md border px-3 py-2 text-left transition-colors"
+        class="flex items-center gap-2.5 rounded-md border px-3 py-2 text-left transition-colors min-w-0"
         :class="wizardStep === 2
           ? 'bg-ink text-white border-border-default'
           : 'bg-surface-inset text-ink border-border-subtle hover:bg-surface-hover'"
         @click="goToStep(2)"
       >
-        <div class="flex items-center gap-2 min-w-0">
-          <span
-            class="inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-semibold shrink-0 border"
-            :class="wizardStep === 2 ? 'bg-white text-ink border-border-subtle' : 'bg-surface-card text-ink border-border-subtle'"
-          >
-            2
-          </span>
-          <div class="min-w-0">
-            <div class="text-xs font-semibold truncate">Images &amp; Attributes</div>
-            <div class="text-[11px] truncate opacity-80">
-              Photos &amp; garment details
-            </div>
+        <span
+          class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold shrink-0 border"
+          :class="wizardStep === 2 ? 'bg-white text-ink border-border-subtle' : 'bg-surface-card text-ink border-border-subtle'"
+        >
+          2
+        </span>
+        <div class="min-w-0 flex-1">
+          <div class="text-xs font-semibold leading-snug">Images &amp; Attributes</div>
+          <div class="text-[11px] truncate opacity-80 mono">
+            {{ (form.images?.length || 0) }} image{{ (form.images?.length || 0) === 1 ? '' : 's' }} · {{ (form.attribute_value_ids?.length || 0) }} attribute{{ (form.attribute_value_ids?.length || 0) === 1 ? '' : 's' }}
           </div>
         </div>
-        <span class="text-[11px] mono px-1.5 py-0.5 rounded border border-border-subtle bg-surface-card text-ink shrink-0">
-          {{ (form.images?.length || 0) }} img · {{ (form.attribute_value_ids?.length || 0) }} attr
-        </span>
       </button>
 
       <button
         type="button"
-        class="flex items-center justify-between gap-2 rounded-md border px-3 py-2 text-left transition-colors"
+        class="flex items-center gap-2.5 rounded-md border px-3 py-2 text-left transition-colors min-w-0"
         :class="wizardStep === 3
           ? 'bg-ink text-white border-border-default'
           : 'bg-surface-inset text-ink border-border-subtle hover:bg-surface-hover'"
         @click="goToStep(3)"
       >
-        <div class="flex items-center gap-2 min-w-0">
-          <span
-            class="inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-semibold shrink-0 border"
-            :class="wizardStep === 3 ? 'bg-white text-ink border-border-subtle' : 'bg-surface-card text-ink border-border-subtle'"
-          >
-            3
-          </span>
-          <div class="min-w-0">
-            <div class="text-xs font-semibold truncate">Colors, Sizes &amp; Stock</div>
-            <div class="text-[11px] truncate opacity-80">
-              Add color → sizes → stock
-            </div>
+        <span
+          class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold shrink-0 border"
+          :class="wizardStep === 3 ? 'bg-white text-ink border-border-subtle' : 'bg-surface-card text-ink border-border-subtle'"
+        >
+          3
+        </span>
+        <div class="min-w-0 flex-1">
+          <div class="text-xs font-semibold leading-snug">Colors, Sizes &amp; Stock</div>
+          <div class="text-[11px] truncate opacity-80 mono">
+            {{ variantMode === 'multi' ? `${selectedColors.length} color${selectedColors.length === 1 ? '' : 's'} · ${includedMatrixRows.length} var · ${totalMatrixStock} pcs` : 'Single item' }}
           </div>
         </div>
-        <span class="text-[11px] mono px-1.5 py-0.5 rounded border border-border-subtle bg-surface-card text-ink shrink-0">
-          {{ variantMode === 'multi' ? `${includedMatrixRows.length} var · ${totalMatrixStock} pcs` : '1 var' }}
-        </span>
       </button>
     </div>
 
