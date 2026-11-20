@@ -12,11 +12,16 @@
     "generate:contracts": "python ../scripts/generate_contracts.py",
     "postinstall": "nuxt prepare",
     "lint": "eslint .",
-    "typecheck": "nuxt typecheck"
+    "typecheck": "nuxt typecheck",
+    "astryx": "node node_modules/@astryxdesign/cli/clients/cli/bin/astryx.mjs"
   },
   "dependencies": {
+    "@astryxdesign/cli": "^0.7.16",
+    "@astryxdesign/core": "^0.7.16",
+    "@astryxdesign/theme-neutral": "^0.7.16",
     "@nuxt/ui": "^2.18.0",
     "@pinia/nuxt": "^0.5.5",
+    "@stylexjs/stylex": "^0.19.2",
     "@vueuse/nuxt": "^11.1.0",
     "dayjs": "^1.11.13",
     "nuxt": "^3.13.2",

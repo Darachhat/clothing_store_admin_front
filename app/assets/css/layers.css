@@ -1,0 +1,7 @@
+/* ==========================================================================
+   Astryx + Tailwind v3 Canonical Cascade Layer Order
+   Loaded first in nuxt.config.ts so layer precedence is locked before any
+   @import or component stylesheet:
+     reset -> tw-preflight -> astryx-base -> astryx-theme -> (unlayered utilities)
+   ========================================================================== */
+@layer reset, tw-preflight, astryx-base, astryx-theme;

@@ -186,7 +186,7 @@
             <button
               type="button"
               class="w-full px-3.5 py-2.5 flex items-center gap-2.5 text-sm text-status-red hover:bg-status-red-bg hover:text-white cursor-pointer transition-colors text-left"
-              @click="handleLogout"
+              @click="userMenuOpen = false; showLogoutConfirm = true"
             >
               <UIcon name="i-heroicons-arrow-right-on-rectangle" class="w-4.5 h-4.5" />
               <span>{{ t('common.sign_out', 'Sign out') }}</span>
@@ -336,7 +336,7 @@
           </button>
         </div>
 
-        <!-- Row 3: Font Scale -->
+        <!-- Row 3: Font Scale (CDC-style Segmented Scale Control) -->
         <div class="flex items-center justify-between gap-3 p-4">
           <div class="flex items-center gap-3 min-w-0">
             <UIcon name="i-heroicons-bars-3-bottom-left" class="w-5 h-5 text-ink-secondary shrink-0" />
@@ -345,17 +345,19 @@
               <div class="text-xs text-ink-tertiary">Adjust system text scale</div>
             </div>
           </div>
-          <select
-            v-model="fontScale"
-            aria-label="System font size"
-            class="h-8 px-2.5 rounded-md border border-border-default bg-surface-card text-xs font-medium text-ink outline-none cursor-pointer"
-            @change="applyFontScale"
-          >
-            <option value="13px">13px (Compact)</option>
-            <option value="14px">14px (Default)</option>
-            <option value="15px">15px (Comfortable)</option>
-            <option value="16px">16px (Large)</option>
-          </select>
+          <div class="inline-flex items-center gap-1 p-0.5 bg-surface-inset border border-border-subtle rounded-md shrink-0">
+            <button
+              v-for="opt in fontSizeOptions"
+              :key="opt.value"
+              type="button"
+              class="px-2 py-1 rounded text-xs font-medium cursor-pointer transition-colors"
+              :class="fontSize === opt.value ? 'bg-navy text-white' : 'text-ink-secondary hover:text-ink'"
+              :title="opt.label"
+              @click="setFontSize(opt.value)"
+            >
+              {{ opt.short }}
+            </button>
+          </div>
         </div>
 
         <!-- Row 4: BRAND_MODEL & Receipt Settings Link -->
@@ -391,11 +393,24 @@
         </NuxtLink>
       </div>
     </AppDetailDrawer>
+
+    <!-- Confirm Sign Out Modal (CDC Pattern) -->
+    <AppConfirmDialog
+      v-model="showLogoutConfirm"
+      :title="t('common.sign_out', 'Sign out')"
+      message="Are you sure you want to sign out of the admin portal?"
+      :confirm-label="t('common.sign_out', 'Sign out')"
+      variant="warning"
+      icon="i-heroicons-arrow-right-on-rectangle"
+      :loading="loggingOut"
+      @confirm="handleLogout"
+    />
   </header>
 </template>
 
 <script setup lang="ts">
 import type { SupportedLocale } from '~/types'
+import { useFontSize } from '~/composables/useFontSize'
 
 const route = useRoute()
 const authStore = useAuthStore()
@@ -415,9 +430,11 @@ const langMenuOpen = ref(false)
 const userMenuOpen = ref(false)
 const notifDrawerOpen = ref(false)
 const quickSettingsOpen = ref(false)
+const showLogoutConfirm = ref(false)
+const loggingOut = ref(false)
 const notifTab = ref<'all' | 'unread'>('all')
 const notifLoading = ref(false)
-const fontScale = ref('14px')
+const { fontSize, options: fontSizeOptions, setFontSize, initFontSize } = useFontSize()
 
 const langMenuRef = ref<HTMLElement | null>(null)
 const userMenuRef = ref<HTMLElement | null>(null)
@@ -497,21 +514,20 @@ function markAllRead() {
   readIds.value = notifications.value.map(n => n.id)
 }
 
-function applyFontScale() {
-  if (import.meta.client) {
-    document.documentElement.style.fontSize = fontScale.value
-    localStorage.setItem('admin-font-scale', fontScale.value)
-  }
-}
-
 function selectLanguage(code: SupportedLocale) {
   setLocale(code)
   langMenuOpen.value = false
 }
 
 async function handleLogout() {
+  loggingOut.value = true
   userMenuOpen.value = false
-  await authStore.logout()
+  try {
+    await authStore.logout()
+  } finally {
+    loggingOut.value = false
+    showLogoutConfirm.value = false
+  }
   await navigateTo('/login')
 }
 
@@ -527,14 +543,8 @@ function handleClickOutside(event: MouseEvent) {
 
 onMounted(() => {
   initLocale()
+  initFontSize()
   fetchTranslations()
-  if (import.meta.client) {
-    const savedScale = localStorage.getItem('admin-font-scale')
-    if (savedScale) {
-      fontScale.value = savedScale
-      document.documentElement.style.fontSize = savedScale
-    }
-  }
   loadNotifications()
   document.addEventListener('click', handleClickOutside)
 })

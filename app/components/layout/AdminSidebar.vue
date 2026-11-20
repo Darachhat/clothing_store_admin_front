@@ -20,9 +20,9 @@
     <aside
       :data-state="effectiveRail ? 'collapsed' : 'expanded'"
       :data-collapsible="effectiveRail ? 'icon' : ''"
-      class="group/sidebar fixed inset-y-0 left-0 z-50 md:z-30 h-dvh flex flex-col shrink-0 bg-navy text-white border-r border-white/10 transition-[width,transform] duration-200 ease-out md:sticky md:top-0 md:self-start no-print select-none"
+      class="group/sidebar fixed inset-y-0 left-0 z-50 md:z-30 h-dvh flex flex-col shrink-0 bg-navy text-white border-r border-white/10 shadow-lg transition-[width,transform] duration-200 ease-out md:sticky md:top-0 md:self-start no-print select-none"
       :class="[
-        effectiveRail ? 'w-16' : 'w-[256px]',
+        effectiveRail ? 'w-[96px]' : 'w-[252px]',
         isMobileOpen ? 'translate-x-0 shadow-xl' : '-translate-x-full md:translate-x-0',
         customClass,
       ]"
@@ -31,26 +31,26 @@
       <!-- ─── #header Slot: BRAND_MODEL Identity & Collapse Trigger ────────── -->
       <div
         data-slot="header"
-        class="h-14 px-3 flex items-center justify-between gap-2 border-b border-white/10 shrink-0"
+        class="min-h-14 px-3 py-2.5 flex items-center justify-between gap-2 border-b border-white/10 shrink-0"
       >
         <NuxtLink
           to="/dashboard"
           class="flex items-center gap-2.5 min-w-0 no-underline flex-1"
-          :class="[effectiveRail && 'justify-center']"
+          :class="[effectiveRail && 'flex-col justify-center gap-1']"
           :title="String(config.public.appName || displayName || 'Clothing Store')"
           @click="closeMobileSidebar"
         >
-          <div class="w-9 h-9 rounded-md bg-white/10 border border-white/15 text-white flex items-center justify-center shrink-0 overflow-hidden">
+          <div class="w-9 h-9 rounded-lg bg-white/12 border border-white/15 text-white flex items-center justify-center shrink-0 overflow-hidden">
             <img
               v-if="brand.logo_url"
               :src="brand.logo_url"
               :alt="displayName"
               class="w-full h-full object-contain p-0.5 rounded"
             />
-            <UIcon v-else name="i-heroicons-building-storefront" class="w-4.5 h-4.5 text-white" />
+            <UIcon v-else name="i-heroicons-building-storefront" class="w-5 h-5 text-white" />
           </div>
           <div v-if="!effectiveRail" class="flex flex-col min-w-0 flex-1">
-            <span class="font-medium text-[15px] text-white block truncate font-khmer leading-tight">
+            <span class="font-semibold text-[15px] text-white block truncate font-khmer leading-tight">
               {{ displayName }}
             </span>
             <span class="text-[11px] text-white/60 block truncate leading-tight mt-0.5">
@@ -82,33 +82,35 @@
         </button>
       </div>
 
-      <!-- ─── #body Slot: Vertical Navigation Menu with Child Dropdowns ─ -->
+      <!-- ─── #body Slot: Vertical Navigation Menu (CDC Navy + Gold Accent) ─ -->
       <nav
         data-slot="body"
-        class="flex-1 overflow-y-auto px-2.5 py-3 flex flex-col gap-0.5"
+        class="flex-1 overflow-y-auto px-2 py-3 flex flex-col gap-1"
         :aria-label="ariaLabel || 'Main navigation'"
       >
         <template v-for="(section, idx) in filteredNavSections" :key="section.key || section.title">
           <!-- Section Header -->
           <div
             v-if="!effectiveRail"
-            class="px-2.5 pt-3.5 pb-1 text-[11px] font-medium uppercase tracking-wider text-white/45 select-none first:pt-0.5"
+            class="px-2.5 pt-3.5 pb-1 text-[11px] font-semibold uppercase tracking-wider text-white/45 select-none first:pt-0.5"
           >
             {{ section.title }}
           </div>
-          <div v-else-if="idx > 0" class="h-px my-2 bg-white/10 mx-1.5" />
+          <div v-else-if="idx > 0" class="h-px my-1.5 bg-white/10 mx-2" />
 
           <template v-for="item in section.items" :key="item.to">
             <!-- Parent Item with Collapsible Child Pages Dropdown -->
             <div v-if="item.children && item.children.length" class="flex flex-col">
               <button
                 type="button"
-                class="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm font-medium transition-colors cursor-pointer"
+                class="w-full flex items-center rounded-lg transition-colors duration-200 cursor-pointer"
                 :class="[
+                  effectiveRail
+                    ? 'flex-col justify-center gap-1.5 py-2.5 px-1.5 text-center'
+                    : 'gap-2.5 px-3 py-2.5 text-sm font-medium',
                   isGroupActive(item)
-                    ? 'bg-navy-deep text-gold font-medium'
-                    : 'text-white/85 hover:bg-white/10 hover:text-white',
-                  effectiveRail && 'justify-center px-0',
+                    ? 'bg-gold/15 text-gold font-medium'
+                    : 'text-slate-100/80 hover:bg-gold/15 hover:text-gold/90',
                 ]"
                 :aria-expanded="isGroupOpen(item.to)"
                 :title="effectiveRail ? item.label : undefined"
@@ -116,38 +118,52 @@
               >
                 <UIcon
                   :name="item.icon"
-                  class="w-4.5 h-4.5 shrink-0"
-                  :class="isGroupActive(item) ? 'text-gold' : 'text-white/75'"
+                  class="shrink-0 transition-colors"
+                  :class="[
+                    effectiveRail ? 'w-5 h-5' : 'w-4.5 h-4.5',
+                    isGroupActive(item) ? 'text-gold opacity-100' : 'text-slate-100/70',
+                  ]"
                 />
-                <span v-show="!effectiveRail" class="truncate flex-1 text-left">{{ item.label }}</span>
+                <span
+                  v-if="!effectiveRail"
+                  class="truncate flex-1 text-left"
+                >
+                  {{ item.label }}
+                </span>
+                <span
+                  v-else
+                  class="text-[11px] leading-tight font-normal line-clamp-2 w-full text-center"
+                >
+                  {{ item.label }}
+                </span>
                 <span
                   v-if="!effectiveRail && item.badge"
-                  class="text-[11px] font-medium bg-gold text-navy-deep px-1.5 py-0.5 rounded"
+                  class="text-[11px] font-semibold bg-gold text-navy-deep px-1.5 py-0.5 rounded"
                 >
                   {{ item.badge }}
                 </span>
                 <UIcon
                   v-show="!effectiveRail"
                   name="i-heroicons-chevron-down"
-                  class="w-3.5 h-3.5 shrink-0 text-white/50 transition-transform duration-150"
-                  :class="[isGroupOpen(item.to) ? 'rotate-180 text-white/80' : '']"
+                  class="w-3.5 h-3.5 shrink-0 opacity-60 transition-transform duration-200"
+                  :class="[isGroupOpen(item.to) ? 'rotate-180 opacity-100' : '']"
                 />
               </button>
 
               <!-- Collapsible Child Links (Tree Branch) -->
               <div
                 v-show="!effectiveRail && isGroupOpen(item.to)"
-                class="ml-4 pl-2.5 mt-0.5 mb-1 border-l border-white/15 flex flex-col gap-0.5"
+                class="ml-4 pl-2.5 mt-1 mb-1 border-l border-white/15 flex flex-col gap-0.5"
               >
                 <NuxtLink
                   v-for="child in item.children"
                   :key="child.to"
                   :to="child.to"
-                  class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[13px] transition-colors no-underline"
+                  class="flex items-center gap-2 px-2.5 py-2 rounded-lg text-[13px] transition-colors duration-200 no-underline"
                   :class="[
                     isActive(child.to, child.exact)
-                      ? 'bg-navy-deep text-gold font-medium'
-                      : 'text-white/70 hover:bg-white/10 hover:text-white font-normal',
+                      ? 'bg-gold/15 text-gold font-medium'
+                      : 'text-slate-100/70 hover:bg-gold/15 hover:text-gold/90 font-normal',
                   ]"
                   @click="closeMobileSidebar"
                 >
@@ -155,7 +171,7 @@
                     v-if="child.icon"
                     :name="child.icon"
                     class="w-3.5 h-3.5 shrink-0"
-                    :class="isActive(child.to, child.exact) ? 'text-gold' : 'text-white/50'"
+                    :class="isActive(child.to, child.exact) ? 'text-gold' : 'text-slate-100/55'"
                   />
                   <span class="truncate flex-1">{{ child.label }}</span>
                 </NuxtLink>
@@ -166,25 +182,33 @@
             <NuxtLink
               v-else
               :to="item.to"
-              class="flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm font-medium transition-colors no-underline"
+              class="flex items-center rounded-lg transition-colors duration-200 no-underline"
               :class="[
+                effectiveRail
+                  ? 'flex-col justify-center gap-1.5 py-2.5 px-1.5 text-center'
+                  : 'gap-2.5 px-3 py-2.5 text-sm font-medium',
                 isActive(item.to, item.exact)
-                  ? 'bg-navy-deep text-gold font-medium'
-                  : 'text-white/85 hover:bg-white/10 hover:text-white',
-                effectiveRail && 'justify-center px-0',
+                  ? 'bg-gold/15 text-gold font-medium'
+                  : 'text-slate-100/80 hover:bg-gold/15 hover:text-gold/90',
               ]"
               :title="effectiveRail ? `${section.title}: ${item.label}${item.shortcut ? ` [${item.shortcut}]` : ''}` : undefined"
               @click="closeMobileSidebar"
             >
               <UIcon
                 :name="item.icon"
-                class="w-4.5 h-4.5 shrink-0"
-                :class="isActive(item.to, item.exact) ? 'text-gold' : 'text-white/75'"
+                class="shrink-0 transition-colors"
+                :class="[
+                  effectiveRail ? 'w-5 h-5' : 'w-4.5 h-4.5',
+                  isActive(item.to, item.exact) ? 'text-gold opacity-100' : 'text-slate-100/70',
+                ]"
               />
-              <span v-show="!effectiveRail" class="truncate flex-1">{{ item.label }}</span>
+              <span v-if="!effectiveRail" class="truncate flex-1">{{ item.label }}</span>
+              <span v-else class="text-[11px] leading-tight font-normal line-clamp-2 w-full text-center">
+                {{ item.label }}
+              </span>
               <span
                 v-if="!effectiveRail && item.badge"
-                class="text-[11px] font-medium bg-gold text-navy-deep px-1.5 py-0.5 rounded"
+                class="text-[11px] font-semibold bg-gold text-navy-deep px-1.5 py-0.5 rounded"
               >
                 {{ item.badge }}
               </span>
@@ -199,18 +223,18 @@
         </template>
       </nav>
 
-      <!-- ─── #footer Slot: User Profile & Session Controls ──────────── -->
+      <!-- ─── #footer Slot: User Profile, Session Controls & Version ─── -->
       <div
         data-slot="footer"
-        class="p-2.5 border-t border-white/10 flex flex-col gap-1 shrink-0"
+        class="p-2.5 border-t border-white/10 flex flex-col gap-1.5 shrink-0"
         :class="[effectiveRail && 'items-center']"
       >
         <div
-          class="flex items-center gap-2.5 p-1.5 rounded-md w-full"
+          class="flex items-center gap-2.5 p-1.5 rounded-lg w-full"
           :class="[effectiveRail ? 'justify-center p-0' : '']"
           :title="effectiveRail ? `${userName} (${userRole})` : undefined"
         >
-          <div class="w-8 h-8 rounded-md bg-white/15 border border-white/20 text-white flex items-center justify-center text-xs font-medium shrink-0">
+          <div class="w-8 h-8 rounded-full bg-white/15 border border-white/20 text-white flex items-center justify-center text-xs font-semibold shrink-0">
             {{ userInitials }}
           </div>
           <div v-show="!effectiveRail" class="min-w-0 flex-1">
@@ -234,17 +258,21 @@
 
         <button
           type="button"
-          class="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm font-medium transition-colors text-white/80 hover:bg-status-red-bg hover:text-white cursor-pointer"
-          :class="[effectiveRail && 'justify-center px-0']"
+          class="w-full flex items-center rounded-lg text-sm font-medium transition-colors text-slate-100/80 hover:bg-red-600/90 hover:text-white cursor-pointer"
+          :class="[effectiveRail ? 'flex-col justify-center gap-1 py-2 px-1 text-[11px]' : 'gap-2.5 px-3 py-2']"
           :title="effectiveRail ? t('common.sign_out', 'Sign out') : undefined"
-          @click="onLogout"
+          @click="showLogoutConfirm = true"
         >
           <UIcon name="i-heroicons-arrow-right-on-rectangle" class="w-4.5 h-4.5 shrink-0" />
-          <span v-show="!effectiveRail">{{ t('common.sign_out', 'Sign out') }}</span>
+          <span>{{ t('common.sign_out', 'Sign out') }}</span>
         </button>
+
+        <div class="text-center text-[11px] text-white/45 pt-0.5 font-mono">
+          v1.0.0
+        </div>
       </div>
 
-      <!-- ─── #rail Slot: Nuxt UI Edge Rail Toggle Handle ────────────── -->
+      <!-- ─── #rail Slot: Edge Rail Toggle Handle ────────────────────── -->
       <button
         v-if="collapsible"
         type="button"
@@ -252,10 +280,22 @@
         aria-label="Toggle Sidebar"
         :tabindex="-1"
         :title="effectiveRail ? 'Expand sidebar' : 'Collapse sidebar'"
-        class="hidden md:block absolute inset-y-0 -right-1.5 w-3 z-20 cursor-ew-resize after:absolute after:inset-y-0 after:left-1/2 after:w-[2px] hover:after:bg-gold/60 transition-colors"
+        class="hidden md:block absolute inset-y-0 -right-1.5 w-3 z-20 cursor-ew-resize after:absolute after:inset-y-0 after:left-1/2 after:w-[2px] hover:after:bg-gold/70 transition-colors"
         @click="toggleCollapse"
       />
     </aside>
+
+    <!-- Confirm Sign Out Modal (CDC Pattern) -->
+    <AppConfirmDialog
+      v-model="showLogoutConfirm"
+      :title="t('common.sign_out', 'Sign out')"
+      message="Are you sure you want to sign out of the admin portal?"
+      :confirm-label="t('common.sign_out', 'Sign out')"
+      variant="warning"
+      icon="i-heroicons-arrow-right-on-rectangle"
+      :loading="loggingOut"
+      @confirm="confirmLogout"
+    />
   </div>
 </template>
 
@@ -493,13 +533,20 @@ const userInitials = computed(() => {
   )
 })
 
-async function onLogout() {
+const showLogoutConfirm = ref(false)
+const loggingOut = ref(false)
+
+async function confirmLogout() {
+  loggingOut.value = true
   closeMobileSidebar()
   emit('logout')
   try {
     await authStore.logout()
   } catch (err) {
     console.error('Logout error:', err)
+  } finally {
+    loggingOut.value = false
+    showLogoutConfirm.value = false
   }
   await router.push('/login')
 }

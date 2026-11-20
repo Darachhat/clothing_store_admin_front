@@ -24,90 +24,93 @@ export default ({
 
   theme: {
     extend: {
-      // ── Color System ──────────────────────────────────────────────────
+      // ── Color System (CDC Navy + Gold + Clean Slate Surfaces) ────────
       colors: {
-        // Surfaces
+        // Surfaces — crisp slate canvas & pure white elevated cards
         surface: {
-          bg: '#F3F4F4',      // page canvas / gray wash
+          bg: '#F1F5F9',      // page canvas (slate-100)
           card: '#FFFFFF',    // elevated cards, panels
-          inset: '#F3F4F4',   // table head, inset panels
+          inset: '#F8FAFC',   // table head, inset panels (slate-50)
           input: '#FFFFFF',   // form inputs
-          hover: '#EAECEC',   // hover state
-          active: '#DFE2E2',  // pressed / active state
+          hover: '#F1F5F9',   // subtle hover state
+          active: '#E2E8F0',  // pressed / active state (slate-200)
         },
 
         // Borders (neutral only — per AGENTS.md rule: no colorful borders)
-        subtle: '#E2E2E2',    // `border-subtle`  very faint dividers
+        subtle: '#E2E8F0',    // `border-subtle`  slate-200 subtle dividers
         border: {
-          subtle: '#E2E2E2',
-          default: '#C8C8C8',
-          strong: '#8F8F8F',
+          subtle: '#E2E8F0',
+          default: '#CBD5E1', // slate-300
+          strong: '#94A3B8',  // slate-400
         },
 
-        // Text / Ink
+        // Text / Ink (crisp slate hierarchy)
         ink: {
-          DEFAULT: '#000000',   // body text  (`text-ink`)
-          secondary: '#4A4F58', // labels, meta
-          tertiary: '#5E646E',  // placeholders, hints
+          DEFAULT: '#1E293B',   // body text  (`text-ink`, slate-800)
+          secondary: '#64748B', // labels, meta (slate-500)
+          tertiary: '#94A3B8',  // placeholders, hints (slate-400)
           inverse: '#FFFFFF',   // white text on dark bg
         },
 
-        // BRAND_MODEL palette — blue primary (brand-900 === primary), navy chrome, gold active accent
+        // BRAND_MODEL palette — Deep Navy (#102D71) + Gold (#DDAD01) active accent
         brand: {
-          50: '#000000',
-          700: '#262626',
-          800: '#1A1A1A',
-          900: '#000000',  // main brand accent  (`bg-brand-900`, `text-brand-900`)
+          50: '#EFF6FF',
+          100: '#DBEAFE',
+          600: '#1D4ED8',
+          700: '#153A8A',
+          800: '#0B2054',
+          900: '#102D71',  // main brand accent (`bg-brand-900`, `text-brand-900`)
         },
         action: {
-          DEFAULT: '#000000',
-          hover: '#1A1A1A',
-          soft: '#000000',
+          DEFAULT: '#102D71',
+          hover: '#0B2054',
+          soft: '#EFF6FF',
         },
         navy: {
-          DEFAULT: '#000000',
-          deep: '#1A1A1A',
+          DEFAULT: '#102D71',
+          deep: '#0B2054',
         },
-        gold: '#F5B90F',
+        gold: '#DDAD01',
 
-        // Status — muted, matches --status-* vars
+        // Status — clean semantic fills/text (borders remain neutral subtle)
         status: {
-          green: '#2A7C13',
-          'green-bg': '#2A7C13',
-          amber: '#9A5B00',
-          'amber-bg': '#8A5300',
-          red: '#830000',
-          'red-bg': '#830000',
-          blue: '#000000',
-          'blue-bg': '#000000',
+          green: '#059669',
+          'green-bg': '#059669',
+          amber: '#D97706',
+          'amber-bg': '#D97706',
+          red: '#DC2626',
+          'red-bg': '#DC2626',
+          blue: '#102D71',
+          'blue-bg': '#102D71',
         },
       },
 
-      // ── Typography ────────────────────────────────────────────────────
+      // ── Typography (Astryx Neutral Figtree + Khmer stack) ─────────────
       fontFamily: {
-        sans: ['Inter', 'Kantumruy Pro', 'Battambang', 'Noto Sans Khmer', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        body: ['Inter', 'Kantumruy Pro', 'Battambang', 'Noto Sans Khmer', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        mono: ['Inter Tight', 'ui-monospace', 'Cascadia Code', 'monospace'],
-        khmer: ['Kantumruy Pro', 'Battambang', 'Noto Sans Khmer', 'Battambang Local', 'Inter', 'sans-serif'],
+        sans: ['Figtree', 'Inter', 'Kantumruy Pro', 'Battambang', 'Noto Sans Khmer', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        body: ['Figtree', 'Inter', 'Kantumruy Pro', 'Battambang', 'Noto Sans Khmer', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        heading: ['Figtree', 'Inter', 'Kantumruy Pro', 'Battambang', 'Noto Sans Khmer', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        mono: ['Inter Tight', 'ui-monospace', 'SF Mono', 'Cascadia Code', 'monospace'],
+        khmer: ['Kantumruy Pro', 'Battambang', 'Noto Sans Khmer', 'Battambang Local', 'Figtree', 'Inter', 'sans-serif'],
       },
 
       // ── Border Radius ─────────────────────────────────────────────────
       borderRadius: {
         sm: '4px',   // `rounded-sm`
-        DEFAULT: '6px',
+        DEFAULT: '6px', // `--radius-inner` (0.375rem)
         md: '6px',   // `rounded-md`
-        lg: '8px',   // `rounded-lg`
-        xl: '12px',  // `rounded-xl`
+        lg: '10px',  // `rounded-lg` (`--radius-element`: 0.625rem)
+        xl: '12px',  // `rounded-xl` (`--radius-container`: 0.75rem)
         full: '9999px',
       },
 
-      // ── Box Shadow ────────────────────────────────────────────────────
+      // ── Box Shadow (Astryx Neutral elevation) ─────────────────────────
       boxShadow: {
-        card: '0 1px 2px rgba(0,0,0,0.05)',
-        menu: '0 8px 24px rgba(0,0,0,0.12)',
-        modal: '0 20px 40px rgba(0,0,0,0.24)',
-        header: '0 1px 4px rgba(0,0,0,0.06)',
-        focus: '0 0 0 3px rgba(0,0,0,0.12)',
+        card: '0 2px 4px rgba(0,0,0,0.04), 0 4px 8px rgba(0,0,0,0.06)',
+        menu: '0 2px 4px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.10)',
+        modal: '0 4px 6px rgba(0,0,0,0.10), 0 12px 24px rgba(0,0,0,0.15)',
+        header: '0 1px 3px rgba(0,0,0,0.05)',
+        focus: '0 0 0 2px #1B1B1B',
       },
 
       // ── Width shortcuts ───────────────────────────────────────────────

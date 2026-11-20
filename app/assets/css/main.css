@@ -1,9 +1,13 @@
 /* ==========================================================================
-   Clothing Store Admin — Centralized Tailwind & Theme System
+   Clothing Store Admin — Astryx Neutral (@astryxdesign/theme-neutral) + Tailwind
    Tokens & Utilities. Strict Compliance: Neutral Subtle Borders Only.
    ========================================================================== */
 
-@tailwind base;
+@layer reset, tw-preflight, astryx-base, astryx-theme;
+
+@layer tw-preflight {
+  @tailwind base;
+}
 @tailwind components;
 @tailwind utilities;
 
@@ -16,40 +20,62 @@
   font-display: swap;
 }
 
-/* ─── Semantic Design Tokens ────────────────────────────────────────────── */
-:root {
-  /* Surfaces */
-  --surface-bg:        #F3F4F4;
+/* ─── Semantic Design Tokens (CDC Navy + Gold + Clean Slate Surfaces) ────── */
+:root,
+[data-astryx-theme="neutral"] {
+  /* Dynamic Root Font Scale (13px / 14px / 15px / 16px) */
+  --app-fontsize:      14px;
+
+  /* Surfaces — crisp light slate canvas & pure white cards */
+  --surface-bg:        #F1F5F9;
   --surface-card:      #FFFFFF;
-  --surface-inset:     #F3F4F4;
+  --surface-inset:     #F8FAFC;
   --surface-input:     #FFFFFF;
-  --surface-hover:     #EAECEC;
-  --surface-active:    #DFE2E2;
+  --surface-hover:     #F1F5F9;
+  --surface-active:    #E2E8F0;
   --surface:           #FFFFFF;
 
-  /* Neutral Borders (Never use colorful borders) */
-  --border-subtle:     #E2E2E2;
-  --border-default:    #C8C8C8;
-  --border-strong:     #8F8F8F;
-  --border:            #E2E2E2;
+  /* Neutral Borders (Never use colorful borders — Workspace Rule #1) */
+  --border-subtle:     #E2E8F0;
+  --border-default:    #CBD5E1;
+  --border-strong:     #94A3B8;
+  --border:            #E2E8F0;
 
-  /* Typography Colors */
-  --text-primary:      #000000;
-  --text-secondary:    #4A4F58;
-  --text-tertiary:     #5E646E;
-  --text-muted:        #6B7789;
+  /* Enforce Neutral Subtle Borders across Astryx status/hue border tokens */
+  --color-border:            #E2E8F0;
+  --color-border-emphasized: #CBD5E1;
+  --color-border-info:       var(--border-subtle);
+  --color-border-success:    var(--border-subtle);
+  --color-border-warning:    var(--border-subtle);
+  --color-border-error:      var(--border-subtle);
+  --color-border-red:        var(--border-subtle);
+  --color-border-orange:     var(--border-subtle);
+  --color-border-yellow:     var(--border-subtle);
+  --color-border-green:      var(--border-subtle);
+  --color-border-teal:       var(--border-subtle);
+  --color-border-cyan:       var(--border-subtle);
+  --color-border-blue:       var(--border-subtle);
+  --color-border-purple:     var(--border-subtle);
+  --color-border-pink:       var(--border-subtle);
+  --color-border-gray:       var(--border-default);
+
+  /* Typography Colors — crisp slate ink */
+  --text-primary:      #1E293B;
+  --text-secondary:    #64748B;
+  --text-tertiary:     #94A3B8;
+  --text-muted:        #94A3B8;
   --text-inverse:      #FFFFFF;
 
-  /* BRAND_MODEL — Navy chrome, blue primary, gold active accent */
-  --primary:           #000000;
-  --primary-hover:     #1A1A1A;
-  --primary-soft:      #000000;
-  --navy:              #000000;
-  --navy-deep:         #1A1A1A;
-  --gold:              #F5B90F;
+  /* BRAND_MODEL — Corporate Deep Navy (#102D71) & Gold (#DDAD01) active accent */
+  --primary:           #102D71;
+  --primary-hover:     #0B2054;
+  --primary-soft:      #EFF6FF;
+  --navy:              #102D71;
+  --navy-deep:         #0B2054;
+  --gold:              #DDAD01;
   --brand-900:         var(--primary);
   --brand-800:         var(--primary-hover);
-  --brand-700:         #262626;
+  --brand-700:         #153A8A;
   --brand-50:          var(--primary-soft);
   --accent-primary:    var(--primary);
   --accent-hover:      var(--primary-hover);
@@ -57,23 +83,24 @@
   --color-primary:     var(--primary);
 
   /* Status Colors (Semantic text/bg; borders remain neutral subtle) */
-  --status-green:      #2A7C13;
-  --status-green-bg:   #2A7C13;
-  --status-amber:      #9A5B00;
-  --status-amber-bg:   #8A5300;
-  --status-red:        #830000;
-  --status-red-bg:     #830000;
-  --status-blue:       #000000;
-  --status-blue-bg:    #000000;
+  --status-green:      #059669;
+  --status-green-bg:   #059669;
+  --status-amber:      #D97706;
+  --status-amber-bg:   #D97706;
+  --status-red:        #DC2626;
+  --status-red-bg:     #DC2626;
+  --status-blue:       #102D71;
+  --status-blue-bg:    #102D71;
 
-  /* Fonts */
-  --font-body:    'Inter', 'Kantumruy Pro', 'Battambang Local', ui-sans-serif, system-ui, sans-serif;
-  --font-mono:    'Inter Tight', 'JetBrains Mono', ui-monospace, 'Cascadia Code', monospace;
-  --font-khmer:   'Kantumruy Pro', 'Battambang', 'Battambang Local', 'Noto Sans Khmer', sans-serif;
+  /* Fonts — Inter + Figtree + Khmer fallback stack */
+  --font-body:    'Inter', 'Figtree', 'Kantumruy Pro', 'Battambang Local', ui-sans-serif, system-ui, sans-serif;
+  --font-heading: 'Inter', 'Figtree', 'Kantumruy Pro', 'Battambang Local', ui-sans-serif, system-ui, sans-serif;
+  --font-mono:    'Inter Tight', 'JetBrains Mono', ui-monospace, 'SF Mono', 'Cascadia Code', monospace;
+  --font-khmer:   'Kantumruy Pro', 'Battambang', 'Battambang Local', 'Noto Sans Khmer', 'Inter', sans-serif;
 
   /* Layout Metrics */
-  --sidebar-width:           248px;
-  --sidebar-width-collapsed: 64px;
+  --sidebar-width:           252px;
+  --sidebar-width-collapsed: 96px;
   --topbar-height:           56px;
   --radius-sm:               4px;
   --radius-md:               8px;
@@ -82,11 +109,13 @@
   --radius-full:             9999px;
 }
 /* ─── Base HTML Resets ─────────────────────────────────────────────────── */
+html {
+  font-size: var(--app-fontsize, 14px);
+}
 html, body {
   font-family: var(--font-body);
   background-color: var(--surface-bg);
   color: var(--text-primary);
-  font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -398,6 +427,59 @@ textarea:focus-visible {
     gap: 3mm !important;
     padding: 8mm !important;
     justify-content: start !important;
+  }
+}
+
+/* ─── Shimmer Skeleton & Right Side-Drawer Animations (CDC pattern) ───── */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background-color: rgba(148, 163, 184, 0.22);
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.65) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: shimmer-slide 1.25s infinite;
+}
+@keyframes shimmer-slide {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes drawerSlideInRight {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes drawerSlideInBottom {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.cdc-side-drawer {
+  animation: drawerSlideInRight 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
+}
+
+@media (max-width: 639px) {
+  .cdc-side-drawer {
+    animation: drawerSlideInBottom 0.28s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
   }
 }
 

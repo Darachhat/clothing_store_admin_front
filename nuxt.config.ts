@@ -67,6 +67,7 @@ export default defineNuxtConfig({
         ['AdminSidebar', 'AppSidebar'],
         ['AdminHeader', 'AppHeader'],
         ['PageHeader', 'AppPageHeader'],
+        ['AstryxTheme', 'Theme'],
       ]
 
       const toKebab = (name: string) =>
@@ -115,7 +116,7 @@ export default defineNuxtConfig({
         { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
         {
           rel: 'stylesheet',
-          href: 'https://fonts.googleapis.com/css2?family=Battambang:wght@400;700&family=Inter:wght@300;400;500;600;700&family=Inter+Tight:wght@400;500;600;700&family=Kantumruy+Pro:wght@400;500;600;700&family=Noto+Sans+Khmer:wght@400;500;600;700&display=swap',
+          href: 'https://fonts.googleapis.com/css2?family=Battambang:wght@400;700&family=Figtree:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Inter+Tight:wght@400;500;600;700&family=Kantumruy+Pro:wght@400;500;600;700&family=Noto+Sans+Khmer:wght@400;500;600;700&display=swap',
         },
       ],
     },
@@ -148,7 +149,7 @@ export default defineNuxtConfig({
     typeCheck: false,
   },
 
-  css: ['~/assets/css/main.css'],
+  css: ['~/assets/css/layers.css', '~/assets/css/main.css'],
 
   pinia: {
     storesDirs: ['./app/stores/**'],

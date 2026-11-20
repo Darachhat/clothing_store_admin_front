@@ -162,13 +162,15 @@
       </div>
     </AppCard>
 
-    <!-- Users Table -->
+    <!-- Users Table (Row Click opens CDC Right Sidebar Detail Drawer) -->
     <AppCard>
       <AppTable
         :columns="columns"
         :rows="users"
         :loading="loading"
+        :row-clickable="true"
         :empty-state="{ icon: 'i-heroicons-user-group', label: 'No matching user accounts found' }"
+        @row-click="openDetailDrawer"
       >
         <!-- 1. Account Identity -->
         <template #cell-username="{ row }">
@@ -257,20 +259,20 @@
 
         <!-- 6. Actions -->
         <template #cell-actions="{ row }">
-          <div class="flex items-center gap-1">
+          <div class="flex items-center gap-1" @click.stop>
             <AppButton
               size="sm"
               variant="ghost"
-              icon="i-heroicons-pencil-square"
-              label="Roles & Edit"
-              @click="openEditModal(row)"
+              icon="i-heroicons-eye"
+              label="Details"
+              @click="openDetailDrawer(row)"
             />
             <AppButton
               size="sm"
               variant="ghost"
-              icon="i-heroicons-clock"
-              label="History"
-              @click="openHistoryModal(row)"
+              icon="i-heroicons-pencil-square"
+              label="Edit"
+              @click="openEditModal(row)"
             />
             <AppButton
               v-if="row.status === 'ACTIVE' && row.id !== authStore.currentUser?.id"
@@ -293,83 +295,221 @@
       </AppTable>
     </AppCard>
 
-    <!-- Create User Modal -->
-    <AppModal v-model="showCreateModal" size="lg">
-      <AppCard>
-        <template #header>
-          <div class="flex items-center justify-between">
-            <h3 class="text-base font-semibold">Create Staff Account</h3>
-            <AppButton variant="ghost" size="sm" icon="i-heroicons-x-mark" @click="showCreateModal = false" />
-          </div>
-        </template>
+    <!-- CDC-Style Right Sidebar User Detail Drawer -->
+    <AppDetailDrawer
+      v-model="showDetailDrawer"
+      title="User Details"
+      size="lg"
+      :no-padding="true"
+    >
+      <div v-if="detailUser" class="flex flex-col">
+        <!-- Cover Banner -->
+        <div class="h-32 sm:h-36 w-full bg-gradient-to-br from-[#102D71] via-[#153A8A] to-[#0B2054] relative overflow-hidden">
+          <div class="pointer-events-none absolute -right-10 -top-10 w-44 h-44 rounded-full border border-white/10" />
+          <div class="pointer-events-none absolute -left-10 -bottom-10 w-40 h-40 rounded-full border border-white/10" />
+        </div>
 
-        <form class="space-y-4" @submit.prevent="handleCreateUser">
+        <!-- Overlapping Avatar + Identity + Quick Actions -->
+        <div class="px-5 sm:px-6 pb-6">
+          <div class="flex items-end justify-between gap-3 -mt-10 relative z-10 mb-4">
+            <div class="w-20 h-20 rounded-full bg-navy text-white text-2xl font-semibold flex items-center justify-center border-4 border-surface-card shadow-md shrink-0">
+              {{ getInitials(detailUser.full_name || detailUser.username) }}
+            </div>
+            <div class="flex items-center gap-1.5 pb-1">
+              <AppButton
+                size="sm"
+                variant="default"
+                icon="i-heroicons-clock"
+                label="History"
+                @click="openHistoryModal(detailUser)"
+              />
+              <AppButton
+                size="sm"
+                variant="primary"
+                icon="i-heroicons-pencil-square"
+                label="Edit"
+                @click="openEditFromDetail(detailUser)"
+              />
+            </div>
+          </div>
+
+          <div class="mb-6">
+            <div class="flex items-center gap-2 flex-wrap">
+              <h2 class="text-xl font-bold text-ink m-0">{{ detailUser.full_name }}</h2>
+              <AppBadge
+                :color="detailUser.status === 'ACTIVE' ? 'emerald' : 'gray'"
+                :label="detailUser.status"
+                size="sm"
+                variant="subtle"
+              />
+            </div>
+            <p class="text-sm text-ink-secondary font-mono m-0 mt-0.5">
+              @{{ detailUser.username }}
+              <span v-if="detailUser.employee_code"> &middot; {{ detailUser.employee_code }}</span>
+            </p>
+          </div>
+
+          <!-- CDC 2-Column <dl> Profile Information Grid -->
+          <div class="space-y-3">
+            <h3 class="text-sm font-semibold text-ink uppercase tracking-wider m-0 pb-2 border-b border-subtle">
+              Account Information
+            </h3>
+            <dl class="m-0 grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-x-4 gap-y-3 text-sm">
+              <dt class="text-ink-secondary">Full Name</dt>
+              <dd class="m-0 text-ink font-medium">{{ detailUser.full_name || '—' }}</dd>
+
+              <dt class="text-ink-secondary">Username</dt>
+              <dd class="m-0 text-ink font-mono break-all">@{{ detailUser.username || '—' }}</dd>
+
+              <dt class="text-ink-secondary">Email</dt>
+              <dd class="m-0 text-ink break-all">{{ detailUser.email || '—' }}</dd>
+
+              <dt class="text-ink-secondary">Phone Number</dt>
+              <dd class="m-0 text-ink font-mono flex items-center gap-2 flex-wrap">
+                <span>{{ detailUser.phone_number || '—' }}</span>
+                <AppBadge
+                  v-if="detailUser.phone_number"
+                  :color="detailUser.phone_verified ? 'emerald' : 'amber'"
+                  :label="detailUser.phone_verified ? 'Verified' : 'Unverified'"
+                  size="sm"
+                  variant="subtle"
+                />
+              </dd>
+
+              <dt class="text-ink-secondary">Employee Code</dt>
+              <dd class="m-0 text-ink font-mono">{{ detailUser.employee_code || '—' }}</dd>
+
+              <dt class="text-ink-secondary">Assigned Roles</dt>
+              <dd class="m-0 flex flex-wrap gap-1.5">
+                <AppBadge
+                  v-for="role in detailUser.roles"
+                  :key="role.id"
+                  :color="getRoleColor(role.name)"
+                  :label="role.name"
+                  size="sm"
+                  variant="subtle"
+                />
+                <span v-if="!detailUser.roles?.length" class="text-ink-tertiary">No roles</span>
+              </dd>
+
+              <dt class="text-ink-secondary">Telegram</dt>
+              <dd class="m-0 text-ink">
+                <span v-if="detailUser.telegram_id" class="font-mono">
+                  {{ detailUser.telegram_username ? `@${detailUser.telegram_username}` : `ID: ${detailUser.telegram_id}` }}
+                </span>
+                <span v-else class="text-ink-tertiary">Not linked</span>
+              </dd>
+
+              <dt class="text-ink-secondary">Last Login</dt>
+              <dd class="m-0 text-ink-secondary">
+                {{ detailUser.last_login_at ? formatDateTime(detailUser.last_login_at) : 'Never' }}
+              </dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+
+      <template v-if="detailUser" #footer>
+        <AppButton
+          v-if="detailUser.status === 'ACTIVE' && detailUser.id !== authStore.currentUser?.id"
+          size="sm"
+          variant="danger"
+          icon="i-heroicons-no-symbol"
+          label="Deactivate User"
+          @click="deactivateUser(detailUser)"
+        />
+        <AppButton
+          v-else-if="detailUser.status !== 'ACTIVE'"
+          size="sm"
+          variant="secondary"
+          icon="i-heroicons-check-circle"
+          label="Activate User"
+          @click="activateUser(detailUser)"
+        />
+        <AppButton
+          size="sm"
+          variant="primary"
+          icon="i-heroicons-pencil-square"
+          label="Edit User & Roles"
+          @click="openEditFromDetail(detailUser)"
+        />
+      </template>
+    </AppDetailDrawer>
+
+    <!-- Create User Right Sidebar Drawer (CDC Pattern) -->
+    <AppDetailDrawer
+      v-model="showCreateModal"
+      title="Create Staff Account"
+      subtitle="Add a new staff member and assign roles"
+      size="lg"
+    >
+      <form id="create-user-form" class="space-y-4" @submit.prevent="handleCreateUser">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Username *</label>
+              <label class="block text-xs font-medium text-ink-secondary mb-1">Username *</label>
               <input
                 v-model="createForm.username"
                 type="text"
                 required
                 placeholder="e.g. john_doe"
-                class="w-full rounded-md border border-gray-200 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
+                class="w-full rounded-lg border border-border-default bg-surface-card px-3 py-2 text-sm text-ink outline-none focus:border-navy"
               />
             </div>
             <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Full Name *</label>
+              <label class="block text-xs font-medium text-ink-secondary mb-1">Full Name *</label>
               <input
                 v-model="createForm.full_name"
                 type="text"
                 required
                 placeholder="e.g. John Doe"
-                class="w-full rounded-md border border-gray-200 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
+                class="w-full rounded-lg border border-border-default bg-surface-card px-3 py-2 text-sm text-ink outline-none focus:border-navy"
               />
             </div>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Email Address *</label>
+              <label class="block text-xs font-medium text-ink-secondary mb-1">Email Address *</label>
               <input
                 v-model="createForm.email"
                 type="email"
                 required
                 placeholder="john@example.com"
-                class="w-full rounded-md border border-gray-200 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
+                class="w-full rounded-lg border border-border-default bg-surface-card px-3 py-2 text-sm text-ink outline-none focus:border-navy"
               />
             </div>
             <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Initial Password *</label>
+              <label class="block text-xs font-medium text-ink-secondary mb-1">Initial Password *</label>
               <input
                 v-model="createForm.password"
                 type="password"
                 required
                 minlength="8"
                 placeholder="Min 8 characters"
-                class="w-full rounded-md border border-gray-200 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
+                class="w-full rounded-lg border border-border-default bg-surface-card px-3 py-2 text-sm text-ink outline-none focus:border-navy"
               />
             </div>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Employee Code</label>
+              <label class="block text-xs font-medium text-ink-secondary mb-1">Employee Code</label>
               <input
                 v-model="createForm.employee_code"
                 type="text"
                 placeholder="e.g. EMP-004"
-                class="w-full rounded-md border border-gray-200 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
+                class="w-full rounded-lg border border-border-default bg-surface-card px-3 py-2 text-sm text-ink outline-none focus:border-navy"
               />
             </div>
             <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Phone Number (E.164)</label>
+              <label class="block text-xs font-medium text-ink-secondary mb-1">Phone Number (E.164)</label>
               <input
                 v-model="createForm.phone_number"
                 type="text"
                 placeholder="+85569382165"
-                class="w-full rounded-md border border-gray-200 bg-white dark:bg-gray-800 px-3 py-2 text-sm font-mono"
+                class="w-full rounded-lg border border-border-default bg-surface-card px-3 py-2 text-sm text-ink font-mono outline-none focus:border-navy"
               />
-              <label v-if="createForm.phone_number" class="flex items-center gap-1.5 mt-1.5 text-xs text-gray-600 cursor-pointer">
+              <label v-if="createForm.phone_number" class="flex items-center gap-1.5 mt-1.5 text-xs text-ink-secondary cursor-pointer">
                 <input v-model="createForm.phone_verified" type="checkbox" />
                 <span>Mark phone number as verified</span>
               </label>
@@ -377,12 +517,12 @@
           </div>
 
           <div>
-            <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Assigned Roles (Multi-ROLE_MODEL Supported) *</label>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 p-2.5 border border-gray-200 rounded-md">
+            <label class="block text-xs font-medium text-ink-secondary mb-1.5">Assigned Roles (Multi-Role Supported) *</label>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 border border-subtle rounded-xl bg-surface-inset">
               <label
                 v-for="r in roles"
                 :key="r.id"
-                class="flex items-start gap-2 text-xs text-gray-700 dark:text-gray-200 cursor-pointer p-1"
+                class="flex items-start gap-2 text-xs text-ink cursor-pointer p-1.5 rounded-lg hover:bg-surface-card transition-colors"
               >
                 <input
                   v-model="createForm.role_ids"
@@ -393,74 +533,68 @@
                 />
                 <div>
                   <div class="font-semibold">{{ r.name }}</div>
-                  <div class="text-[11px] text-gray-500">{{ r.permissions?.length || 0 }} permissions</div>
+                  <div class="text-[11px] text-ink-secondary">{{ r.permissions?.length || 0 }} permissions</div>
                 </div>
               </label>
             </div>
           </div>
+      </form>
+      <template #footer>
+        <AppButton variant="default" size="sm" label="Cancel" @click="showCreateModal = false" />
+        <AppButton type="submit" form="create-user-form" variant="primary" size="sm" label="Create Account" :loading="saving" @click="handleCreateUser" />
+      </template>
+    </AppDetailDrawer>
 
-          <div class="flex justify-end gap-2 pt-2">
-            <AppButton variant="ghost" label="Cancel" @click="showCreateModal = false" />
-            <AppButton type="submit" variant="primary" label="Create Account" :loading="saving" />
-          </div>
-        </form>
-      </AppCard>
-    </AppModal>
-
-    <!-- Edit User & ROLE_MODEL Management Modal -->
-    <AppModal v-model="showEditModal" size="lg">
-      <AppCard>
-        <template #header>
-          <div class="flex items-center justify-between">
-            <div>
-              <h3 class="text-base font-semibold">Manage User &amp; Roles: @{{ selectedUser?.username }}</h3>
-              <p class="text-xs text-gray-500 font-mono">ID: {{ selectedUser?.id }}</p>
-            </div>
-            <AppButton variant="ghost" size="sm" icon="i-heroicons-x-mark" @click="showEditModal = false" />
-          </div>
-        </template>
-
-        <form class="space-y-4" @submit.prevent="handleUpdateUser">
+    <!-- Edit User & Roles Nested Right Sidebar Drawer (CDC Pattern) -->
+    <AppDetailDrawer
+      v-model="showEditModal"
+      :title="`Edit User: @${selectedUser?.username || ''}`"
+      :subtitle="selectedUser?.id ? `ID: ${selectedUser.id}` : ''"
+      size="lg"
+      :nested="editOpenedFromDetail"
+      @close="editOpenedFromDetail = false"
+    >
+      <form id="edit-user-form" class="space-y-4" @submit.prevent="handleUpdateUser">
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Full Name</label>
+              <label class="block text-xs font-medium text-ink-secondary mb-1">Full Name</label>
               <input
                 v-model="editForm.full_name"
                 type="text"
                 required
-                class="w-full rounded-md border border-gray-200 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
+                class="w-full rounded-lg border border-border-default bg-surface-card px-3 py-2 text-sm text-ink outline-none focus:border-navy"
               />
             </div>
             <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Employee Code</label>
+              <label class="block text-xs font-medium text-ink-secondary mb-1">Employee Code</label>
               <input
                 v-model="editForm.employee_code"
                 type="text"
                 placeholder="EMP-001"
-                class="w-full rounded-md border border-gray-200 bg-white dark:bg-gray-800 px-3 py-2 text-sm font-mono"
+                class="w-full rounded-lg border border-border-default bg-surface-card px-3 py-2 text-sm text-ink font-mono outline-none focus:border-navy"
               />
             </div>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+              <label class="block text-xs font-medium text-ink-secondary mb-1">Email</label>
               <input
                 v-model="editForm.email"
                 type="email"
                 required
-                class="w-full rounded-md border border-gray-200 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
+                class="w-full rounded-lg border border-border-default bg-surface-card px-3 py-2 text-sm text-ink outline-none focus:border-navy"
               />
             </div>
             <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Phone Number (Normalized E.164)</label>
+              <label class="block text-xs font-medium text-ink-secondary mb-1">Phone Number (Normalized E.164)</label>
               <input
                 v-model="editForm.phone_number"
                 type="text"
                 placeholder="+85569382165"
-                class="w-full rounded-md border border-gray-200 bg-white dark:bg-gray-800 px-3 py-2 text-sm font-mono"
+                class="w-full rounded-lg border border-border-default bg-surface-card px-3 py-2 text-sm text-ink font-mono outline-none focus:border-navy"
               />
-              <label class="flex items-center gap-1.5 mt-1.5 text-xs text-gray-600 cursor-pointer">
+              <label class="flex items-center gap-1.5 mt-1.5 text-xs text-ink-secondary cursor-pointer">
                 <input v-model="editForm.phone_verified" type="checkbox" :disabled="!editForm.phone_number" />
                 <span>Verified phone ownership</span>
               </label>
@@ -468,18 +602,18 @@
           </div>
 
           <!-- Telegram Identity Summary -->
-          <div class="p-3 rounded-md border border-gray-200 bg-gray-50 dark:bg-gray-800/50 flex flex-wrap items-center justify-between gap-2">
-            <div class="flex items-center gap-2 min-w-0">
-              <UIcon name="i-heroicons-paper-airplane" class="w-4 h-4 text-gray-500 flex-shrink-0" />
+          <div class="p-3.5 rounded-xl border border-subtle bg-surface-inset flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <UIcon name="i-heroicons-paper-airplane" class="w-4 h-4 text-ink-secondary shrink-0" />
               <div class="text-xs min-w-0">
-                <div class="font-medium text-gray-900 dark:text-white">Telegram External Identity</div>
-                <div v-if="selectedUser?.telegram_id && !editForm.unlink_telegram" class="text-gray-500 font-mono truncate">
+                <div class="font-medium text-ink">Telegram External Identity</div>
+                <div v-if="selectedUser?.telegram_id && !editForm.unlink_telegram" class="text-ink-secondary font-mono truncate">
                   Linked: {{ selectedUser.telegram_username ? `@${selectedUser.telegram_username}` : '' }} (ID: {{ selectedUser.telegram_id }})
-                  <span v-if="selectedUser.telegram_linked_at" class="block text-[11px] text-gray-400 font-sans">
+                  <span v-if="selectedUser.telegram_linked_at" class="block text-[11px] text-ink-tertiary font-sans">
                     Linked at: {{ formatDateTime(selectedUser.telegram_linked_at) }}
                   </span>
                 </div>
-                <div v-else class="text-gray-400">No Telegram account linked</div>
+                <div v-else class="text-ink-tertiary">No Telegram account linked</div>
               </div>
             </div>
             <AppButton
@@ -490,24 +624,24 @@
               label="Unlink Telegram"
               @click="editForm.unlink_telegram = true"
             />
-            <span v-else-if="editForm.unlink_telegram" class="text-xs text-gray-500">Will unlink on save</span>
+            <span v-else-if="editForm.unlink_telegram" class="text-xs text-ink-secondary">Will unlink on save</span>
           </div>
 
-          <!-- Multi-ROLE_MODEL Assignment -->
+          <!-- Multi-Role Assignment -->
           <div>
-            <div class="flex flex-wrap items-center justify-between gap-1 mb-1">
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">Assigned Roles</label>
-              <span v-if="isEditingSelf" class="text-[11px] text-gray-500 flex items-center gap-1">
+            <div class="flex flex-wrap items-center justify-between gap-1 mb-1.5">
+              <label class="block text-xs font-medium text-ink-secondary">Assigned Roles</label>
+              <span v-if="isEditingSelf" class="text-[11px] text-ink-secondary flex items-center gap-1">
                 <UIcon name="i-heroicons-lock-closed" class="w-3.5 h-3.5" />
                 Self-role modification is locked
               </span>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 p-2.5 border border-gray-200 rounded-md">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 border border-subtle rounded-xl bg-surface-inset">
               <label
                 v-for="r in roles"
                 :key="r.id"
-                class="flex items-start gap-2 text-xs text-gray-700 dark:text-gray-200 p-1"
-                :class="isEditingSelf || (r.name === 'ADMIN' && !authStore.isAdmin) ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'"
+                class="flex items-start gap-2 text-xs text-ink p-1.5 rounded-lg"
+                :class="isEditingSelf || (r.name === 'ADMIN' && !authStore.isAdmin) ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer hover:bg-surface-card'"
               >
                 <input
                   v-model="editForm.role_ids"
@@ -518,7 +652,7 @@
                 />
                 <div>
                   <div class="font-semibold">{{ r.name }}</div>
-                  <div class="text-[11px] text-gray-500">{{ r.description || `${r.permissions?.length || 0} permissions` }}</div>
+                  <div class="text-[11px] text-ink-secondary">{{ r.description || `${r.permissions?.length || 0} permissions` }}</div>
                 </div>
               </label>
             </div>
@@ -526,35 +660,33 @@
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Account Status</label>
+              <label class="block text-xs font-medium text-ink-secondary mb-1">Account Status</label>
               <select
                 v-model="editForm.status"
                 :disabled="isEditingSelf"
-                class="w-full rounded-md border border-gray-200 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
+                class="w-full rounded-lg border border-border-default bg-surface-card px-3 py-2 text-sm text-ink outline-none focus:border-navy"
               >
                 <option value="ACTIVE">ACTIVE</option>
                 <option value="INACTIVE">INACTIVE</option>
               </select>
             </div>
             <div>
-              <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Reset Password (Optional)</label>
+              <label class="block text-xs font-medium text-ink-secondary mb-1">Reset Password (Optional)</label>
               <input
                 v-model="editForm.password"
                 type="password"
                 minlength="8"
                 placeholder="Leave blank to keep existing"
-                class="w-full rounded-md border border-gray-200 bg-white dark:bg-gray-800 px-3 py-2 text-sm"
+                class="w-full rounded-lg border border-border-default bg-surface-card px-3 py-2 text-sm text-ink outline-none focus:border-navy"
               />
             </div>
           </div>
-
-          <div class="flex justify-end gap-2 pt-2">
-            <AppButton variant="ghost" label="Cancel" @click="showEditModal = false" />
-            <AppButton type="submit" variant="primary" label="Save Changes" :loading="saving" />
-          </div>
-        </form>
-      </AppCard>
-    </AppModal>
+      </form>
+      <template #footer>
+        <AppButton variant="default" size="sm" label="Cancel" @click="showEditModal = false" />
+        <AppButton type="submit" form="edit-user-form" variant="primary" size="sm" label="Save Changes" :loading="saving" @click="handleUpdateUser" />
+      </template>
+    </AppDetailDrawer>
 
     <!-- ROLE_MODEL & Account Audit History Modal -->
     <AppModal v-model="showHistoryModal">
@@ -754,6 +886,9 @@ const columns = [
   { key: 'actions', label: 'Actions' },
 ]
 
+const showDetailDrawer = ref(false)
+const detailUser = ref<any>(null)
+const editOpenedFromDetail = ref(false)
 const showCreateModal = ref(false)
 const showEditModal = ref(false)
 const showHistoryModal = ref(false)
@@ -865,6 +1000,16 @@ function openCreateModal() {
     role_ids: defaultRole ? [defaultRole.id] : [],
   }
   showCreateModal.value = true
+}
+
+function openDetailDrawer(user: any) {
+  detailUser.value = user
+  showDetailDrawer.value = true
+}
+
+function openEditFromDetail(user: any) {
+  editOpenedFromDetail.value = true
+  openEditModal(user)
 }
 
 function openEditModal(user: any) {

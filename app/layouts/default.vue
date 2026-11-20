@@ -13,13 +13,13 @@
     >
       <AppHeader />
 
-      <main id="main-content" class="admin-content flex-1 p-4 sm:p-6 outline-none overflow-y-auto min-w-0" tabindex="-1">
+      <main id="main-content" class="admin-content flex-1 p-3 sm:p-5 pb-20 md:pb-5 outline-none overflow-y-auto min-w-0" tabindex="-1">
         <slot />
       </main>
     </div>
 
-    <!-- Global Toast Notification Container -->
-    <AppToast />
+    <!-- Mobile Bottom Tab Bar with Expandable "More" Tray (CDC Pattern) -->
+    <MobileTabBar />
   </div>
 </template>
 

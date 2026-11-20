@@ -1,4 +1,4 @@
-<!-- AppToast — flat toast notification stack -->
+<!-- AppToast — CDC-inspired tinted glassmorphic toast notifications -->
 <template>
   <Teleport to="body">
     <div
@@ -9,34 +9,28 @@
         <div
           v-for="toast in toasts"
           :key="toast.id"
-          class="flex items-start gap-2.5 w-full sm:w-auto sm:min-w-[290px] sm:max-w-[380px] p-3 sm:px-3.5 bg-surface-card border border-border-subtle rounded-md shadow-lg pointer-events-auto backdrop-blur-sm"
+          class="flex items-start gap-3 w-full sm:w-auto sm:min-w-[300px] sm:max-w-[400px] px-4 py-3 rounded-xl border border-white/15 shadow-modal pointer-events-auto backdrop-blur-md text-white"
+          :class="toastBgClass(toast.color)"
         >
-          <div
-            class="shrink-0 mt-0.5"
-            :class="[
-              toast.color === 'green' ? 'text-status-green' :
-              toast.color === 'red' ? 'text-status-red' :
-              toast.color === 'amber' ? 'text-status-amber' :
-              'text-ink-secondary'
-            ]"
-          >
-            <UIcon v-if="toast.color === 'green'" name="i-heroicons-check-circle" class="w-4 h-4" />
-            <UIcon v-else-if="toast.color === 'red'" name="i-heroicons-x-circle" class="w-4 h-4" />
-            <UIcon v-else-if="toast.color === 'amber'" name="i-heroicons-exclamation-triangle" class="w-4 h-4" />
-            <UIcon v-else name="i-heroicons-information-circle" class="w-4 h-4" />
+          <div class="shrink-0 mt-0.5 text-white/95">
+            <UIcon v-if="toast.color === 'green'" name="i-heroicons-check-circle" class="w-5 h-5" />
+            <UIcon v-else-if="toast.color === 'red'" name="i-heroicons-x-circle" class="w-5 h-5" />
+            <UIcon v-else-if="toast.color === 'amber'" name="i-heroicons-exclamation-triangle" class="w-5 h-5" />
+            <UIcon v-else name="i-heroicons-information-circle" class="w-5 h-5" />
           </div>
 
           <div class="flex-1 min-w-0 flex flex-col gap-0.5">
-            <span class="text-sm font-medium text-ink leading-tight">{{ toast.title }}</span>
-            <span v-if="toast.description" class="text-xs text-ink-secondary leading-snug">{{ toast.description }}</span>
+            <span class="text-sm font-semibold text-white leading-tight">{{ toast.title }}</span>
+            <span v-if="toast.description" class="text-xs text-white/85 leading-snug">{{ toast.description }}</span>
           </div>
 
           <button
-            class="shrink-0 text-ink-tertiary hover:text-ink hover:bg-surface-hover p-1 rounded transition-colors"
+            type="button"
+            class="shrink-0 text-white/75 hover:text-white hover:bg-white/15 p-1 rounded-lg transition-colors cursor-pointer"
             aria-label="Dismiss toast"
             @click="dismiss(toast.id)"
           >
-            <UIcon name="i-heroicons-x-mark" class="w-3.5 h-3.5" />
+            <UIcon name="i-heroicons-x-mark" class="w-4 h-4" />
           </button>
         </div>
       </TransitionGroup>
@@ -48,4 +42,17 @@
 import { useAppToast } from '~/composables/useAppToast'
 
 const { toasts, dismiss } = useAppToast()
+
+function toastBgClass(color?: string) {
+  switch (color) {
+    case 'green':
+      return 'bg-emerald-700/95'
+    case 'red':
+      return 'bg-rose-700/95'
+    case 'amber':
+      return 'bg-amber-600/95'
+    default:
+      return 'bg-navy/95'
+  }
+}
 </script>
