@@ -165,15 +165,22 @@
 
         <template #cell-name="{ row }">
           <div class="flex items-center gap-3">
-            <NuxtLink :to="`/products/${row.id}`" class="shrink-0" @click.stop>
+            <button
+              v-if="primaryImageOf(row)"
+              type="button"
+              class="shrink-0 p-0 bg-transparent border-0 cursor-zoom-in rounded-lg overflow-hidden"
+              :title="`Preview ${row.name}`"
+              @click.stop="openImagePreview(primaryImageOf(row)!, row.name)"
+            >
               <img
-                v-if="primaryImageOf(row)"
                 :src="primaryImageOf(row)!"
                 :alt="row.name"
                 loading="lazy"
-                class="w-10 h-10 rounded-lg border border-border-subtle object-cover bg-surface-inset"
+                class="w-10 h-10 rounded-lg border border-border-subtle object-cover bg-surface-inset hover:scale-105 transition-transform"
               />
-              <div v-else class="w-10 h-10 rounded-lg border border-border-subtle bg-surface-inset flex items-center justify-center">
+            </button>
+            <NuxtLink v-else :to="`/products/${row.id}`" class="shrink-0" @click.stop>
+              <div class="w-10 h-10 rounded-lg border border-border-subtle bg-surface-inset flex items-center justify-center">
                 <UIcon name="i-heroicons-photo" class="w-4 h-4 text-ink-tertiary" />
               </div>
             </NuxtLink>
@@ -393,6 +400,13 @@
       :consequence="t('products.archive_consequence', 'Selected products will be marked Discontinued and hidden from active POS checkout grids while preserving all variants and historical records.')"
       @confirm="doBulkArchive"
     />
+
+    <!-- Full-Screen Image Viewer Lightbox (CDC Pattern) -->
+    <AppImageViewer
+      v-model="imageViewer.open"
+      :src="imageViewer.src"
+      :title="imageViewer.title"
+    />
   </div>
 </template>
 
@@ -458,6 +472,18 @@ const archiving = ref(false)
 
 const showBulkArchiveModal = ref(false)
 const bulkArchiving = ref(false)
+
+const imageViewer = reactive({
+  open: false,
+  src: '',
+  title: '',
+})
+
+function openImagePreview(src: string, title?: string) {
+  imageViewer.src = src
+  imageViewer.title = title || 'Product Image'
+  imageViewer.open = true
+}
 
 const statusOptions = computed(() => [
   { label: t('products.all_statuses', 'All Statuses'), value: 'ALL' },

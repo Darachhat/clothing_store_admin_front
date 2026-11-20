@@ -158,6 +158,14 @@
             <p class="text-base font-medium text-ink truncate m-0">{{ userName }}</p>
             <p class="text-xs text-ink-tertiary truncate m-0 mt-0.5">{{ authStore.user?.email || userRole }}</p>
           </div>
+          <button
+            type="button"
+            class="w-full px-3.5 py-2.5 flex items-center gap-2.5 text-sm text-ink hover:bg-surface-hover cursor-pointer transition-colors text-left"
+            @click="userMenuOpen = false; profileDrawerOpen = true"
+          >
+            <UIcon name="i-heroicons-identification" class="w-4.5 h-4.5 text-ink-secondary" />
+            <span>{{ t('common.my_profile', 'My Profile') }}</span>
+          </button>
           <NuxtLink
             to="/users"
             class="w-full px-3.5 py-2.5 flex items-center gap-2.5 text-sm text-ink hover:bg-surface-hover cursor-pointer transition-colors no-underline"
@@ -360,6 +368,60 @@
           </div>
         </div>
 
+        <!-- Row 3.5: Expandable Notifications & Connected Channels Accordion (CDC Pattern) -->
+        <div>
+          <button
+            type="button"
+            class="w-full flex items-center justify-between gap-3 p-4 hover:bg-surface-hover transition-colors cursor-pointer text-left"
+            :aria-expanded="notifAccordionOpen"
+            @click="notifAccordionOpen = !notifAccordionOpen"
+          >
+            <div class="flex items-center gap-3 min-w-0">
+              <UIcon name="i-heroicons-bell-alert" class="w-5 h-5 text-ink-secondary shrink-0" />
+              <div class="min-w-0">
+                <div class="text-sm font-medium text-ink">Notifications &amp; Channels</div>
+                <div class="text-xs text-ink-tertiary">Audit alerts and Telegram identity</div>
+              </div>
+            </div>
+            <UIcon
+              name="i-heroicons-chevron-down"
+              class="w-4 h-4 text-ink-tertiary shrink-0 transition-transform duration-200"
+              :class="notifAccordionOpen ? 'rotate-180 text-ink' : ''"
+            />
+          </button>
+
+          <div v-if="notifAccordionOpen" class="border-t border-border-subtle bg-surface-inset divide-y divide-border-subtle">
+            <div class="flex items-center justify-between gap-3 px-4 py-3 pl-11">
+              <div class="min-w-0">
+                <div class="text-xs font-medium text-ink">Unread Activity Feed</div>
+                <div class="text-[11px] text-ink-tertiary">{{ unreadNotifications.length }} unread notifications</div>
+              </div>
+              <button
+                type="button"
+                class="px-2.5 py-1 rounded-md border border-border-default bg-surface-card text-xs font-medium text-ink hover:bg-surface-hover cursor-pointer"
+                @click="quickSettingsOpen = false; openNotifDrawer()"
+              >
+                Open Feed
+              </button>
+            </div>
+            <div class="flex items-center justify-between gap-3 px-4 py-3 pl-11">
+              <div class="min-w-0">
+                <div class="text-xs font-medium text-ink">Telegram Account</div>
+                <div class="text-[11px] text-ink-tertiary">
+                  {{ authStore.currentUser?.telegram_id ? `@${authStore.currentUser?.telegram_username || authStore.currentUser?.telegram_id}` : 'Not linked yet' }}
+                </div>
+              </div>
+              <NuxtLink
+                to="/users"
+                class="px-2.5 py-1 rounded-md border border-border-default bg-surface-card text-xs font-medium text-ink hover:bg-surface-hover no-underline"
+                @click="quickSettingsOpen = false"
+              >
+                {{ authStore.currentUser?.telegram_id ? 'Manage' : 'Link' }}
+              </NuxtLink>
+            </div>
+          </div>
+        </div>
+
         <!-- Row 4: BRAND_MODEL & Receipt Settings Link -->
         <NuxtLink
           to="/settings/brand"
@@ -392,6 +454,95 @@
           <UIcon name="i-heroicons-chevron-right" class="w-4 h-4 text-ink-tertiary shrink-0" />
         </NuxtLink>
       </div>
+    </AppDetailDrawer>
+
+    <!-- ─── CDC-Style Profile Overview Right Drawer ────────────────────────── -->
+    <AppDetailDrawer
+      v-model="profileDrawerOpen"
+      :title="t('common.my_profile', 'My Profile')"
+      size="md"
+      :no-padding="true"
+    >
+      <div class="flex flex-col">
+        <!-- Deep Navy Cover Banner -->
+        <div class="h-32 w-full bg-gradient-to-br from-[#102D71] via-[#153A8A] to-[#0B2054] relative overflow-hidden">
+          <div class="pointer-events-none absolute -right-10 -top-10 w-40 h-40 rounded-full border border-white/10" />
+          <div class="pointer-events-none absolute -left-8 -bottom-12 w-36 h-36 rounded-full border border-white/10" />
+        </div>
+
+        <div class="px-5 pb-6">
+          <!-- Overlapping Avatar + Quick Icon Buttons (CDC Profile Pattern) -->
+          <div class="flex items-end justify-between gap-3 -mt-10 relative z-10 mb-4">
+            <div class="w-20 h-20 rounded-full bg-navy text-white text-2xl font-semibold flex items-center justify-center border-4 border-surface-card shadow-md shrink-0">
+              {{ userInitial }}
+            </div>
+            <div class="flex items-center gap-1 pb-1">
+              <button
+                type="button"
+                class="inline-flex items-center justify-center w-9 h-9 rounded-full text-ink-secondary hover:text-navy hover:bg-surface-hover cursor-pointer transition-colors"
+                title="Quick Settings"
+                aria-label="Quick Settings"
+                @click="openQuickSettingsFromProfile"
+              >
+                <UIcon name="i-heroicons-cog-6-tooth" class="w-5 h-5" />
+              </button>
+              <NuxtLink
+                to="/users"
+                class="inline-flex items-center justify-center w-9 h-9 rounded-full text-ink-secondary hover:text-navy hover:bg-surface-hover transition-colors no-underline"
+                title="Account & Security"
+                aria-label="Account & Security"
+                @click="profileDrawerOpen = false"
+              >
+                <UIcon name="i-heroicons-shield-check" class="w-5 h-5" />
+              </NuxtLink>
+            </div>
+          </div>
+
+          <div class="mb-5">
+            <h2 class="text-xl font-bold text-ink m-0">{{ userName }}</h2>
+            <p class="text-xs text-ink-secondary m-0 mt-0.5">{{ userRole }}</p>
+          </div>
+
+          <dl class="m-0 grid grid-cols-[minmax(0,2fr)_minmax(0,3fr)] gap-x-4 gap-y-3 text-sm border-t border-subtle pt-4">
+            <dt class="text-ink-secondary flex items-center gap-1.5">
+              <UIcon name="i-heroicons-envelope" class="w-4 h-4 text-ink-tertiary shrink-0" />
+              <span>Email</span>
+            </dt>
+            <dd class="m-0 text-ink break-all">{{ authStore.user?.email || '—' }}</dd>
+
+            <dt class="text-ink-secondary flex items-center gap-1.5">
+              <UIcon name="i-heroicons-phone" class="w-4 h-4 text-ink-tertiary shrink-0" />
+              <span>Phone</span>
+            </dt>
+            <dd class="m-0 text-ink font-mono">{{ authStore.currentUser?.phone_number || '—' }}</dd>
+
+            <dt class="text-ink-secondary flex items-center gap-1.5">
+              <UIcon name="i-heroicons-paper-airplane" class="w-4 h-4 text-ink-tertiary shrink-0" />
+              <span>Telegram</span>
+            </dt>
+            <dd class="m-0 text-ink font-mono">
+              {{ authStore.currentUser?.telegram_id ? `@${authStore.currentUser?.telegram_username || authStore.currentUser?.telegram_id}` : 'Not linked' }}
+            </dd>
+          </dl>
+        </div>
+      </div>
+
+      <template #footer>
+        <AppButton
+          size="sm"
+          variant="default"
+          icon="i-heroicons-cog-6-tooth"
+          label="Preferences"
+          @click="openQuickSettingsFromProfile"
+        />
+        <AppButton
+          size="sm"
+          variant="danger"
+          icon="i-heroicons-arrow-right-on-rectangle"
+          :label="t('common.sign_out', 'Sign out')"
+          @click="profileDrawerOpen = false; showLogoutConfirm = true"
+        />
+      </template>
     </AppDetailDrawer>
 
     <!-- Confirm Sign Out Modal (CDC Pattern) -->
@@ -430,11 +581,18 @@ const langMenuOpen = ref(false)
 const userMenuOpen = ref(false)
 const notifDrawerOpen = ref(false)
 const quickSettingsOpen = ref(false)
+const profileDrawerOpen = ref(false)
+const notifAccordionOpen = ref(false)
 const showLogoutConfirm = ref(false)
 const loggingOut = ref(false)
 const notifTab = ref<'all' | 'unread'>('all')
 const notifLoading = ref(false)
 const { fontSize, options: fontSizeOptions, setFontSize, initFontSize } = useFontSize()
+
+function openQuickSettingsFromProfile() {
+  profileDrawerOpen.value = false
+  quickSettingsOpen.value = true
+}
 
 const langMenuRef = ref<HTMLElement | null>(null)
 const userMenuRef = ref<HTMLElement | null>(null)
